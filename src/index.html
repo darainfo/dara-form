@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Dara Form</title>
+
+</head>
+
+<body onload="formObj.load()">
+
+  <div>
+    <div class="form-button">
+      <button type="button" onclick="formObj.addItem()">Add</button>
+      <button type="button" onclick="formObj.getValue()">getValue</button>
+    </div>
+  </div>
+
+  <div style="padding: 20px;">
+    <div id="formArea"></div>
+  </div>
+</body>
+
+</html>
+<style>
+  .form-button {
+    text-align: center;
+
+  }
+</style>
+<script>
+  var formInfo = {
+    message: 'This value is not valid',
+    mode: 'horizontal1',
+    //mode:'vertical',
+    //width: '600px',
+    labelWidth: '150px',
+    message: {
+      empty: '{name} 필수 입력사항입니다.',
+      "string": {
+        minLength: '{size} 글자 이상 입력해야합니다.'
+        , maxLength: '{size} 글자 이상 입력할 수 없습니다.'
+      }
+      , "number": {
+        min: '{size} 보다 커야 합니다'
+        , min: '{size} 보다 커야 합니다'
+      }
+      , "type": {
+        email: '이메일이 유효하지 않습니다.'
+        , url: 'URL이 유효하지 않습니다.'
+      }
+    }
+    , fields: [
+      {
+        name: 'uid'
+        , label: '아이디'
+        , required: true
+        , rule: {
+          minLength: 3
+          , maxLength: 100
+        }
+        , callback: {
+          message: '이미 존재하는 아이디 입니다.',
+          callback: function (value, validator, $field) {
+            return idChecVal < 1;
+          }
+        }
+      }
+      , {
+        name: 'uname'
+        , label: '이름'
+        , required: true
+        , rule: {
+          maxLength: 100
+        }
+      }
+      , {
+        name: 'uemail'
+        , label: '이메일'
+        , type: 'email'
+        , required: true
+        , rule: {
+          maxLength: 100
+        }
+        , typeMessage: 'The input is not a valid email address'
+        , isValid: function (fieldInfo) {
+
+        }
+      }
+      , {
+        name: 'upw'
+        , label: '비밀번호'
+        , renderType: 'password'
+        , different: {
+          field: 'uid',
+          message: '아이디와 달라야 합니다.'
+        }
+        , identical: {
+          field: 'confirmUpw',
+          message: '비밀번호가 같아야합니다.'
+        }
+      }
+      , {
+        name: 'confirmUpw'
+        , label: '비밀번호'
+        , renderType: 'password'
+        , identical: {
+          field: 'upw',
+          message: '비밀번호가 같아야합니다.'
+        }
+      }
+      , {
+        name: 'dropdown'
+        , label: '드랍다운'
+        , renderType: 'dropdown'
+        , value: [
+          { label: 'option1', value: '1', selected: true }
+          , { label: 'option2', value: '2' }
+        ]
+      }
+      , {
+        name: 'useYn'
+        , label: '사용여부'
+        , renderType: 'radio'
+        , value: [
+          { label: 'Y', value: 'Y', selected: true }
+          , { label: 'N', value: 'N' }
+        ]
+      }
+      , {
+        name: 'check'
+        , label: 'checkbox'
+        , renderType: 'checkbox'
+        , value: [
+          { label: 'option1', value: '1' }
+          , { label: 'option2', value: '2' }
+          , { label: 'option3', value: '3' }
+        ]
+      }
+      , {
+        name: '텍트 박스'
+        , label: '텍스트 area'
+        , renderType: 'textarea'
+      }
+    ]
+  };
+
+  var rowIdx = 0;
+  var formBuilder;
+  var formObj = {
+    load: () => {
+      formBuilder = new DaraForm("#formArea", formInfo);
+    }
+    , addItem: () => {
+      rowIdx += 1;
+      formBuilder.addField({
+        name: `addItem${rowIdx}`
+        , label: `추가컬럼${rowIdx}`
+        , maxLength: 100
+        , required: true
+      });
+    }
+    , getValue: () => {
+      alert(JSON.stringify(formBuilder.getValue()));
+    }
+  }
+
+
+</script>
