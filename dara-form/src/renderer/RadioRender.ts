@@ -20,11 +20,9 @@ export default class RadioRender implements Render {
             const id = `${fieldName}-${elementIdx}`;
 
             templates.push(
-                `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
-                <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" />
-                    ${val.label}
-                </label>
+                `<span class="field ${field.viewMode}">
+                <input type="radio" name="${fieldName}" id="${id}" value="${val.value}" class="form-field radio" />
+                <label for="${id}">${val.label}</label>
                 </span>
                 `
             )

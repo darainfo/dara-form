@@ -2,7 +2,7 @@ import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 
 let elementIdx = 0;
-export default class RadioRender implements Render {
+export default class CheckboxRender implements Render {
     private element;
     private field;
 
@@ -14,17 +14,16 @@ export default class RadioRender implements Render {
     static template(field: FormField): string {
         const templates: string[] = [];
         const fieldName = field.name;
+
         templates.push(`<div class="field-group">`);
         field.value.forEach((val) => {
             elementIdx += 1;
             const id = `${fieldName}-${elementIdx}`;
 
             templates.push(
-                `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
-                <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" />
-                    ${val.label}
-                </label>
+                `<span class="field ${field.viewMode}">
+                <input type="checkbox" name="${fieldName}" id="${id}" value="${val.value}" class="form-field checkbox" />
+                <label for="${id}">${val.label}</label>
                 </span>
                 `
             )

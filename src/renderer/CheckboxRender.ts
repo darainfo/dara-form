@@ -1,5 +1,6 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import XssUtil from "src/util/XssUtil";
 
 let elementIdx = 0;
 export default class CheckboxRender implements Render {
@@ -18,17 +19,17 @@ export default class CheckboxRender implements Render {
         templates.push(`<div class="field-group">`);
         field.value.forEach((val) => {
             elementIdx += 1;
-            const id = `${fieldName}-${elementIdx}`;
 
-            templates.push(
-                `<span class="field ${field.viewMode}">
-                <input type="checkbox" name="${fieldName}" id="${id}" value="${val.value}" class="form-field checkbox" />
-                <label for="${id}">${val.label}</label>
+            templates.push(`
+                <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
+                    <label>
+                        <input type="checkbox" name="${fieldName}" value="${XssUtil.replaceXSS(val.value)}" class="form-field checkbox" />
+                        ${val.label}
+                    </label>
                 </span>
-                `
-            )
+            `);
         })
-        templates.push(`</div>`);
+        templates.push(`< /div>`);
 
         return templates.join('');
     }

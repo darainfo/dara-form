@@ -1,5 +1,3 @@
-import { Render } from "src/renderer/Render";
-
 interface OptionCallback {
     (loaderOpt: object): any;
 }
@@ -34,5 +32,4 @@ export interface FormField {
         message: string // '이미 존재하는 아이디 입니다.',
         callback: OptionCallback
     }
-    , $renderType: Render
 }
