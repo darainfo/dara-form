@@ -5,6 +5,7 @@ import TextAreaRender from './renderer/TextAreaRender';
 import DropdownRender from './renderer/DropdownRender';
 import TextRender from './renderer/TextRender';
 import { fieldTemplate } from './template';
+import XssUtil from './util/XssUtil';
 
 
 let defaultOptions = {
@@ -65,6 +66,8 @@ export default class DaraForm {
         const rowElement = document.createElement("div");
         rowElement.className = `dara-form-row`;
 
+        replaceXssField(field);
+
         let rednerTemplate = '';
         if (field.template) {
             if (typeof field.template === 'string') {
@@ -79,6 +82,11 @@ export default class DaraForm {
         rowElement.innerHTML = rednerTemplate;
 
         this.formElement.appendChild(rowElement); // Append the element
+
+        const element = this.getFormFieldElement(field);
+
+        field.$renderType = 
+
     }
 
     rowTemplate(field: FormField) {
@@ -108,6 +116,7 @@ export default class DaraForm {
             if (childField.childen) {
                 childTemplae.push(this.rowTemplate(field));
             } else {
+                replaceXssField(childField);
                 childTemplae.push(`<li class="sub-row">
                         <span class="sub-label">${childField.label}</span>
                         <span class="sub-field">${fieldTemplate(childField)}</span>
@@ -130,6 +139,13 @@ export default class DaraForm {
         if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
             element.value = '';
         }
+    }
+
+    getFormFieldElement(field: FormField) {
+        if (field.renderType != 'group') {
+            return this.formElement.querySelector(`[name="${field.name}"]`);
+        }
+        return null;
     }
 
     getFieldElement(fieldName: string) {
@@ -193,4 +209,9 @@ export default class DaraForm {
     destroy = () => {
         return this.options;
     }
+}
+
+function replaceXssField(field: FormField) {
+    field.name = XssUtil.replaceXSS(field.name);
+    field.label = XssUtil.replaceXSS(field.label);
 }
