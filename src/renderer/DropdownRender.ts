@@ -1,12 +1,15 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import { ValidResult } from "@t/ValidResult";
+import { RULES } from "src/constants";
 
 export default class DropdownRender implements Render {
     private element;
     private field;
-    constructor(field: FormField, element: HTMLTextAreaElement) {
+
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        this.element = rowElement.querySelector(`[name="${field.name}"]`) as HTMLSelectElement;
     }
 
     static template(field: FormField): string {
@@ -28,5 +31,26 @@ export default class DropdownRender implements Render {
         this.element.value = value;
     }
 
+    reset() {
+        this.element.value = '';
+    }
 
+    getElement(): HTMLElement {
+        return this.element;
+    }
+
+    valid(): any {
+        const value = this.getValue();
+
+        if (this.field.required) {
+            if (value) {
+                return true;
+            }
+            const result: ValidResult = { name: this.field.name };
+            result.constraint = RULES.REQUIRED;
+            return result;
+        }
+
+        return true;
+    }
 }

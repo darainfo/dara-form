@@ -8,7 +8,7 @@ const xssFilter = {
 
 export default {
 
-    replaceXSS(inputText: string): string {
+    replace(inputText: string): string {
         let returnText = inputText;
         if (returnText) {
             Object.keys(xssFilter).forEach((key) => {
@@ -18,7 +18,7 @@ export default {
         return returnText;
     }
 
-    , unReplaceXSS(inputText: string): string {
+    , unReplace(inputText: string): string {
         let returnText = inputText;
 
         if (returnText) {
@@ -27,5 +27,14 @@ export default {
             })
         }
         return returnText;
+    }
+
+    , unFieldName(fieldName: string): string {
+        if (fieldName) {
+            return this.unReplace(fieldName).replaceAll("\"", "\\\"");
+        }
+
+        return '';
+
     }
 }

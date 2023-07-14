@@ -1,12 +1,16 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import XssUtil from "src/util/XssUtil";
+import { stringCheck } from "src/rule/stringRule";
 
 export default class TextAreaRender implements Render {
     private element;
     private field;
-    constructor(field: FormField, element: HTMLTextAreaElement) {
+
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        const fieldName = XssUtil.unFieldName(field.name);
+        this.element = rowElement.querySelector(`[name="${fieldName}"]`) as HTMLTextAreaElement;
     }
 
     static template(field: FormField): string {
@@ -14,6 +18,7 @@ export default class TextAreaRender implements Render {
     }
 
     getValue() {
+        console.log(this.element, this.field)
         return this.element.value;
     }
 
@@ -21,5 +26,16 @@ export default class TextAreaRender implements Render {
         this.element.value = value;
     }
 
+    reset() {
+        this.element.value = '';
+    }
+
+    getElement(): HTMLElement {
+        return this.element;
+    }
+
+    valid(): any {
+        return stringCheck(this.getValue(), this.field);
+    }
 
 }

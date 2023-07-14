@@ -34,5 +34,6 @@ export interface FormField {
         message: string // '이미 존재하는 아이디 입니다.',
         callback: OptionCallback
     }
-    , $renderType: Render
+    , renderer: Render
+    , $isCustomRenderer: boolean
 }

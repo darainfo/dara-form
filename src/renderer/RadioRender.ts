@@ -1,14 +1,27 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import XssUtil from "src/util/XssUtil";
+import { ValidResult } from "@t/ValidResult";
+import { RULES } from "src/constants";
 
 let elementIdx = 0;
 export default class RadioRender implements Render {
-    private element;
+    private rowElement: HTMLElement;
     private field;
+    private fieldName;
+    private defaultCheckValue;
 
-    constructor(field: FormField, element: HTMLInputElement) {
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        this.rowElement = rowElement;
+        this.fieldName = XssUtil.unFieldName(field.name);
+        this.defaultCheckValue = this.field.value[0].value;
+
+        this.field.value.forEach((val) => {
+            if (val.selected) {
+                this.defaultCheckValue = val.value;
+            }
+        });
     }
 
     static template(field: FormField): string {
@@ -22,7 +35,7 @@ export default class RadioRender implements Render {
             templates.push(
                 `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                 <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" />
+                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" ${val.selected ? 'checked' : ''} />
                     ${val.label}
                 </label>
                 </span>
@@ -35,12 +48,38 @@ export default class RadioRender implements Render {
     }
 
     getValue() {
-        return this.element.value;
+        return (this.rowElement.querySelector(`[name="${this.fieldName}"]:checked`) as HTMLInputElement)?.value;
     }
 
     setValue(value: any): void {
-        this.element.value = value;
+        this.rowElement.querySelector(`[name="${this.fieldName}"][value="${value}"]`)?.setAttribute("checked", "checked");
     }
 
+    reset() {
+        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`).forEach(item => {
+            (item as HTMLInputElement).checked = false;
+        })
+
+        this.setValue(this.defaultCheckValue);
+    }
+
+    getElement(): any {
+        return this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`);
+    }
+
+    valid(): any {
+        const value = this.getValue();
+
+        if (this.field.required) {
+            if (value) {
+                return true;
+            }
+            const result: ValidResult = { name: this.field.name };
+            result.constraint = RULES.REQUIRED;
+            return result;
+        }
+
+        return true;
+    }
 
 }

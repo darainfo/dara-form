@@ -28,5 +28,17 @@ export default class GroupRender implements Render {
         this.element.value = value;
     }
 
+    reset() {
+        this.element.value = '';
+    }
+
+    getElement(): HTMLElement {
+        return this.element;
+    }
+
+    valid(): any {
+        return false;
+    }
+
 
 }

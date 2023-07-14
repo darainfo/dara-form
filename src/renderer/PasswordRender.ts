@@ -1,12 +1,14 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import { stringCheck } from "src/rule/stringRule";
 
 export default class PasswordRender implements Render {
     private element;
     private field;
-    constructor(field: FormField, element: HTMLInputElement) {
+
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        this.element = rowElement.querySelector(`[name="${field.name}"]`) as HTMLInputElement;
     }
 
     static template(field: FormField): string {
@@ -21,5 +23,17 @@ export default class PasswordRender implements Render {
         this.element.value = value;
     }
 
+    reset() {
+        this.element.value = '';
+    }
 
+    getElement(): HTMLElement {
+        return this.element;
+    }
+
+    valid(): any {
+        // TODO 처리 할것. 
+        stringCheck(this.getValue(), this.field);
+        return true;
+    }
 }

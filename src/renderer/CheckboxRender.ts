@@ -1,15 +1,27 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 import XssUtil from "src/util/XssUtil";
+import { ValidResult } from "@t/ValidResult";
+import { RULES } from "src/constants";
 
 let elementIdx = 0;
 export default class CheckboxRender implements Render {
-    private element;
+    private rowElement: HTMLElement;
     private field;
+    private fieldName;
+    private defaultCheckValue: any[]
 
-    constructor(field: FormField, element: HTMLInputElement) {
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        this.rowElement = rowElement;
+        this.fieldName = XssUtil.unFieldName(field.name);
+        this.defaultCheckValue = [];
+
+        this.field.value.forEach((val) => {
+            if (val.selected) {
+                this.defaultCheckValue.push(val.value);
+            }
+        });
     }
 
     static template(field: FormField): string {
@@ -23,7 +35,7 @@ export default class CheckboxRender implements Render {
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${XssUtil.replaceXSS(val.value)}" class="form-field checkbox" />
+                        <input type="checkbox" name="${fieldName}" value="${XssUtil.replace(val.value)}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
                         ${val.label}
                     </label>
                 </span>
@@ -34,13 +46,51 @@ export default class CheckboxRender implements Render {
         return templates.join('');
     }
 
-    getValue() {
-        return this.element.value;
+    getValue(): any[] {
+        const checkValue: any[] = [];
+
+        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]:checked`).forEach(item => {
+            checkValue.push((item as HTMLInputElement).value);
+
+        })
+
+        return checkValue;
     }
 
     setValue(value: any): void {
-        this.element.value = value;
+        if (Array.isArray(value)) {
+            value.forEach(item => {
+                this.rowElement.querySelector(`[name="${this.fieldName}"][value="${item}"]`)?.setAttribute("checked", "checked");
+            })
+        } else {
+            this.rowElement.querySelector(`[name="${this.fieldName}"][value="${value}"]`)?.setAttribute("checked", "checked");
+        }
     }
 
+    reset() {
+        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`).forEach(item => {
+            (item as HTMLInputElement).checked = false;
+        })
 
+        this.setValue(this.defaultCheckValue);
+    }
+
+    getElement(): any {
+        return this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`);
+    }
+
+    valid(): any {
+        const value = this.getValue();
+
+        if (this.field.required) {
+            if (value.length > 0) {
+                return true;
+            }
+            const result: ValidResult = { name: this.field.name };
+            result.constraint = RULES.REQUIRED;
+            return result;
+        }
+
+        return true;
+    }
 }

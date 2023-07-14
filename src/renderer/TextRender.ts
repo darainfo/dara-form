@@ -1,12 +1,18 @@
 import { FormField } from "@t/FormField";
+import { ValidResult } from "@t/ValidResult";
 import { Render } from "./Render";
+import XssUtil from "src/util/XssUtil";
+import { RULES } from "src/constants";
+import { stringCheck } from "src/rule/stringRule";
 
 export default class TextRender implements Render {
-    private element;
+    private element: HTMLInputElement;
     private field;
-    constructor(field: FormField, element: HTMLInputElement) {
+
+    constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = element;
+        const fieldName = XssUtil.unFieldName(field.name);
+        this.element = rowElement.querySelector(`[name="${fieldName}"]`) as HTMLInputElement;
     }
 
     static template(field: FormField): string {
@@ -21,5 +27,15 @@ export default class TextRender implements Render {
         this.element.value = value;
     }
 
+    reset() {
+        this.element.value = '';
+    }
 
+    getElement(): HTMLInputElement {
+        return this.element;
+    }
+
+    valid(): any {
+        return stringCheck(this.getValue(), this.field);
+    }
 }

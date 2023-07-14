@@ -4,7 +4,7 @@ import NumberRender from './renderer/NumberRender';
 import TextAreaRender from './renderer/TextAreaRender';
 import DropdownRender from './renderer/DropdownRender';
 import TextRender from './renderer/TextRender';
-import { fieldTemplate } from './template';
+import { getRenderTemplate, getRenderer } from './template';
 import XssUtil from './util/XssUtil';
 
 
@@ -33,11 +33,19 @@ let defaultOptions = {
 
 let daraFormIdx = 0;
 
+export interface FieldMap {
+    [key: string]: FormField;
+}
+
 export default class DaraForm {
     private readonly options;
     private isHorizontal;
 
     private formElement;
+
+    private allFieldInfo: FieldMap = {};
+
+    private addRowField: string[] = [];
 
     constructor(selector: string, options: FormOptions) {
         this.options = Object.assign({}, defaultOptions, options);
@@ -62,19 +70,21 @@ export default class DaraForm {
     }
 
     addRow(field: FormField) {
-
+        this.addRowField = [];
         const rowElement = document.createElement("div");
         rowElement.className = `dara-form-row`;
 
         replaceXssField(field);
 
         let rednerTemplate = '';
-        if (field.template) {
-            if (typeof field.template === 'string') {
-                rednerTemplate = field.template;
+        if (field.renderer) {
+            const templateValue = (field.renderer as any).template;
+            if (typeof templateValue === 'string') {
+                rednerTemplate = templateValue;
             } else {
-                rednerTemplate = field.template.call(null, field);
+                rednerTemplate = templateValue.call(null, field);
             }
+            field.$isCustomRenderer = true;
         } else {
             rednerTemplate = this.rowTemplate(field);
         }
@@ -83,11 +93,15 @@ export default class DaraForm {
 
         this.formElement.appendChild(rowElement); // Append the element
 
-        const element = this.getFormFieldElement(field);
-
-        field.$renderType = 
-
+        this.addRowField.forEach(fieldName => {
+            if (this.allFieldInfo[fieldName].$isCustomRenderer !== true) {
+                field.renderer = new (field.renderer as any)(field, rowElement);
+            }
+        })
+        //field.renderer = getRenderer(field);
     }
+
+
 
     rowTemplate(field: FormField) {
         let fieldHtml = '';
@@ -95,7 +109,7 @@ export default class DaraForm {
         if (field.childen) {
             fieldHtml = this.groupTemplate(field);
         } else {
-            fieldHtml = fieldTemplate(field);
+            fieldHtml = this.getFieldTempate(field);
         }
 
         return `
@@ -108,8 +122,14 @@ export default class DaraForm {
         `;
     }
 
+
+    /**
+     * 그룹 템플릿
+     *
+     * @param {FormField} field
+     * @returns {*}
+     */
     groupTemplate(field: FormField) {
-        //그룹 처리 할것. 
         const childTemplae = [];
         childTemplae.push(`<ul class="sub-field-group ${field.renderType === 'group' ? 'group-inline' : 'group-row'}">`);
         field.childen.forEach(childField => {
@@ -119,7 +139,7 @@ export default class DaraForm {
                 replaceXssField(childField);
                 childTemplae.push(`<li class="sub-row">
                         <span class="sub-label">${childField.label}</span>
-                        <span class="sub-field">${fieldTemplate(childField)}</span>
+                        <span class="sub-field">${this.getFieldTempate(childField)}</span>
                     </li>`
                 );
             }
@@ -129,6 +149,24 @@ export default class DaraForm {
         return childTemplae.join('');
     }
 
+
+    /**
+     * field tempalte 구하기
+     *
+     * @param {FormField} field
+     * @returns {string}
+     */
+    getFieldTempate(field: FormField): string {
+        this.allFieldInfo[field.name] = field;
+        this.addRowField.push(field.name);
+        field.renderer = getRenderer(field);
+        return (field.renderer as any).template(field);
+    }
+
+
+    /**
+     * 폼 데이터 reset
+     */
     resetForm = () => {
         this.formElement.reset();
     }
@@ -141,23 +179,25 @@ export default class DaraForm {
         }
     }
 
-    getFormFieldElement(field: FormField) {
-        if (field.renderType != 'group') {
-            return this.formElement.querySelector(`[name="${field.name}"]`);
+    getFieldElement(fieldName: string) {
+        const field = this.allFieldInfo[fieldName];
+
+        if (field) {
+            return field.renderer.getValue();
         }
+
         return null;
     }
 
-    getFieldElement(fieldName: string) {
-        return this.formElement.querySelector(`[name="${fieldName}"]`);
-    }
-
     getFieldValue = (fieldName: string) => {
-        const element = this.getFieldElement(fieldName);
 
-        if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-            return element.value;
+        const field = this.allFieldInfo[fieldName];
+
+        if (field) {
+            return field.renderer.getValue();
         }
+        return null;
+
     }
 
     getValue = (isValid: boolean): any => {
@@ -187,6 +227,8 @@ export default class DaraForm {
 
         if (element != null) {
             element.closest('.dara-form-row')?.remove();
+
+            delete this.allFieldInfo[fieldName];
         }
     }
 
@@ -212,6 +254,6 @@ export default class DaraForm {
 }
 
 function replaceXssField(field: FormField) {
-    field.name = XssUtil.replaceXSS(field.name);
-    field.label = XssUtil.replaceXSS(field.label);
+    field.name = XssUtil.replace(field.name);
+    field.label = XssUtil.replace(field.label);
 }
