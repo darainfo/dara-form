@@ -11,18 +11,17 @@ export interface FormOptions {
     , labelWidth: string// '20%'
     , notValidMessage: string//'This value is not valid'
     , message: {
-        empty: string // '{name} 필수 입력사항입니다.'
+        required: string // '{name} 필수 입력사항입니다.'
         , "string": {
             minLength: string //'{size} 글자 이상 입력해야합니다.'
             , maxLength: string  //'{size} 글자 이상 입력할 수 없습니다.'
         }
         , "number": {
             min: string //'{size} 보다 커야 합니다'
-            , min: string //'{size} 보다 커야 합니다'
+            , max : string //'{size} 보다 커야 합니다'
         }
         , "type": {
-            email: string // '이메일이 유효하지 않습니다.'
-            , url: string // 'URL이 유효하지 않습니다.'
+            message: string // '{type} 유효하지 않습니다.'
         }
     }
     , fields: array

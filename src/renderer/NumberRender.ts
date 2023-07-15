@@ -1,13 +1,17 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
+import { numberValidator } from "src/rule/numberValidator";
+import XssUtil from "src/util/util";
 
 export default class NumberRender implements Render {
-    private element;
+    private element:HTMLInputElement;
+    private rowElement:HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = rowElement.querySelector(`[name="${field.name}"]`) as HTMLInputElement;
+        this.rowElement = rowElement;
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     }
 
     static template(field: FormField): string {
@@ -31,7 +35,19 @@ export default class NumberRender implements Render {
     }
 
     valid(): any {
-        return false;
+        const validResult = numberValidator(this.getValue(), this.field);
+
+        if(validResult===true){
+            if(this.element.classList.contains('invalid')){
+                this.element.classList.remove('invalid');
+            }
+        }else{
+            if(!this.element.classList.contains('invalid')){
+                this.element.classList.add('invalid')
+            }
+        }
+        
+        return validResult;
     }
 
 }

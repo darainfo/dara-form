@@ -14,6 +14,8 @@ export type formFieldType = 'number' | 'string' | 'array';
 
 export type renderType = 'number' | 'text' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group';
 
+export type validators = 'email' | 'url' | 'alpha' | 'alpha-num';
+
 export interface FormField {
     label: string // '아이디'
     , viewMode: string //'horizontal' // horizontal , vertical /   // radio, checkbox, group
@@ -21,12 +23,14 @@ export interface FormField {
     , type: formFieldType
     , renderType: renderType | string
     , required: boolean //true
+    , validator : validators
     , rule: {
         minLength: number // 3
         , maxLength: number //100
         , min: number
         , max: number
     }
+    , message : string
     , template: OptionCallback | string
     , value: value[]
     , childen: FormField[]
@@ -36,4 +40,6 @@ export interface FormField {
     }
     , renderer: Render
     , $isCustomRenderer: boolean
+    , $xssName : string
+    , $type : string
 }

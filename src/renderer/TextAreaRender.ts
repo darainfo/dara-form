@@ -1,16 +1,17 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import XssUtil from "src/util/XssUtil";
-import { stringCheck } from "src/rule/stringRule";
+import XssUtil from "src/util/util";
+import { stringValidator } from "src/rule/stringValidator";
 
 export default class TextAreaRender implements Render {
-    private element;
+    private element:HTMLTextAreaElement ;
+    private rowElement:HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        const fieldName = XssUtil.unFieldName(field.name);
-        this.element = rowElement.querySelector(`[name="${fieldName}"]`) as HTMLTextAreaElement;
+        this.rowElement = rowElement;
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
     }
 
     static template(field: FormField): string {
@@ -18,7 +19,6 @@ export default class TextAreaRender implements Render {
     }
 
     getValue() {
-        console.log(this.element, this.field)
         return this.element.value;
     }
 
@@ -35,7 +35,20 @@ export default class TextAreaRender implements Render {
     }
 
     valid(): any {
-        return stringCheck(this.getValue(), this.field);
+
+        const validResult = stringValidator(this.getValue(), this.field);
+
+        if(validResult===true){
+            if(this.element.classList.contains('invalid')){
+                this.element.classList.remove('invalid');
+            }
+        }else{
+            if(!this.element.classList.contains('invalid')){
+                this.element.classList.add('invalid')
+            }
+        }
+        
+        return validResult;
     }
 
 }

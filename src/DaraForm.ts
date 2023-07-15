@@ -5,29 +5,18 @@ import TextAreaRender from './renderer/TextAreaRender';
 import DropdownRender from './renderer/DropdownRender';
 import TextRender from './renderer/TextRender';
 import { getRenderTemplate, getRenderer } from './template';
-import XssUtil from './util/XssUtil';
+import XssUtil from './util/util';
+import { render } from 'preact';
+import { ValidResult } from '@t/ValidResult';
+import { Message } from '@t/Message';
+import Lanauage from './util/Lanauage';
 
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
     , width: '100%'
     , labelWidth: '20%'
-    , notValidMessage: 'This value is not valid'
-    , message: {
-        empty: '{name} 필수 입력사항입니다.'
-        , "string": {
-            minLength: '{size} 글자 이상 입력해야합니다.'
-            , maxLength: '{size} 글자 이상 입력할 수 없습니다.'
-        }
-        , "number": {
-            min: '{size} 보다 커야 합니다'
-            , max: '{size} 보다 커야 합니다'
-        }
-        , "type": {
-            email: '이메일이 유효하지 않습니다.'
-            , url: 'URL이 유효하지 않습니다.'
-        }
-    }
+    , notValidMessage: 'This form is not valid.'
     , fields: []
 } as FormOptions;
 
@@ -47,9 +36,12 @@ export default class DaraForm {
 
     private addRowField: string[] = [];
 
-    constructor(selector: string, options: FormOptions) {
+    constructor(selector: string, options: FormOptions, message : Message) {
         this.options = Object.assign({}, defaultOptions, options);
+        
         daraFormIdx += 1;
+
+        Lanauage.set(message);
 
         this.isHorizontal = this.options.mode === 'horizontal';
 
@@ -61,6 +53,10 @@ export default class DaraForm {
 
         this.formElement = formElement;
         this.createForm(this.options.fields);
+    }
+
+    public static setMessage(message : Message):void{
+        Lanauage.set(message);
     }
 
     createForm(fields: FormField[]) {
@@ -95,13 +91,11 @@ export default class DaraForm {
 
         this.addRowField.forEach(fieldName => {
             if (this.allFieldInfo[fieldName].$isCustomRenderer !== true) {
+                field.$xssName = XssUtil.unFieldName(field.name);
                 field.renderer = new (field.renderer as any)(field, rowElement);
             }
         })
-        //field.renderer = getRenderer(field);
     }
-
-
 
     rowTemplate(field: FormField) {
         let fieldHtml = '';
@@ -117,7 +111,8 @@ export default class DaraForm {
                 <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
             </div>
             <div class="dara-form-field">
-                <span>${fieldHtml}</span>
+                <span>${fieldHtml}<i class="help-icon"></i></span>
+                <div class="help-message"></div>
             </div>
         `;
     }
@@ -202,18 +197,22 @@ export default class DaraForm {
 
     getValue = (isValid: boolean): any => {
 
-        if (isValid) {
-            if (!this.isValidForm()) {
-                return;
-            };
-        }
-        const fields = this.options.fields;
-
         let reval = {} as any;
-        fields.forEach((field: FormField) => {
-            reval[field.name] = this.getFieldValue(field.name);
-        })
+        Object.keys(this.allFieldInfo).forEach((fieldName) => {
+            const filedInfo = this.allFieldInfo[fieldName];
+            const renderInfo = filedInfo.renderer;
+            if (isValid) {
+                let fieldValid =renderInfo.valid();
 
+                if(fieldValid !== true){
+                    fieldValid = fieldValid as ValidResult;
+                    throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
+                }
+            }
+            
+            reval[fieldName] = renderInfo.getValue();
+        })
+       
         return reval;
     }
 
@@ -233,11 +232,24 @@ export default class DaraForm {
     }
 
     isValidForm = (): boolean => {
-        return true;
+        const result = this.validForm();
+        return result.length > 0 ? false : true;
     }
 
-    validForm = (): boolean => {
-        return true;
+    validForm = (): any[] => {
+        let validResult = [] as any;
+        for(const fieldName in this.allFieldInfo){
+            const filedInfo = this.allFieldInfo[fieldName];
+            const renderInfo = filedInfo.renderer;
+            
+            let fieldValid =renderInfo.valid();
+
+            if(fieldValid !== true){
+                validResult.push(fieldValid);
+            }
+        }
+
+        return validResult;
     }
 
     isValidField = (fieldName: string): boolean => {

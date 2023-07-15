@@ -31,7 +31,7 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    mode: 'horizontal1',
+    mode: 'horizontal',
     //mode:'vertical',
     //width: '600px',
     labelWidth: '150px',
@@ -71,6 +71,7 @@
         , label: '이름'
         , required: true
         , rule: {
+          minLength : 2,
           maxLength: 100
         }
       }
@@ -78,6 +79,20 @@
         name: 'uemail'
         , label: '이메일'
         , type: 'email'
+        , required: true
+        , validator: 'email'
+        , rule: {
+          maxLength: 100
+        }
+        , typeMessage: 'The input is not a valid email address'
+        , isValid: function (fieldInfo) {
+
+        }
+      }
+      , {
+        name: 'age'
+        , label: '나이'
+        , type: 'number'
         , required: true
         , rule: {
           maxLength: 100

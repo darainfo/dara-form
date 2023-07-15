@@ -1,14 +1,17 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import { stringCheck } from "src/rule/stringRule";
+import { stringValidator } from "src/rule/stringValidator";
+import XssUtil from "src/util/util";
 
 export default class PasswordRender implements Render {
-    private element;
+    private element:HTMLInputElement;
+    private rowElement:HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = rowElement.querySelector(`[name="${field.name}"]`) as HTMLInputElement;
+        this.rowElement = rowElement; 
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     }
 
     static template(field: FormField): string {
@@ -32,8 +35,19 @@ export default class PasswordRender implements Render {
     }
 
     valid(): any {
-        // TODO 처리 할것. 
-        stringCheck(this.getValue(), this.field);
-        return true;
+        // TODO password 관련 사항 처리 할것. 
+        const validResult = stringValidator(this.getValue(), this.field);
+
+        if(validResult===true){
+            if(this.element.classList.contains('invalid')){
+                this.element.classList.remove('invalid');
+            }
+        }else{
+            if(!this.element.classList.contains('invalid')){
+                this.element.classList.add('invalid')
+            }
+        }
+        
+        return validResult;
     }
 }

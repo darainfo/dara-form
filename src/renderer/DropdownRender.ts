@@ -2,14 +2,18 @@ import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
+import XssUtil from "src/util/util";
 
 export default class DropdownRender implements Render {
-    private element;
+    private element:HTMLSelectElement;
+    private rowElement:HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.element = rowElement.querySelector(`[name="${field.name}"]`) as HTMLSelectElement;
+        this.rowElement = rowElement; 
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
+
     }
 
     static template(field: FormField): string {
@@ -46,8 +50,8 @@ export default class DropdownRender implements Render {
             if (value) {
                 return true;
             }
-            const result: ValidResult = { name: this.field.name };
-            result.constraint = RULES.REQUIRED;
+            const result: ValidResult = { name: this.field.name , constraint:[] };
+            result.constraint.push(RULES.REQUIRED);
             return result;
         }
 

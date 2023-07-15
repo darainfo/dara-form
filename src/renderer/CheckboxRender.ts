@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import XssUtil from "src/util/XssUtil";
+import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 
@@ -8,13 +8,11 @@ let elementIdx = 0;
 export default class CheckboxRender implements Render {
     private rowElement: HTMLElement;
     private field;
-    private fieldName;
     private defaultCheckValue: any[]
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
         this.rowElement = rowElement;
-        this.fieldName = XssUtil.unFieldName(field.name);
         this.defaultCheckValue = [];
 
         this.field.value.forEach((val) => {
@@ -49,7 +47,7 @@ export default class CheckboxRender implements Render {
     getValue(): any[] {
         const checkValue: any[] = [];
 
-        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]:checked`).forEach(item => {
+        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).forEach(item => {
             checkValue.push((item as HTMLInputElement).value);
 
         })
@@ -60,15 +58,15 @@ export default class CheckboxRender implements Render {
     setValue(value: any): void {
         if (Array.isArray(value)) {
             value.forEach(item => {
-                this.rowElement.querySelector(`[name="${this.fieldName}"][value="${item}"]`)?.setAttribute("checked", "checked");
+                this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${item}"]`)?.setAttribute("checked", "checked");
             })
         } else {
-            this.rowElement.querySelector(`[name="${this.fieldName}"][value="${value}"]`)?.setAttribute("checked", "checked");
+            this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`)?.setAttribute("checked", "checked");
         }
     }
 
     reset() {
-        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`).forEach(item => {
+        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
             (item as HTMLInputElement).checked = false;
         })
 
@@ -76,7 +74,7 @@ export default class CheckboxRender implements Render {
     }
 
     getElement(): any {
-        return this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`);
+        return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
     }
 
     valid(): any {
@@ -86,8 +84,8 @@ export default class CheckboxRender implements Render {
             if (value.length > 0) {
                 return true;
             }
-            const result: ValidResult = { name: this.field.name };
-            result.constraint = RULES.REQUIRED;
+            const result: ValidResult = { name: this.field.name , constraint:[] };
+            result.constraint.push(RULES.REQUIRED);
             return result;
         }
 

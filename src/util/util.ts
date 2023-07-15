@@ -1,3 +1,6 @@
+import { FormField } from "@t/FormField";
+import { ValidResult } from '../types/ValidResult';
+
 const xssFilter = {
     "&": "&amp;"
     , "<": "&lt;"
@@ -36,5 +39,10 @@ export default {
 
         return '';
 
+    }
+
+    , message(field:FormField, valid:ValidResult):string{
+        
+        return '';
     }
 }

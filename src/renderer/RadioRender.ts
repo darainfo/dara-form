@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import XssUtil from "src/util/XssUtil";
+import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 
@@ -8,13 +8,11 @@ let elementIdx = 0;
 export default class RadioRender implements Render {
     private rowElement: HTMLElement;
     private field;
-    private fieldName;
     private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
         this.rowElement = rowElement;
-        this.fieldName = XssUtil.unFieldName(field.name);
         this.defaultCheckValue = this.field.value[0].value;
 
         this.field.value.forEach((val) => {
@@ -48,15 +46,15 @@ export default class RadioRender implements Render {
     }
 
     getValue() {
-        return (this.rowElement.querySelector(`[name="${this.fieldName}"]:checked`) as HTMLInputElement)?.value;
+        return (this.rowElement.querySelector(`[name="${this.field.$xssName}"]:checked`) as HTMLInputElement)?.value;
     }
 
     setValue(value: any): void {
-        this.rowElement.querySelector(`[name="${this.fieldName}"][value="${value}"]`)?.setAttribute("checked", "checked");
+        this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`)?.setAttribute("checked", "checked");
     }
 
     reset() {
-        this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`).forEach(item => {
+        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
             (item as HTMLInputElement).checked = false;
         })
 
@@ -64,7 +62,7 @@ export default class RadioRender implements Render {
     }
 
     getElement(): any {
-        return this.rowElement.querySelectorAll(`[name="${this.fieldName}"]`);
+        return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
     }
 
     valid(): any {
@@ -74,8 +72,8 @@ export default class RadioRender implements Render {
             if (value) {
                 return true;
             }
-            const result: ValidResult = { name: this.field.name };
-            result.constraint = RULES.REQUIRED;
+            const result: ValidResult = { name: this.field.name, constraint:[] };
+            result.constraint.push(RULES.REQUIRED);
             return result;
         }
 
