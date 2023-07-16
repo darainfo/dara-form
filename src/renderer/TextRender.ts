@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import Lanauage from "src/util/Lanauage";
+import { helpMessage } from "src/util/helpMessage";
 
 export default class TextRender implements Render {
   private element: HTMLInputElement;
@@ -39,40 +39,7 @@ export default class TextRender implements Render {
   valid(): any {
     const validResult = stringValidator(this.getValue(), this.field);
 
-    if (validResult === true) {
-      if (this.rowElement.classList.contains("invalid")) {
-        this.rowElement.classList.remove("invalid");
-      }
-
-      if (!this.rowElement.classList.contains("valid")) {
-        this.rowElement.classList.add("valid");
-      }
-
-      const helpMessageElement = this.rowElement.querySelector(".help-message");
-      if (helpMessageElement) {
-        helpMessageElement.innerHTML = "";
-      }
-    } else {
-      if (!this.rowElement.classList.contains("invalid")) {
-        this.rowElement.classList.add("invalid");
-      }
-
-      if (validResult !== false) {
-        const message: string[] = Lanauage.validMessage(this.field, validResult);
-
-        console.log(message);
-
-        const helpMessageElement =
-          this.rowElement.querySelector(".help-message");
-        if (helpMessageElement && message.length > 0) {
-          const msgHtml: string[] = [];
-          message.forEach((item) => {
-            msgHtml.push(`<div>${item}</div>`);
-          });
-          helpMessageElement.innerHTML = msgHtml.join("");
-        }
-      }
-    }
+    helpMessage(this.field, this.rowElement, validResult);
 
     return validResult;
   }

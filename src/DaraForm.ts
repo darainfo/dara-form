@@ -106,12 +106,13 @@ export default class DaraForm {
             fieldHtml = this.getFieldTempate(field);
         }
 
+        
         return `
             <div class="dara-form-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
                 <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
             </div>
-            <div class="dara-form-field">
-                <span>${fieldHtml}<i class="help-icon"></i></span>
+            <div class="dara-form-field-container">
+                <span class="dara-form-field">${fieldHtml}<i class="help-icon"></i></span>
                 <div class="help-message"></div>
             </div>
         `;

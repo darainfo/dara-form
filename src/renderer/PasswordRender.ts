@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import XssUtil from "src/util/util";
+import { helpMessage } from "src/util/helpMessage";
 
 export default class PasswordRender implements Render {
     private element:HTMLInputElement;
@@ -38,15 +38,7 @@ export default class PasswordRender implements Render {
         // TODO password 관련 사항 처리 할것. 
         const validResult = stringValidator(this.getValue(), this.field);
 
-        if(validResult===true){
-            if(this.element.classList.contains('invalid')){
-                this.element.classList.remove('invalid');
-            }
-        }else{
-            if(!this.element.classList.contains('invalid')){
-                this.element.classList.add('invalid')
-            }
-        }
+        helpMessage(this.field, this.rowElement, validResult);
         
         return validResult;
     }

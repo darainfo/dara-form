@@ -2,7 +2,7 @@ import { FormField } from "@t/FormField";
 import { Render } from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import XssUtil from "src/util/util";
+import { helpMessage } from "src/util/helpMessage";
 
 export default class DropdownRender implements Render {
     private element:HTMLSelectElement;
@@ -50,9 +50,10 @@ export default class DropdownRender implements Render {
             if (value) {
                 return true;
             }
-            const result: ValidResult = { name: this.field.name , constraint:[] };
-            result.constraint.push(RULES.REQUIRED);
-            return result;
+            const validResult: ValidResult = { name: this.field.name , constraint:[] };
+            validResult.constraint.push(RULES.REQUIRED);
+            
+            helpMessage(this.field, this.rowElement, validResult);
         }
 
         return true;

@@ -3,8 +3,8 @@ import { Render } from "./Render";
 import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
+import { helpMessage } from "src/util/helpMessage";
 
-let elementIdx = 0;
 export default class CheckboxRender implements Render {
     private rowElement: HTMLElement;
     private field;
@@ -28,7 +28,6 @@ export default class CheckboxRender implements Render {
 
         templates.push(`<div class="field-group">`);
         field.value.forEach((val) => {
-            elementIdx += 1;
 
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
@@ -39,7 +38,7 @@ export default class CheckboxRender implements Render {
                 </span>
             `);
         })
-        templates.push(`< /div>`);
+        templates.push(`</div>`);
 
         return templates.join('');
     }
@@ -80,15 +79,17 @@ export default class CheckboxRender implements Render {
     valid(): any {
         const value = this.getValue();
 
+        let validResult: ValidResult|boolean = true; 
+
         if (this.field.required) {
-            if (value.length > 0) {
-                return true;
+            if (value.length < 1) {
+                validResult = { name: this.field.name, constraint:[] };
+                validResult.constraint.push(RULES.REQUIRED);    
             }
-            const result: ValidResult = { name: this.field.name , constraint:[] };
-            result.constraint.push(RULES.REQUIRED);
-            return result;
         }
 
+        helpMessage(this.field, this.rowElement, validResult);
+        
         return true;
     }
 }

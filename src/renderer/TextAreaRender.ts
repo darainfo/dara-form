@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import XssUtil from "src/util/util";
 import { stringValidator } from "src/rule/stringValidator";
+import { helpMessage } from "src/util/helpMessage";
 
 export default class TextAreaRender implements Render {
     private element:HTMLTextAreaElement ;
@@ -38,15 +38,7 @@ export default class TextAreaRender implements Render {
 
         const validResult = stringValidator(this.getValue(), this.field);
 
-        if(validResult===true){
-            if(this.element.classList.contains('invalid')){
-                this.element.classList.remove('invalid');
-            }
-        }else{
-            if(!this.element.classList.contains('invalid')){
-                this.element.classList.add('invalid')
-            }
-        }
+        helpMessage(this.field, this.rowElement, validResult);
         
         return validResult;
     }

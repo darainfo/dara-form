@@ -1,10 +1,10 @@
 import { FormField } from "@t/FormField";
 import { Render } from "./Render";
-import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
+import { helpMessage } from "src/util/helpMessage";
+import util from "src/util/util";
 
-let elementIdx = 0;
 export default class RadioRender implements Render {
     private rowElement: HTMLElement;
     private field;
@@ -27,8 +27,6 @@ export default class RadioRender implements Render {
         const fieldName = field.name;
         templates.push(`<div class="field-group">`);
         field.value.forEach((val) => {
-            elementIdx += 1;
-            const id = `${fieldName}-${elementIdx}`;
 
             templates.push(
                 `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
@@ -68,14 +66,16 @@ export default class RadioRender implements Render {
     valid(): any {
         const value = this.getValue();
 
+        let validResult: ValidResult|boolean = true; 
+
         if (this.field.required) {
-            if (value) {
-                return true;
+            if (util.isEmpty(value)) {
+                validResult = { name: this.field.name, constraint:[] };
+                validResult.constraint.push(RULES.REQUIRED);    
             }
-            const result: ValidResult = { name: this.field.name, constraint:[] };
-            result.constraint.push(RULES.REQUIRED);
-            return result;
         }
+
+        helpMessage(this.field, this.rowElement, validResult);
 
         return true;
     }

@@ -39,9 +39,8 @@ class Language {
         if (constraint === RULES.REQUIRED) {
             messageFormat = message(this.lang.required, field);
             messageFormats.push(messageFormat);
-         }
-      
-          
+        }
+                
         if (field.validator) {
             messageFormat = (this.lang.validator as any)[constraint];
             messageFormats.push(messageFormat);
@@ -69,8 +68,6 @@ class Language {
     })
 
     return reMessage;
-
-    
   }
 }
 

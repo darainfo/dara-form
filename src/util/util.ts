@@ -41,8 +41,11 @@ export default {
 
     }
 
-    , message(field:FormField, valid:ValidResult):string{
-        
-        return '';
+    ,isEmpty(value:any):boolean {
+        if (value === null) return true;
+        if (typeof value === 'undefined') return true;
+        if (typeof value === 'string' && (value === '' || value.replace(/\s/g,'')==='')) return true;
+
+        return false; 
     }
 }
