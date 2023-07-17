@@ -1,9 +1,9 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { helpMessage } from "src/util/helpMessage";
+import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
 
 export default class CheckboxRender implements Render {
     private rowElement: HTMLElement;
@@ -55,13 +55,16 @@ export default class CheckboxRender implements Render {
     }
 
     setValue(value: any): void {
+        let valueArr: any[] = [];
         if (Array.isArray(value)) {
-            value.forEach(item => {
-                this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${item}"]`)?.setAttribute("checked", "checked");
-            })
+            valueArr = value;
         } else {
-            this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`)?.setAttribute("checked", "checked");
+            valueArr.push(value);
         }
+        valueArr.forEach(val => {
+            const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`) as HTMLInputElement;
+            ele.checked = true;
+        })
     }
 
     reset() {
@@ -70,6 +73,7 @@ export default class CheckboxRender implements Render {
         })
 
         this.setValue(this.defaultCheckValue);
+        resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): any {
@@ -79,17 +83,17 @@ export default class CheckboxRender implements Render {
     valid(): any {
         const value = this.getValue();
 
-        let validResult: ValidResult|boolean = true; 
+        let validResult: ValidResult | boolean = true;
 
         if (this.field.required) {
             if (value.length < 1) {
-                validResult = { name: this.field.name, constraint:[] };
-                validResult.constraint.push(RULES.REQUIRED);    
+                validResult = { name: this.field.name, constraint: [] };
+                validResult.constraint.push(RULES.REQUIRED);
             }
         }
 
-        helpMessage(this.field, this.rowElement, validResult);
-        
+        setInvalidMessage(this.field, this.rowElement, validResult);
+
         return true;
     }
 }

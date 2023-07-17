@@ -1,6 +1,3 @@
-import { FormField } from "@t/FormField";
-import { ValidResult } from '../types/ValidResult';
-
 const xssFilter = {
     "&": "&amp;"
     , "<": "&lt;"
@@ -36,16 +33,27 @@ export default {
         if (fieldName) {
             return this.unReplace(fieldName).replaceAll("\"", "\\\"");
         }
-
         return '';
-
     }
 
-    ,isEmpty(value:any):boolean {
+    , isEmpty(value: any): boolean {
         if (value === null) return true;
         if (typeof value === 'undefined') return true;
-        if (typeof value === 'string' && (value === '' || value.replace(/\s/g,'')==='')) return true;
+        if (typeof value === 'string' && (value === '' || value.replace(/\s/g, '') === '')) return true;
 
-        return false; 
+        return false;
     }
+
+    , isUndefined(value: any): value is undefined {
+        return typeof value === 'undefined';
+    }
+
+    , isFunction(value: any): boolean {
+        return typeof value === 'function';
+    }
+
+    , isString(value: any): value is string {
+        return typeof value === 'string';
+    }
+
 }

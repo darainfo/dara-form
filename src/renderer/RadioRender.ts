@@ -1,8 +1,8 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { helpMessage } from "src/util/helpMessage";
+import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
 import util from "src/util/util";
 
 export default class RadioRender implements Render {
@@ -48,7 +48,8 @@ export default class RadioRender implements Render {
     }
 
     setValue(value: any): void {
-        this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`)?.setAttribute("checked", "checked");
+        const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`) as HTMLInputElement;
+        ele.checked = true;
     }
 
     reset() {
@@ -56,7 +57,9 @@ export default class RadioRender implements Render {
             (item as HTMLInputElement).checked = false;
         })
 
+        console.log('this.defaultCheckValue : ', this.defaultCheckValue)
         this.setValue(this.defaultCheckValue);
+        resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): any {
@@ -66,16 +69,16 @@ export default class RadioRender implements Render {
     valid(): any {
         const value = this.getValue();
 
-        let validResult: ValidResult|boolean = true; 
+        let validResult: ValidResult | boolean = true;
 
         if (this.field.required) {
             if (util.isEmpty(value)) {
-                validResult = { name: this.field.name, constraint:[] };
-                validResult.constraint.push(RULES.REQUIRED);    
+                validResult = { name: this.field.name, constraint: [] };
+                validResult.constraint.push(RULES.REQUIRED);
             }
         }
 
-        helpMessage(this.field, this.rowElement, validResult);
+        setInvalidMessage(this.field, this.rowElement, validResult);
 
         return true;
     }

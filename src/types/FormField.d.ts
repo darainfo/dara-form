@@ -1,38 +1,32 @@
-import { Render } from "src/renderer/Render";
+import { FORM_FIELD_TYPE, RENDER_TYPE, VALIDATORS } from "src/constants";
 
 interface OptionCallback {
     (loaderOpt: object): any;
 }
 
-interface value {
+interface CodeValue {
     label: string
     , value: string
     , selected: boolean
 }
 
-export type formFieldType = 'number' | 'string' | 'array';
-
-export type renderType = 'number' | 'text' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group';
-
-export type validators = 'email' | 'url' | 'alpha' | 'alpha-num';
-
 export interface FormField {
     label: string // '아이디'
     , viewMode: string //'horizontal' // horizontal , vertical /   // radio, checkbox, group
     , name: string // 'uid'
-    , type: formFieldType
-    , renderType: renderType | string
+    , type: FORM_FIELD_TYPE
+    , renderType: RENDER_TYPE | string
     , required: boolean //true
-    , validator : validators
+    , validator: VALIDATORS
     , rule: {
         minLength: number // 3
         , maxLength: number //100
         , min: number
         , max: number
     }
-    , message : string
+    , message: string
     , template: OptionCallback | string
-    , value: value[]
+    , value: CodeValue[]
     , childen: FormField[]
     , callback: {
         message: string // '이미 존재하는 아이디 입니다.',
@@ -40,6 +34,6 @@ export interface FormField {
     }
     , renderer: Render
     , $isCustomRenderer: boolean
-    , $xssName : string
-    , $type : string
+    , $xssName: string
+    , $type: string
 }

@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <title>Dara Form</title>
 
-</head>
+<script defer src="dara.form.js"></script></head>
 
 <body onload="formObj.load()">
 
@@ -13,8 +13,7 @@
     <div class="form-button">
       <button type="button" onclick="formObj.addItem()">Add</button>
       <button type="button" onclick="formObj.getValue()">getValue</button>
-      <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
-      <button type="button" onclick="formBuilder.resetForm()">Reset</button>
+      <button type="button" onclick="formBuilder.isValidForm()">valid</button>
     </div>
   </div>
 
@@ -33,8 +32,8 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    //mode: 'horizontal',
-    mode: 'vertical',
+    mode: 'horizontal',
+    //mode:'vertical',
     //width: '600px',
     labelWidth: '150px',
     message: {
@@ -127,19 +126,11 @@
         }
       }
       , {
-        name: 'file'
-        , label: '사진'
-        , renderType: 'file'
-        , required: true
-      }
-      , {
         name: 'dropdown'
         , label: '드랍다운'
         , renderType: 'dropdown'
-        , required: true
         , value: [
-          { label: 'All', value: '' }
-          , { label: 'option1', value: '1', selected: true }
+          { label: 'option1', value: '1', selected: true }
           , { label: 'option2', value: '2' }
         ]
       }

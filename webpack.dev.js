@@ -13,6 +13,16 @@ module.exports = (env) => {
     plugins: [
       env.mode !== 'deploy' ? new BundleAnalyzerPlugin() : '',
     ]
+    , module: {
+      rules: [
+        {
+          test: /\.(sa|sc|c)ss$/i,
+          //exclude: /node_modules/u,
+          use: ["style-loader", "css-loader", "sass-loader"],
+          //use: ["style-loader", "css-loader"],
+        }
+      ],
+    }
   });
 
 

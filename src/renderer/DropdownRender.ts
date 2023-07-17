@@ -1,19 +1,34 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { helpMessage } from "src/util/helpMessage";
+import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { dropdownChangeEvent } from "src/util/renderEvents";
 
 export default class DropdownRender implements Render {
-    private element:HTMLSelectElement;
-    private rowElement:HTMLElement;
+    private element: HTMLSelectElement;
+    private rowElement: HTMLElement;
     private field;
+    private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.rowElement = rowElement; 
+        this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
+        this.defaultCheckValue = this.field.value[0].value;
+
+        this.field.value.forEach((val) => {
+            if (val.selected) {
+                this.defaultCheckValue = val.value;
+            }
+        });
+
+        this.initEvent();
+    }
+
+    initEvent() {
+        dropdownChangeEvent(this.element, this);
     }
 
     static template(field: FormField): string {
@@ -36,7 +51,8 @@ export default class DropdownRender implements Render {
     }
 
     reset() {
-        this.element.value = '';
+        this.setValue(this.defaultCheckValue);
+        resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): HTMLElement {
@@ -44,17 +60,19 @@ export default class DropdownRender implements Render {
     }
 
     valid(): any {
+
         const value = this.getValue();
 
+        let validResult: ValidResult | boolean = true;
+
         if (this.field.required) {
-            if (value) {
-                return true;
+            if (value.length < 1) {
+                validResult = { name: this.field.name, constraint: [] };
+                validResult.constraint.push(RULES.REQUIRED);
             }
-            const validResult: ValidResult = { name: this.field.name , constraint:[] };
-            validResult.constraint.push(RULES.REQUIRED);
-            
-            helpMessage(this.field, this.rowElement, validResult);
         }
+
+        setInvalidMessage(this.field, this.rowElement, validResult);
 
         return true;
     }

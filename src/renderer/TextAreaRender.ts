@@ -1,17 +1,23 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import { helpMessage } from "src/util/helpMessage";
+import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { inputEvent } from "src/util/renderEvents";
 
 export default class TextAreaRender implements Render {
-    private element:HTMLTextAreaElement ;
-    private rowElement:HTMLElement;
+    private element: HTMLTextAreaElement;
+    private rowElement: HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
+        this.initEvent();
+    }
+
+    initEvent() {
+        inputEvent(this.element, this);
     }
 
     static template(field: FormField): string {
@@ -27,7 +33,8 @@ export default class TextAreaRender implements Render {
     }
 
     reset() {
-        this.element.value = '';
+        this.setValue('');
+        resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): HTMLElement {
@@ -38,8 +45,8 @@ export default class TextAreaRender implements Render {
 
         const validResult = stringValidator(this.getValue(), this.field);
 
-        helpMessage(this.field, this.rowElement, validResult);
-        
+        setInvalidMessage(this.field, this.rowElement, validResult);
+
         return validResult;
     }
 

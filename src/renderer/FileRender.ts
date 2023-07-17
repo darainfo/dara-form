@@ -2,13 +2,16 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
 import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
-import { $dom } from "src/util/domCtrl";
-import { inputEvent } from "src/util/renderEvents";
+import { fileValidator } from "src/rule/fileValidator";
+import { fileChangeEvent } from "src/util/renderEvents";
 
-export default class TextRender implements Render {
+export default class FileRender implements Render {
   private element: HTMLInputElement;
   private rowElement: Element;
   private field;
+  private removeFileIds: any[] = [];
+  private uploadFiles: any[] = [];
+  private fileList: any[] = [];
 
   constructor(field: FormField, rowElement: HTMLElement) {
     this.field = field;
@@ -18,15 +21,23 @@ export default class TextRender implements Render {
   }
 
   initEvent() {
-    inputEvent(this.element, this);
+    fileChangeEvent(this.element, this);
   }
 
   static template(field: FormField): string {
-    return `<input type="text" name="${field.name}" class="form-field text" />`;
+    return `<input type="file" name="${field.name}" class="form-field file" multiple/>`;
   }
 
   getValue() {
-    return this.element.value;
+    const files: any[] = [];
+
+    const filelist = this.element.files;
+    if (filelist && filelist?.length > 0) {
+      for (const file of filelist) {
+        files.push(file);
+      }
+    }
+    return files.length > 0 ? files : null;
   }
 
   setValue(value: any): void {
@@ -43,7 +54,7 @@ export default class TextRender implements Render {
   }
 
   valid(): any {
-    const validResult = stringValidator(this.getValue(), this.field);
+    const validResult = fileValidator(this.element, this.field);
 
     setInvalidMessage(this.field, this.rowElement, validResult);
 

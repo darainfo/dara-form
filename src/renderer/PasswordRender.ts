@@ -1,21 +1,27 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import { helpMessage } from "src/util/helpMessage";
+import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { inputEvent } from "src/util/renderEvents";
 
 export default class PasswordRender implements Render {
-    private element:HTMLInputElement;
-    private rowElement:HTMLElement;
+    private element: HTMLInputElement;
+    private rowElement: HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
-        this.rowElement = rowElement; 
+        this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
+        this.initEvent();
+    }
+
+    initEvent() {
+        inputEvent(this.element, this);
     }
 
     static template(field: FormField): string {
-        return `<input type="password" name="${field.name}" class="form-field password" />`;
+        return `<input type="password" name="${field.name}" class="form-field password" autocomplete="off" />`;
     }
 
     getValue() {
@@ -27,7 +33,8 @@ export default class PasswordRender implements Render {
     }
 
     reset() {
-        this.element.value = '';
+        this.setValue('');
+        resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): HTMLElement {
@@ -38,8 +45,8 @@ export default class PasswordRender implements Render {
         // TODO password 관련 사항 처리 할것. 
         const validResult = stringValidator(this.getValue(), this.field);
 
-        helpMessage(this.field, this.rowElement, validResult);
-        
+        setInvalidMessage(this.field, this.rowElement, validResult);
+
         return validResult;
     }
 }
