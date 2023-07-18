@@ -1,8 +1,12 @@
 /**
  * 
- * @interface DataMap
- * @typedef {DataMap}
+ * @interface StringKeyMap
+ * @typedef {StringKeyMap}
  */
-export interface DataMap {
+export interface StringKeyMap {
     [key: string]: any;
+}
+
+export interface AnyKeyMap {
+    [key: any]: any;
 }

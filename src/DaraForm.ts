@@ -5,6 +5,8 @@ import utils from './util/util';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
 import Lanauage from './util/Lanauage';
+import MyComponent from './Test'
+import CustomRender from './renderer/CustomRender';
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
@@ -28,7 +30,7 @@ export default class DaraForm {
 
     private allFieldInfo: FieldMap = {};
 
-    private addRowField: string[] = [];
+    private addRowFields: string[] = [];
 
     constructor(selector: string, options: FormOptions, message: Message) {
         this.options = Object.assign({}, defaultOptions, options);
@@ -53,6 +55,10 @@ export default class DaraForm {
         Lanauage.set(message);
     }
 
+    public test() {
+        const myCompoent = new MyComponent();
+
+    }
 
     createForm(fields: FormField[]) {
         fields.forEach((field) => {
@@ -66,7 +72,7 @@ export default class DaraForm {
      * @param field 
      */
     addRow(field: FormField) {
-        this.addRowField = [];
+        this.addRowFields = [];
         const rowElement = document.createElement("div");
         rowElement.className = `dara-form-row`;
 
@@ -74,26 +80,19 @@ export default class DaraForm {
 
         let rednerTemplate = '';
         if (field.renderer) {
-            const templateValue = (field.renderer as any).template;
-            if (typeof templateValue === 'string') {
-                rednerTemplate = templateValue;
-            } else {
-                rednerTemplate = templateValue.call(null, field);
-            }
             field.$isCustomRenderer = true;
-        } else {
-            rednerTemplate = this.rowTemplate(field);
         }
+
+        rednerTemplate = this.rowTemplate(field);
 
         rowElement.innerHTML = rednerTemplate;
 
         this.formElement.appendChild(rowElement); // Append the element
 
-        this.addRowField.forEach(fieldName => {
-            if (this.allFieldInfo[fieldName].$isCustomRenderer !== true) {
-                field.$xssName = utils.unFieldName(field.name);
-                field.renderer = new (field.renderer as any)(field, rowElement);
-            }
+        this.addRowFields.forEach(fieldName => {
+            const fileldInfo = this.allFieldInfo[fieldName];
+            fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
+            fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, rowElement);
         })
     }
 
@@ -111,7 +110,7 @@ export default class DaraForm {
                 <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
             </div>
             <div class="dara-form-field-container">
-                <span class="dara-form-field">${fieldHtml}<i class="help-icon"></i></span>
+                ${fieldHtml}
                 <div class="help-message"></div>
             </div>
         `;
@@ -152,9 +151,9 @@ export default class DaraForm {
      */
     getFieldTempate(field: FormField): string {
         this.allFieldInfo[field.name] = field;
-        this.addRowField.push(field.name);
-        field.renderer = getRenderer(field);
-        return (field.renderer as any).template(field);
+        this.addRowFields.push(field.name);
+        field.$renderer = getRenderer(field);
+        return (field.$renderer as any).template(field);
     }
 
 
@@ -164,7 +163,7 @@ export default class DaraForm {
     resetForm = () => {
         for (const fieldName in this.allFieldInfo) {
             const filedInfo = this.allFieldInfo[fieldName];
-            const renderInfo = filedInfo.renderer;
+            const renderInfo = filedInfo.$renderer;
 
             if (renderInfo && typeof renderInfo.reset === 'function') {
                 renderInfo.reset();
@@ -177,7 +176,7 @@ export default class DaraForm {
      * @param fieldName 필드명
      */
     resetField = (fieldName: string) => {
-        this.allFieldInfo[fieldName].renderer.reset();
+        this.allFieldInfo[fieldName].$renderer.reset();
     }
 
 
@@ -190,8 +189,8 @@ export default class DaraForm {
     getFieldElement(fieldName: string) {
         const field = this.allFieldInfo[fieldName];
 
-        if (field && field.renderer) {
-            return field.renderer.getElement();
+        if (field && field.$renderer) {
+            return field.$renderer.getElement();
         }
 
         return null;
@@ -208,7 +207,7 @@ export default class DaraForm {
         const field = this.allFieldInfo[fieldName];
 
         if (field) {
-            return field.renderer.getValue();
+            return field.$renderer.getValue();
         }
         return null;
     }
@@ -223,7 +222,7 @@ export default class DaraForm {
         let reval = {} as any;
         Object.keys(this.allFieldInfo).forEach((fieldName) => {
             const filedInfo = this.allFieldInfo[fieldName];
-            const renderInfo = filedInfo.renderer;
+            const renderInfo = filedInfo.$renderer;
             if (isValid) {
                 let fieldValid = renderInfo.valid();
 
@@ -249,7 +248,7 @@ export default class DaraForm {
             const filedInfo = this.allFieldInfo[fieldName];
 
             if (filedInfo) {
-                const renderInfo = filedInfo.renderer;
+                const renderInfo = filedInfo.$renderer;
                 renderInfo.setValue(value);
             }
         })
@@ -301,7 +300,7 @@ export default class DaraForm {
         let validResult = [] as any;
         for (const fieldName in this.allFieldInfo) {
             const filedInfo = this.allFieldInfo[fieldName];
-            const renderInfo = filedInfo.renderer;
+            const renderInfo = filedInfo.$renderer;
 
             let fieldValid = renderInfo.valid();
 
@@ -315,7 +314,7 @@ export default class DaraForm {
 
     isValidField = (fieldName: string): boolean => {
         const filedInfo = this.allFieldInfo[fieldName];
-        const renderInfo = filedInfo.renderer;
+        const renderInfo = filedInfo.$renderer;
         if (renderInfo) {
             return renderInfo.valid() === true ? true : false;
         }

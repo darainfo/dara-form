@@ -22,7 +22,11 @@ export default class TextRender implements Render {
   }
 
   static template(field: FormField): string {
-    return `<input type="text" name="${field.name}" class="form-field text" />`;
+    return `
+    <span class="dara-form-field">
+      <input type="text" name="${field.name}" class="form-field text" /> <i class="help-icon"></i>
+     </span> 
+     `;
   }
 
   getValue() {

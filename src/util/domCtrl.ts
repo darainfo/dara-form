@@ -1,4 +1,4 @@
-import { DataMap } from "@t/DataMap";
+import { StringKeyMap } from "@t/DataMap";
 import utils from './util';
 
 const instanceMap = new Map();
@@ -15,7 +15,7 @@ export class DaraElement {
 
     private readonly element: Element;
 
-    private eventMap: DataMap = {};
+    private eventMap: StringKeyMap = {};
 
     constructor(el: Element | string) {
         this.element = $querySelector(el);
@@ -30,7 +30,7 @@ export class DaraElement {
      * @returns {this}
      */
     public before(renderElements: Element | string) {
-        insertAdjacentHTML(this.element, 'beforebegin', renderElements);
+        insertAdjacent(this.element, 'beforebegin', renderElements);
         return this;
     }
 
@@ -42,7 +42,7 @@ export class DaraElement {
      * @returns {this}
      */
     public after(renderElements: Element | string) {
-        insertAdjacentHTML(this.element, 'afterend', renderElements);
+        insertAdjacent(this.element, 'afterend', renderElements);
         return this;
     }
 
@@ -54,7 +54,7 @@ export class DaraElement {
      * @returns {this}
      */
     public prepend(renderElements: Element | string) {
-        insertAdjacentHTML(this.element, 'afterbegin', renderElements);
+        insertAdjacent(this.element, 'afterbegin', renderElements);
         return this;
     }
 
@@ -66,7 +66,7 @@ export class DaraElement {
      * @returns {this}
      */
     public append(renderElements: Element | string) {
-        insertAdjacentHTML(this.element, 'beforeend', renderElements);
+        insertAdjacent(this.element, 'beforeend', renderElements);
         return this;
     }
 
@@ -171,7 +171,7 @@ function $querySelector(el: Element | string): Element {
     return document.querySelector(el) as Element;
 }
 
-function insertAdjacentHTML(el: Element, insertPosition: InsertPosition, renderElements: Element | string) {
+function insertAdjacent(el: Element, insertPosition: InsertPosition, renderElements: Element | string) {
 
     if (utils.isString(renderElements)) {
         el.insertAdjacentHTML(insertPosition, renderElements)

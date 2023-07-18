@@ -1,13 +1,21 @@
 import { FORM_FIELD_TYPE, RENDER_TYPE, VALIDATORS } from "src/constants";
+import Render from "src/renderer/Render";
 
-interface OptionCallback {
+export interface OptionCallback {
     (loaderOpt: object): any;
 }
 
-interface CodeValue {
+export interface CodeValue {
     label: string
     , value: string
     , selected: boolean
+}
+
+export interface FielInfo {
+    fileId: string
+    , fileName: string
+    , fileSize: number
+    , $seq: number
 }
 
 export interface FormField {
@@ -26,13 +34,14 @@ export interface FormField {
     }
     , message: string
     , template: OptionCallback | string
-    , value: CodeValue[]
+    , values: any[]
     , childen: FormField[]
     , callback: {
         message: string // '이미 존재하는 아이디 입니다.',
         callback: OptionCallback
     }
     , renderer: Render
+    , $renderer: Render
     , $isCustomRenderer: boolean
     , $xssName: string
     , $type: string

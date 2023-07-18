@@ -1,4 +1,4 @@
-import { DataMap } from "@t/DataMap";
+import { StringKeyMap } from "@t/DataMap";
 import utils from './util';
 import Render from "src/renderer/Render";
 
@@ -11,12 +11,6 @@ export const inputEvent = (element: Element, rederInfo: Render) => {
 }
 
 export const dropdownChangeEvent = (element: Element, rederInfo: Render) => {
-    element.addEventListener('change', (e: Event) => {
-        rederInfo.valid();
-    })
-}
-
-export const fileChangeEvent = (element: Element, rederInfo: Render) => {
     element.addEventListener('change', (e: Event) => {
         rederInfo.valid();
     })

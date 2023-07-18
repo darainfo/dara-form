@@ -1,5 +1,5 @@
 import { ValidResult } from "@t/ValidResult";
-export interface Render {
+export default interface Render {
     getValue(): any;
     setValue(value: any): void;
     reset(): void;

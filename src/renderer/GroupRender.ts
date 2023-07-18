@@ -9,10 +9,12 @@ export default class GroupRender implements Render {
         this.element = element;
     }
 
+    public initEvent() { }
+
     static template(field: FormField): string {
         let template = `<select name="${field.name}" class="form-field dropdown">`;
 
-        field.value.forEach(val => {
+        field.values.forEach(val => {
             template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
         })
 

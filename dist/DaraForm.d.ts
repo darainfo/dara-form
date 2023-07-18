@@ -1,9 +1,6 @@
 import { FormOptions } from '@t/FormOptions';
 import { FormField } from '@t/FormField';
 import { Message } from '@t/Message';
-export interface FieldMap {
-    [key: string]: FormField;
-}
 export default class DaraForm {
     private readonly options;
     private isHorizontal;
@@ -12,6 +9,7 @@ export default class DaraForm {
     private addRowField;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;
+    test(): void;
     createForm(fields: FormField[]): void;
     /**
      * field row 추가.

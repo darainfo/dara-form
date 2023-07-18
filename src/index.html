@@ -131,13 +131,17 @@
         , label: '사진'
         , renderType: 'file'
         , required: true
+        , values: [
+          { fileId: 'test', fileName: 'aaa.zip' }
+          , { fileId: 'test', fileName: 'bbb.zip' }
+        ]
       }
       , {
         name: 'dropdown'
         , label: '드랍다운'
         , renderType: 'dropdown'
         , required: true
-        , value: [
+        , values: [
           { label: 'All', value: '' }
           , { label: 'option1', value: '1', selected: true }
           , { label: 'option2', value: '2' }
@@ -148,7 +152,7 @@
         , label: '사용여부'
         , required: true
         , renderType: 'radio'
-        , value: [
+        , values: [
           { label: 'Y', value: 'Y', selected: true }
           , { label: 'N', value: 'N' }
         ]
@@ -158,7 +162,7 @@
         , label: 'checkbox'
         , required: true
         , renderType: 'checkbox'
-        , value: [
+        , values: [
           { label: 'option1', value: '1' }
           , { label: 'option2', value: '2' }
           , { label: 'option3', value: '3' }
@@ -168,6 +172,19 @@
         name: 'textarea"></textarea>aaaa<textarea "aaa" class="form-field textarea" '
         , label: '텍스트 area'
         , renderType: 'textarea'
+      }
+      , {
+        name: "customField"
+        , label: 'custom Render'
+        , renderType: 'custom'
+        , renderer: {
+          template: () => {
+            return 'asdfawefwafwaef'
+          }
+          , getValue: () => {
+            return 'custom field value';
+          }
+        }
       }
     ]
   };

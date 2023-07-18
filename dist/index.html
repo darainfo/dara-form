@@ -13,7 +13,8 @@
     <div class="form-button">
       <button type="button" onclick="formObj.addItem()">Add</button>
       <button type="button" onclick="formObj.getValue()">getValue</button>
-      <button type="button" onclick="formBuilder.isValidForm()">valid</button>
+      <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
+      <button type="button" onclick="formBuilder.resetForm()">Reset</button>
     </div>
   </div>
 
@@ -32,8 +33,8 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    mode: 'horizontal',
-    //mode:'vertical',
+    //mode: 'horizontal',
+    mode: 'vertical',
     //width: '600px',
     labelWidth: '150px',
     message: {
@@ -126,11 +127,19 @@
         }
       }
       , {
+        name: 'file'
+        , label: '사진'
+        , renderType: 'file'
+        , required: true
+      }
+      , {
         name: 'dropdown'
         , label: '드랍다운'
         , renderType: 'dropdown'
+        , required: true
         , value: [
-          { label: 'option1', value: '1', selected: true }
+          { label: 'All', value: '' }
+          , { label: 'option1', value: '1', selected: true }
           , { label: 'option2', value: '2' }
         ]
       }

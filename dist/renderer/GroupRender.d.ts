@@ -1,5 +1,5 @@
 import { FormField } from "@t/FormField";
-import { Render } from "./Render";
+import Render from "./Render";
 export default class GroupRender implements Render {
     private element;
     private field;

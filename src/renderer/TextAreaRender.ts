@@ -21,7 +21,12 @@ export default class TextAreaRender implements Render {
     }
 
     static template(field: FormField): string {
-        return `<textarea name="${field.name}" class="form-field textarea"></textarea>`;
+
+        return `
+            <span class="dara-form-field">
+            <textarea name="${field.name}" class="form-field textarea"></textarea><i class="help-icon"></i>
+            </span> 
+        `;
     }
 
     getValue() {

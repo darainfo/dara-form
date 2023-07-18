@@ -21,7 +21,11 @@ export default class PasswordRender implements Render {
     }
 
     static template(field: FormField): string {
-        return `<input type="password" name="${field.name}" class="form-field password" autocomplete="off" />`;
+        return `
+            <span class="dara-form-field">
+                <input type="password" name="${field.name}" class="form-field password" autocomplete="off" /> <i class="help-icon"></i>
+            </span>
+        `;
     }
 
     getValue() {

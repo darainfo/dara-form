@@ -21,7 +21,11 @@ export default class NumberRender implements Render {
     }
 
     static template(field: FormField): string {
-        return `<input type="number" name="${field.name}" class="form-field number" />`;
+        return `
+        <span class="dara-form-field">
+            <input type="number" name="${field.name}" class="form-field number" /> <i class="help-icon"></i>
+        </span> 
+       `;
     }
 
     getValue() {

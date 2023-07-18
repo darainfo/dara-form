@@ -15,19 +15,21 @@ export default class CheckboxRender implements Render {
         this.rowElement = rowElement;
         this.defaultCheckValue = [];
 
-        this.field.value.forEach((val) => {
+        this.field.values.forEach((val) => {
             if (val.selected) {
                 this.defaultCheckValue.push(val.value);
             }
         });
     }
 
+    public initEvent() { }
+
     static template(field: FormField): string {
         const templates: string[] = [];
         const fieldName = field.name;
 
-        templates.push(`<div class="field-group">`);
-        field.value.forEach((val) => {
+        templates.push(` <span class="dara-form-field"><div class="field-group">`);
+        field.values.forEach((val) => {
 
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
@@ -38,7 +40,7 @@ export default class CheckboxRender implements Render {
                 </span>
             `);
         })
-        templates.push(`</div>`);
+        templates.push(`<i class="help-icon"></i></div></span>`);
 
         return templates.join('');
     }

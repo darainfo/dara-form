@@ -6,10 +6,14 @@ import CheckboxRender from "src/renderer/CheckboxRender";
 import RadioRender from "src/renderer/RadioRender";
 import PasswordRender from "src/renderer/PasswordRender";
 import FileRender from "src/renderer/FileRender";
+import CustomRender from "./renderer/CustomRender";
+
 
 export const RULES = {
-    MIN: 'min',
-    MAX: 'max',
+    MIN: 'minimum',
+    EXCLUSIVE_MIN: 'exclusiveMinimum',
+    MAX: 'maximum',
+    EXCLUSIVE_MAX: 'exclusiveMaximum',
     MIN_LENGTH: 'minLength',
     MAX_LENGTH: 'maxLength',
     PATTERN: 'pattern',
@@ -26,10 +30,11 @@ export const RENDER_TEMPLATE: any = {
     , 'text': TextRender
     , 'password': PasswordRender
     , 'file': FileRender
+    , 'custom': CustomRender
 };
 
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';
 
-export type RENDER_TYPE = 'number' | 'text' | 'file' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group';
+export type RENDER_TYPE = 'number' | 'text' | 'file' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group' | 'custom';
 
 export type VALIDATORS = 'email' | 'url' | 'alpha' | 'alpha-num';

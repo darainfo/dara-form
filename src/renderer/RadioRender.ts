@@ -13,20 +13,23 @@ export default class RadioRender implements Render {
     constructor(field: FormField, rowElement: HTMLElement) {
         this.field = field;
         this.rowElement = rowElement;
-        this.defaultCheckValue = this.field.value[0].value;
+        this.defaultCheckValue = this.field.values[0].value;
 
-        this.field.value.forEach((val) => {
+        this.field.values.forEach((val) => {
             if (val.selected) {
                 this.defaultCheckValue = val.value;
             }
         });
     }
 
+    public initEvent() { }
+
     static template(field: FormField): string {
         const templates: string[] = [];
         const fieldName = field.name;
-        templates.push(`<div class="field-group">`);
-        field.value.forEach((val) => {
+
+        templates.push(`<span class="dara-form-field"><div class="field-group">`);
+        field.values.forEach((val) => {
 
             templates.push(
                 `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
@@ -38,7 +41,7 @@ export default class RadioRender implements Render {
                 `
             )
         })
-        templates.push(`</div>`);
+        templates.push(`<i class="help-icon"></i></div></span> `);
 
         return templates.join('');
     }

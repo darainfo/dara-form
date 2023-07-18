@@ -16,9 +16,9 @@ export default class DropdownRender implements Render {
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
-        this.defaultCheckValue = this.field.value[0].value;
+        this.defaultCheckValue = this.field.values[0].value;
 
-        this.field.value.forEach((val) => {
+        this.field.values.forEach((val) => {
             if (val.selected) {
                 this.defaultCheckValue = val.value;
             }
@@ -32,13 +32,13 @@ export default class DropdownRender implements Render {
     }
 
     static template(field: FormField): string {
-        let template = `<select name="${field.name}" class="form-field dropdown">`;
+        let template = ` <span class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
 
-        field.value.forEach(val => {
+        field.values.forEach(val => {
             template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
         })
 
-        template += `</select>`;
+        template += `</select> <i class="help-icon"></i></span>`;
         return template;
     }
 
