@@ -2,7 +2,7 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 import { dropdownChangeEvent } from "src/util/renderEvents";
 
 export default class DropdownRender implements Render {
@@ -32,13 +32,13 @@ export default class DropdownRender implements Render {
     }
 
     static template(field: FormField): string {
-        let template = ` <span class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
+        let template = ` <div class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
 
         field.values.forEach(val => {
             template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
         })
 
-        template += `</select> <i class="help-icon"></i></span>`;
+        template += `</select> <i class="help-icon"></i></div>`;
         return template;
     }
 
@@ -72,7 +72,7 @@ export default class DropdownRender implements Render {
             }
         }
 
-        setInvalidMessage(this.field, this.rowElement, validResult);
+        invalidMessage(this.field, this.rowElement, validResult);
 
         return true;
     }

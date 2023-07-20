@@ -2,12 +2,19 @@ import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 import util from "src/util/util";
+import { regexpValidator } from "./regexpValidator";
 
 export const stringValidator = (value: string, field: FormField): ValidResult | boolean => {
     const result: ValidResult = { name: field.name, constraint: [] };
 
     if (field.required && util.isEmpty(value)) {
         result.constraint.push(RULES.REQUIRED);
+        return result;
+    }
+
+    const regexpResult = regexpValidator(value, field);
+    if (regexpResult !== true) {
+        return regexpResult;
     }
 
     const rule = field.rule;

@@ -3,7 +3,7 @@ import Render from "./Render";
 import XssUtil from "src/util/util";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 
 export default class CheckboxRender implements Render {
     private rowElement: HTMLElement;
@@ -28,7 +28,7 @@ export default class CheckboxRender implements Render {
         const templates: string[] = [];
         const fieldName = field.name;
 
-        templates.push(` <span class="dara-form-field"><div class="field-group">`);
+        templates.push(` <div class="dara-form-field"><div class="field-group">`);
         field.values.forEach((val) => {
 
             templates.push(`
@@ -40,7 +40,7 @@ export default class CheckboxRender implements Render {
                 </span>
             `);
         })
-        templates.push(`<i class="help-icon"></i></div></span>`);
+        templates.push(`<i class="dara-icon help-icon"></i></div></div>`);
 
         return templates.join('');
     }
@@ -94,7 +94,7 @@ export default class CheckboxRender implements Render {
             }
         }
 
-        setInvalidMessage(this.field, this.rowElement, validResult);
+        invalidMessage(this.field, this.rowElement, validResult);
 
         return true;
     }

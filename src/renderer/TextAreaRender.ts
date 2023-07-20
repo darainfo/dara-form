@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 import { inputEvent } from "src/util/renderEvents";
 
 export default class TextAreaRender implements Render {
@@ -23,9 +23,9 @@ export default class TextAreaRender implements Render {
     static template(field: FormField): string {
 
         return `
-            <span class="dara-form-field">
-            <textarea name="${field.name}" class="form-field textarea"></textarea><i class="help-icon"></i>
-            </span> 
+            <div class="dara-form-field">
+            <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
+            </div> 
         `;
     }
 
@@ -50,7 +50,7 @@ export default class TextAreaRender implements Render {
 
         const validResult = stringValidator(this.getValue(), this.field);
 
-        setInvalidMessage(this.field, this.rowElement, validResult);
+        invalidMessage(this.field, this.rowElement, validResult);
 
         return validResult;
     }

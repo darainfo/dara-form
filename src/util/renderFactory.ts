@@ -1,14 +1,11 @@
 import { FormField } from "@t/FormField";
 
 
-import Render from "./renderer/Render";
-import { RENDER_TEMPLATE } from "./constants";
+import Render from "../renderer/Render";
+import { RENDER_TEMPLATE } from "../constants";
 
 export const getRenderer = (field: FormField): Render => {
-    let renderType = field.renderType;
-    if (!renderType) {
-        renderType = field.type == 'number' ? 'number' : 'text';
-    }
+    let renderType = field.renderType || 'text';
 
     let render = RENDER_TEMPLATE[renderType];
 

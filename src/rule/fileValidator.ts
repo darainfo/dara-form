@@ -10,6 +10,7 @@ export const fileValidator = (element: HTMLInputElement, field: FormField, fileL
     if (field.required && element.files && element.files.length < 1) {
         if (fileList.length < 1) {
             result.constraint.push(RULES.REQUIRED);
+            return result;
         }
     }
 

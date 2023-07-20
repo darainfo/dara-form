@@ -2,7 +2,25 @@ import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import Lanauage from "./Lanauage";
 
-export const setInvalidMessage = (field: FormField, rowElement: Element, validResult: ValidResult | boolean) => {
+export const invalidMessage = (field: FormField, rowElement: Element, validResult: ValidResult | boolean) => {
+
+
+  // valid result 처리 할것. 
+
+  if (validResult && field.validator) {
+    const result = field.validator(field, rowElement);
+
+    if (result === false) {
+      return false;
+    }
+  }
+
+
+
+
+
+
+
   if (validResult === true) {
     rowElement.classList.remove("invalid");
 

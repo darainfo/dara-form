@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 import { $dom } from "src/util/domCtrl";
 import { inputEvent } from "src/util/renderEvents";
 
@@ -25,7 +25,7 @@ export default class CustomRender implements Render {
 
   static template(field: FormField): string {
     if ((field.renderer as any).template) {
-      return ` <span class="dara-form-field">${(field.renderer as any).template()}</span>`;
+      return ` <div class="dara-form-field">${(field.renderer as any).template()}</div>`;
     }
     return '';
   }

@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { numberValidator } from "src/rule/numberValidator";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 import { inputEvent } from "src/util/renderEvents";
 
 export default class NumberRender implements Render {
@@ -22,9 +22,9 @@ export default class NumberRender implements Render {
 
     static template(field: FormField): string {
         return `
-        <span class="dara-form-field">
-            <input type="number" name="${field.name}" class="form-field number" /> <i class="help-icon"></i>
-        </span> 
+        <div class="dara-form-field">
+            <input type="number" name="${field.name}" class="form-field number help-icon" /></i>
+        </div> 
        `;
     }
 
@@ -48,7 +48,7 @@ export default class NumberRender implements Render {
     valid(): any {
         const validResult = numberValidator(this.getValue(), this.field);
 
-        setInvalidMessage(this.field, this.rowElement, validResult);
+        invalidMessage(this.field, this.rowElement, validResult);
 
         return validResult;
     }

@@ -9,6 +9,7 @@ export const numberValidator = (value: string, field: FormField): ValidResult | 
 
     if (field.required && (util.isEmpty(value) || isNaN(numValue))) {
         result.constraint.push(RULES.REQUIRED);
+        return result;
     }
 
     const rule = field.rule;

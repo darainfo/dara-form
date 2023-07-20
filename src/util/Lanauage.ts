@@ -5,6 +5,7 @@ import { RULES } from "src/constants";
 
 let localeMessage: Message = {
   required: "{label} 필수 입력사항입니다.",
+  fileButton: '파일찾기',
   string: {
     minLength: "{minLength} 글자 이상으로 입력하세요.",
     maxLength: "{maxLength} 글자 이하로 입력하세요.",
@@ -16,55 +17,90 @@ let localeMessage: Message = {
     between: "{min}~{max} 사이의 숫자를 입력하세요.",
   },
   validator: {
-    email: "이메일이 유효하지 않습니다.",
-    url: "URL이 유효하지 않습니다.",
-    alpha: "영문만 입력가능합니다.",
-    alphaNum: "영문과 숫자만 입력가능힙니다.",
+    'mobile': "핸드폰 번호가 유효하지 않습니다.",
+    'email': "이메일이 유효하지 않습니다.",
+    'url': "URL이 유효하지 않습니다.",
+    'alpha': "영문만 입력가능합니다.",
+    'alpha-num': "영문과 숫자만 입력가능힙니다.",
+    'number': '숫자만 입력가능힙니다.',
+    'variable': '값이 유효하지 않습니다.'
   },
 };
 
+
+/**
+ * validation 메시지 처리. 
+ *
+ * @class Language
+ * @typedef {Language}
+ */
 class Language {
   private lang: Message = localeMessage;
 
+
+  /**
+   * 다국어 메시지 등록
+   *
+   * @public
+   * @param {?Message} [lang] 둥록할 메시지
+   */
   public set(lang?: Message) {
     this.lang = Object.assign({}, localeMessage, lang);
   }
 
-  public validMessage(field: FormField, validResult: ValidResult):string[] {
+
+  /**
+   * 메시지 얻기
+   *
+   * @public
+   * @param {string} messageKey 메시지 키
+   * @returns {*}
+   */
+  public getMessage(messageKey: string): any {
+    return (this.lang as any)[messageKey];
+  }
+
+  /**
+   * ValidResult 값을 메시지로 변경.
+   *
+   * @public
+   * @param {FormField} field
+   * @param {ValidResult} validResult
+   * @returns {string[]}
+   */
+  public validMessage(field: FormField, validResult: ValidResult): string[] {
     let messageFormat = "";
 
-    let messageFormats:string[] = [];
+    let messageFormats: string[] = [];
 
-    validResult.constraint.forEach(constraint=>{
-        if (constraint === RULES.REQUIRED) {
-            messageFormat = message(this.lang.required, field);
-            messageFormats.push(messageFormat);
-        }
-                
-        if (field.validator) {
-            messageFormat = (this.lang.validator as any)[constraint];
-            messageFormats.push(messageFormat);
-        }
-    
-        if (field.type == "number") {
-            messageFormat = (this.lang.number as any)[constraint];
-            messageFormats.push(messageFormat);
-        }else{
-            messageFormat = (this.lang.string as any)[constraint];
-            messageFormats.push(messageFormat);
-            
-        }
-          
+    if (validResult.validator) {
+      messageFormat = (this.lang.validator as any)[validResult.validator];
+      messageFormats.push(messageFormat);
+    }
+
+    validResult.constraint.forEach(constraint => {
+      if (constraint === RULES.REQUIRED) {
+        messageFormat = message(this.lang.required, field);
+        messageFormats.push(messageFormat);
+      }
+
+      if (field.type == "number" || field.renderType == "number") {
+        messageFormat = (this.lang.number as any)[constraint];
+        messageFormats.push(messageFormat);
+      } else {
+        messageFormat = (this.lang.string as any)[constraint];
+        messageFormats.push(messageFormat);
+      }
     })
 
-    const reMessage:string[] = [];
+    const reMessage: string[] = [];
 
-    const msgParam = Object.assign({},{name : field.name, label : field.label}, field.rule);
-    messageFormats.forEach(msgFormat=>{
-        if(msgFormat){
-            
-            reMessage.push(message(msgFormat, msgParam));
-        }  
+    const msgParam = Object.assign({}, { name: field.name, label: field.label }, field.rule);
+    messageFormats.forEach(msgFormat => {
+      if (msgFormat) {
+
+        reMessage.push(message(msgFormat, msgParam));
+      }
     })
 
     return reMessage;

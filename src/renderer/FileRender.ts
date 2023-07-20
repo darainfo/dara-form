@@ -1,13 +1,14 @@
 import { FielInfo, FormField } from "@t/FormField";
 import Render from "./Render";
-import { resetRowElementStyleClass, setInvalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
 import { fileValidator } from "src/rule/fileValidator";
+import Lanauage from "src/util/Lanauage";
 
 export default class FileRender implements Render {
   private element: HTMLInputElement;
   private rowElement: Element;
   private field;
-  private removeFileIds: any[] = [];
+  private removeIds: any[] = [];
   private uploadFiles: any = {};
   private fileList: any[] = [];
   private fileSeq = 0;
@@ -40,6 +41,13 @@ export default class FileRender implements Render {
 
   addFiles(files: FileList) {
     let addFlag = false;
+
+    const newFiles: FielInfo[] = [];
+
+
+    //수정할것.
+
+
     for (let i = 0; i < files.length; i++) {
       const item = files[i];
 
@@ -49,82 +57,81 @@ export default class FileRender implements Render {
       this.fileSeq += 1;
       this.uploadFiles[this.fileSeq] = item;
 
-      this.fileList.push({
+      let newFileInfo = {
         fileName: item.name
         , $seq: this.fileSeq
         , fileSize: item.size
         , lastModified: item.lastModified
-      });
+      } as FielInfo;
+
+      newFiles.push(newFileInfo);
       addFlag = true;
     }
-
-    this.setFileList(this.fileList);
+    if (addFlag) {
+      this.setFileList(newFiles);
+      this.fileList.push(...newFiles);
+    }
   }
 
   setFileList(fileList: FielInfo[]) {
     const fileListElement = this.rowElement.querySelector('.dara-file-list');
     if (fileListElement) {
-      fileListElement.innerHTML = `${fileList.map(file => `
+      fileListElement.insertAdjacentHTML('beforeend', `${fileList.map(file => `
         <div class="file-item" data-seq="${file.$seq}">
-          <span class="file-icon">
-            ${file.fileId ? '<span class="download"></span>' : ''} <span class="remove">X</span>
-          </span>
+          ${file.fileId ? '<span class="file-icon download"></span>' : '<span class="file-icon"></span>'} <span class="file-icon remove"></span>
           <span class="file-name">${file.fileName}</span > 
         </div>
-      `).join('')}`;
+      `).join('')}`);
 
-      [].forEach.call(fileListElement.querySelectorAll(".remove"), (ele: Element) => {
+      fileList.forEach(item => {
+        const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
+        if (ele) {
+          ele.addEventListener('click', (evt: Event) => {
+            const targetEle = evt.target as Element;
 
-        ele.addEventListener('click', (evt: Event) => {
-          const targetEle = evt.target as Element;
+            const fileItemElement = targetEle.closest('.file-item');
 
-          const fileItemElement = targetEle.closest('.file-item');
+            if (fileItemElement) {
+              const attrSeq = fileItemElement.getAttribute("data-seq");
+              if (attrSeq) {
+                const seq = parseInt(attrSeq, 10);
+                const removeIdx = this.fileList.findIndex(v => v.$seq === seq);
 
-          if (fileItemElement) {
-            const attrSeq = fileItemElement.getAttribute("data-seq");
-            if (attrSeq) {
-              const seq = parseInt(attrSeq, 10);
-              const removeIdx = this.fileList.findIndex(v => v.$seq === seq);
+                const removeItem = this.fileList[removeIdx];
 
-              const removeItem = this.fileList[removeIdx];
+                this.fileList.splice(removeIdx, 1);
+                delete this.uploadFiles[seq];
+                fileItemElement.remove();
 
-              this.fileList.splice(removeIdx, 1);
-              delete this.uploadFiles[seq];
-              fileItemElement.remove();
-
-              this.removeFileIds.push(removeItem.fileId)
+                if (removeItem.fileId) {
+                  this.removeIds.push(removeItem.fileId)
+                }
+              }
             }
-          }
-          this.valid();
-        })
-      })
+            this.valid();
+          })
+        }
+      });
     }
   }
 
-
-
   static template(field: FormField): string {
     return `
-    <span class="dara-form-field">
+    <div class="dara-form-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />File</label>
-        <i class="help-icon"></i>
+        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage.getMessage('fileButton')}</label>
+        <i class="dara-icon help-icon"></i>
       </span>
-    </span>
+    </div>
     <div class="dara-file-list"></div>
     `;
   }
 
   getValue() {
-    const files: any[] = [];
-
-    const filelist = this.element.files;
-    if (filelist && filelist?.length > 0) {
-      for (const file of filelist) {
-        files.push(file);
-      }
-    }
-    return files.length > 0 ? files : null;
+    return {
+      uploadFile: Object.values(this.uploadFiles)
+      , removeIds: this.removeIds
+    };
   }
 
   setValue(value: any): void {
@@ -143,7 +150,7 @@ export default class FileRender implements Render {
   valid(): any {
     const validResult = fileValidator(this.element, this.field, this.fileList);
 
-    setInvalidMessage(this.field, this.rowElement, validResult);
+    invalidMessage(this.field, this.rowElement, validResult);
 
     return validResult;
   }

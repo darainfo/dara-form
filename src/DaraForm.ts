@@ -1,12 +1,11 @@
 import { FormOptions } from '@t/FormOptions';
 import { FormField } from '@t/FormField';
-import { getRenderer } from './template';
+import { getRenderer } from './util/renderFactory';
 import utils from './util/util';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
 import Lanauage from './util/Lanauage';
 import MyComponent from './Test'
-import CustomRender from './renderer/CustomRender';
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
@@ -253,7 +252,6 @@ export default class DaraForm {
             }
         })
     }
-
 
     /**
      * field 추가
