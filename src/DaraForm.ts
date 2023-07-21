@@ -5,6 +5,9 @@ import utils from './util/util';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
 import Lanauage from './util/Lanauage';
+import { stringValidator } from './rule/stringValidator';
+import { numberValidator } from './rule/numberValidator';
+import { regexpValidator } from './rule/regexpValidator';
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
@@ -323,6 +326,21 @@ export default class DaraForm {
         return this.options;
     }
     */
+
+    public static validator = {
+        string: (value: string, field: FormField) => {
+            return stringValidator(value, field);
+        }
+        , number: (value: string, field: FormField) => {
+            return numberValidator(value, field);
+        }
+        , regexp: (value: string, field: FormField) => {
+            let result: ValidResult = { name: field.name, constraint: [] };
+            return regexpValidator(value, field, result);
+        }
+
+    }
+
 }
 
 function replaceXssField(field: FormField) {
