@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
-export declare const setInvalidMessage: (field: FormField, rowElement: Element, validResult: ValidResult | boolean) => void;
+export declare const invalidMessage: (field: FormField, rowElement: Element, validResult: ValidResult | boolean) => void;
 /**
  * remove row element style class
  *

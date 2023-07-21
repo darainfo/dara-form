@@ -4,6 +4,7 @@ export default class GroupRender implements Render {
     private element;
     private field;
     constructor(field: FormField, element: HTMLTextAreaElement);
+    initEvent(): void;
     static template(field: FormField): string;
     getValue(): string;
     setValue(value: any): void;

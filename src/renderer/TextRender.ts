@@ -2,7 +2,6 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
-import { $dom } from "src/util/domCtrl";
 import { inputEvent } from "src/util/renderEvents";
 
 export default class TextRender implements Render {

@@ -6,10 +6,9 @@ export default class DaraForm {
     private isHorizontal;
     private formElement;
     private allFieldInfo;
-    private addRowField;
+    private addRowFields;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;
-    test(): void;
     createForm(fields: FormField[]): void;
     /**
      * field row 추가.

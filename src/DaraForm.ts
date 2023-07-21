@@ -5,7 +5,6 @@ import utils from './util/util';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
 import Lanauage from './util/Lanauage';
-import MyComponent from './Test'
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
@@ -52,11 +51,6 @@ export default class DaraForm {
 
     public static setMessage(message: Message): void {
         Lanauage.set(message);
-    }
-
-    public test() {
-        const myCompoent = new MyComponent();
-
     }
 
     createForm(fields: FormField[]) {

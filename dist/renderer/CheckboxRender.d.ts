@@ -5,6 +5,7 @@ export default class CheckboxRender implements Render {
     private field;
     private defaultCheckValue;
     constructor(field: FormField, rowElement: HTMLElement);
+    initEvent(): void;
     static template(field: FormField): string;
     getValue(): any[];
     setValue(value: any): void;

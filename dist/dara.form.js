@@ -24,10 +24,9 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
-const template_1 = __webpack_require__(/*! ./template */ "./src/template.ts");
+const renderFactory_1 = __webpack_require__(/*! ./util/renderFactory */ "./src/util/renderFactory.ts");
 const util_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/util */ "./src/util/util.ts"));
 const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/Lanauage */ "./src/util/Lanauage.ts"));
-const Test_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Test */ "./src/Test.tsx"));
 let defaultOptions = {
   mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
   ,
@@ -42,14 +41,14 @@ class DaraForm {
   constructor(selector, options, message) {
     var _a;
     this.allFieldInfo = {};
-    this.addRowField = [];
+    this.addRowFields = [];
     /**
      * 폼 데이터 reset
      */
     this.resetForm = () => {
       for (const fieldName in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldName];
-        const renderInfo = filedInfo.renderer;
+        const renderInfo = filedInfo.$renderer;
         if (renderInfo && typeof renderInfo.reset === 'function') {
           renderInfo.reset();
         }
@@ -60,7 +59,7 @@ class DaraForm {
      * @param fieldName 필드명
      */
     this.resetField = fieldName => {
-      this.allFieldInfo[fieldName].renderer.reset();
+      this.allFieldInfo[fieldName].$renderer.reset();
     };
     /**
      * field 값 얻기
@@ -71,7 +70,7 @@ class DaraForm {
     this.getFieldValue = fieldName => {
       const field = this.allFieldInfo[fieldName];
       if (field) {
-        return field.renderer.getValue();
+        return field.$renderer.getValue();
       }
       return null;
     };
@@ -84,7 +83,7 @@ class DaraForm {
       let reval = {};
       Object.keys(this.allFieldInfo).forEach(fieldName => {
         const filedInfo = this.allFieldInfo[fieldName];
-        const renderInfo = filedInfo.renderer;
+        const renderInfo = filedInfo.$renderer;
         if (isValid) {
           let fieldValid = renderInfo.valid();
           if (fieldValid !== true) {
@@ -105,7 +104,7 @@ class DaraForm {
         const value = values[fieldName];
         const filedInfo = this.allFieldInfo[fieldName];
         if (filedInfo) {
-          const renderInfo = filedInfo.renderer;
+          const renderInfo = filedInfo.$renderer;
           renderInfo.setValue(value);
         }
       });
@@ -150,7 +149,7 @@ class DaraForm {
       let validResult = [];
       for (const fieldName in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldName];
-        const renderInfo = filedInfo.renderer;
+        const renderInfo = filedInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
           validResult.push(fieldValid);
@@ -160,7 +159,7 @@ class DaraForm {
     };
     this.isValidField = fieldName => {
       const filedInfo = this.allFieldInfo[fieldName];
-      const renderInfo = filedInfo.renderer;
+      const renderInfo = filedInfo.$renderer;
       if (renderInfo) {
         return renderInfo.valid() === true ? true : false;
       }
@@ -183,9 +182,6 @@ class DaraForm {
   static setMessage(message) {
     Lanauage_1.default.set(message);
   }
-  test() {
-    const myCompoent = new Test_1.default();
-  }
   createForm(fields) {
     fields.forEach(field => {
       this.addRow(field);
@@ -197,29 +193,21 @@ class DaraForm {
    * @param field
    */
   addRow(field) {
-    this.addRowField = [];
+    this.addRowFields = [];
     const rowElement = document.createElement("div");
     rowElement.className = `dara-form-row`;
     replaceXssField(field);
     let rednerTemplate = '';
     if (field.renderer) {
-      const templateValue = field.renderer.template;
-      if (typeof templateValue === 'string') {
-        rednerTemplate = templateValue;
-      } else {
-        rednerTemplate = templateValue.call(null, field);
-      }
       field.$isCustomRenderer = true;
-    } else {
-      rednerTemplate = this.rowTemplate(field);
     }
+    rednerTemplate = this.rowTemplate(field);
     rowElement.innerHTML = rednerTemplate;
     this.formElement.appendChild(rowElement); // Append the element
-    this.addRowField.forEach(fieldName => {
-      if (this.allFieldInfo[fieldName].$isCustomRenderer !== true) {
-        field.$xssName = util_1.default.unFieldName(field.name);
-        field.renderer = new field.renderer(field, rowElement);
-      }
+    this.addRowFields.forEach(fieldName => {
+      const fileldInfo = this.allFieldInfo[fieldName];
+      fileldInfo.$xssName = util_1.default.unFieldName(fileldInfo.name);
+      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, rowElement);
     });
   }
   rowTemplate(field) {
@@ -234,7 +222,7 @@ class DaraForm {
                 <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
             </div>
             <div class="dara-form-field-container">
-                <span class="dara-form-field">${fieldHtml}<i class="help-icon"></i></span>
+                ${fieldHtml}
                 <div class="help-message"></div>
             </div>
         `;
@@ -270,9 +258,9 @@ class DaraForm {
    */
   getFieldTempate(field) {
     this.allFieldInfo[field.name] = field;
-    this.addRowField.push(field.name);
-    field.renderer = (0, template_1.getRenderer)(field);
-    return field.renderer.template(field);
+    this.addRowFields.push(field.name);
+    field.$renderer = (0, renderFactory_1.getRenderer)(field);
+    return field.$renderer.template(field);
   }
   /**
    * 필드 element 얻기
@@ -282,8 +270,8 @@ class DaraForm {
    */
   getFieldElement(fieldName) {
     const field = this.allFieldInfo[fieldName];
-    if (field && field.renderer) {
-      return field.renderer.getElement();
+    if (field && field.$renderer) {
+      return field.$renderer.getElement();
     }
     return null;
   }
@@ -293,32 +281,6 @@ function replaceXssField(field) {
   field.name = util_1.default.replace(field.name);
   field.label = util_1.default.replace(field.label);
 }
-
-/***/ }),
-
-/***/ "./src/Test.tsx":
-/*!**********************!*\
-  !*** ./src/Test.tsx ***!
-  \**********************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-const jsx_runtime_1 = __webpack_require__(/*! preact/jsx-runtime */ "./node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js");
-const preact_1 = __webpack_require__(/*! preact */ "./node_modules/preact/dist/preact.module.js");
-class MyComponent extends preact_1.Component {
-  render(props, state) {
-    // props is the same as this.props
-    // state is the same as this.state
-    return (0, jsx_runtime_1.jsxs)("h1", {
-      children: ["Hello, ", props.name, "!"]
-    });
-  }
-}
-exports["default"] = MyComponent;
 
 /***/ }),
 
@@ -343,13 +305,21 @@ const CheckboxRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/ren
 const RadioRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/RadioRender */ "./src/renderer/RadioRender.ts"));
 const PasswordRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/PasswordRender */ "./src/renderer/PasswordRender.ts"));
 const FileRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/FileRender */ "./src/renderer/FileRender.ts"));
+const CustomRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/CustomRender */ "./src/renderer/CustomRender.ts"));
 exports.RULES = {
-  MIN: 'min',
-  MAX: 'max',
+  MIN: 'minimum',
+  EXCLUSIVE_MIN: 'exclusiveMinimum',
+  MAX: 'maximum',
+  EXCLUSIVE_MAX: 'exclusiveMaximum',
   MIN_LENGTH: 'minLength',
   MAX_LENGTH: 'maxLength',
-  PATTERN: 'pattern',
-  REQUIRED: 'required'
+  BETWEEN: 'between',
+  BETWEEN_EXCLUSIVE_MIN: 'betweenExclusiveMin',
+  BETWEEN_EXCLUSIVE_MAX: 'betweenExclusiveMax',
+  BETWEEN_EXCLUSIVE_MINMAX: 'betweenExclusiveMinMax',
+  REGEXP: 'regexp',
+  REQUIRED: 'required',
+  VALIDATOR: 'validator'
 };
 exports.RENDER_TEMPLATE = {
   'number': NumberRender_1.default,
@@ -359,7 +329,8 @@ exports.RENDER_TEMPLATE = {
   'radio': RadioRender_1.default,
   'text': TextRender_1.default,
   'password': PasswordRender_1.default,
-  'file': FileRender_1.default
+  'file': FileRender_1.default,
+  'custom': CustomRender_1.default
 };
 
 /***/ }),
@@ -399,17 +370,18 @@ class CheckboxRender {
     this.field = field;
     this.rowElement = rowElement;
     this.defaultCheckValue = [];
-    this.field.value.forEach(val => {
+    this.field.values.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue.push(val.value);
       }
     });
   }
+  initEvent() {}
   static template(field) {
     const templates = [];
     const fieldName = field.name;
-    templates.push(`<div class="field-group">`);
-    field.value.forEach(val => {
+    templates.push(` <div class="dara-form-field"><div class="field-group">`);
+    field.values.forEach(val => {
       templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
@@ -419,7 +391,7 @@ class CheckboxRender {
                 </span>
             `);
     });
-    templates.push(`</div>`);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div>`);
     return templates.join('');
   }
   getValue() {
@@ -463,11 +435,73 @@ class CheckboxRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
 exports["default"] = CheckboxRender;
+
+/***/ }),
+
+/***/ "./src/renderer/CustomRender.ts":
+/*!**************************************!*\
+  !*** ./src/renderer/CustomRender.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
+class CustomRender {
+  constructor(field, rowElement) {
+    this.field = field;
+    this.rowElement = rowElement;
+    this.customFunction = field.renderer;
+    this.initEvent();
+  }
+  initEvent() {
+    if (this.customFunction.initEvent) {
+      this.customFunction.initEvent.call(this, this.field, this.rowElement);
+    }
+  }
+  static template(field) {
+    if (field.renderer.template) {
+      return ` <div class="dara-form-field">${field.renderer.template()}</div>`;
+    }
+    return '';
+  }
+  getValue() {
+    if (this.customFunction.getValue) {
+      return this.customFunction.getValue.call(this, this.field, this.rowElement);
+    }
+    return '';
+  }
+  setValue(value) {
+    if (this.customFunction.setValue) {
+      this.customFunction.setValue.call(this, value, this.field, this.rowElement);
+    }
+  }
+  reset() {
+    this.setValue('');
+    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+  }
+  getElement() {
+    if (this.customFunction.getElement) {
+      return this.customFunction.getElement.call(this, this.field, this.rowElement);
+    }
+    return null;
+  }
+  valid() {
+    if (this.customFunction.valid) {
+      return this.customFunction.valid.call(this, this.field, this.rowElement);
+    }
+    return true;
+  }
+}
+exports["default"] = CustomRender;
 
 /***/ }),
 
@@ -490,8 +524,8 @@ class DropdownRender {
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.defaultCheckValue = this.field.value[0].value;
-    this.field.value.forEach(val => {
+    this.defaultCheckValue = this.field.values[0].value;
+    this.field.values.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
       }
@@ -502,11 +536,11 @@ class DropdownRender {
     (0, renderEvents_1.dropdownChangeEvent)(this.element, this);
   }
   static template(field) {
-    let template = `<select name="${field.name}" class="form-field dropdown">`;
-    field.value.forEach(val => {
+    let template = ` <div class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
+    field.values.forEach(val => {
       template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
     });
-    template += `</select>`;
+    template += `</select> <i class="help-icon"></i></div>`;
     return template;
   }
   getValue() {
@@ -534,7 +568,7 @@ class DropdownRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
@@ -553,34 +587,111 @@ exports["default"] = DropdownRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
 const fileValidator_1 = __webpack_require__(/*! src/rule/fileValidator */ "./src/rule/fileValidator.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
+const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/Lanauage */ "./src/util/Lanauage.ts"));
 class FileRender {
   constructor(field, rowElement) {
-    this.removeFileIds = [];
-    this.uploadFiles = [];
+    this.removeIds = [];
+    this.uploadFiles = {};
     this.fileList = [];
+    this.fileSeq = 0;
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+    this.fileList = field.values;
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.fileChangeEvent)(this.element, this);
+    this.element.addEventListener('change', e => {
+      var _a;
+      const files = (_a = e.target) === null || _a === void 0 ? void 0 : _a.files;
+      if (files) {
+        this.addFiles(files);
+      }
+      this.valid();
+    });
+    this.fileList.map(file => {
+      file.$seq = this.fileSeq += 1;
+    });
+    this.setFileList(this.fileList);
+  }
+  addFiles(files) {
+    let addFlag = false;
+    const newFiles = [];
+    //수정할것.
+    for (let i = 0; i < files.length; i++) {
+      const item = files[i];
+      const fileCheckList = this.fileList.filter(fileItem => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified);
+      if (fileCheckList.length > 0) continue;
+      this.fileSeq += 1;
+      this.uploadFiles[this.fileSeq] = item;
+      let newFileInfo = {
+        fileName: item.name,
+        $seq: this.fileSeq,
+        fileSize: item.size,
+        lastModified: item.lastModified
+      };
+      newFiles.push(newFileInfo);
+      addFlag = true;
+    }
+    if (addFlag) {
+      this.setFileList(newFiles);
+      this.fileList.push(...newFiles);
+    }
+  }
+  setFileList(fileList) {
+    const fileListElement = this.rowElement.querySelector('.dara-file-list');
+    if (fileListElement) {
+      fileListElement.insertAdjacentHTML('beforeend', `${fileList.map(file => `
+        <div class="file-item" data-seq="${file.$seq}">
+          ${file.fileId ? '<span class="file-icon download"></span>' : '<span class="file-icon"></span>'} <span class="file-icon remove"></span>
+          <span class="file-name">${file.fileName}</span > 
+        </div>
+      `).join('')}`);
+      fileList.forEach(item => {
+        const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
+        if (ele) {
+          ele.addEventListener('click', evt => {
+            const targetEle = evt.target;
+            const fileItemElement = targetEle.closest('.file-item');
+            if (fileItemElement) {
+              const attrSeq = fileItemElement.getAttribute("data-seq");
+              if (attrSeq) {
+                const seq = parseInt(attrSeq, 10);
+                const removeIdx = this.fileList.findIndex(v => v.$seq === seq);
+                const removeItem = this.fileList[removeIdx];
+                this.fileList.splice(removeIdx, 1);
+                delete this.uploadFiles[seq];
+                fileItemElement.remove();
+                if (removeItem.fileId) {
+                  this.removeIds.push(removeItem.fileId);
+                }
+              }
+            }
+            this.valid();
+          });
+        }
+      });
+    }
   }
   static template(field) {
-    return `<input type="file" name="${field.name}" class="form-field file" multiple/>`;
+    return `
+    <div class="dara-form-field">
+      <span class="file-wrapper">
+        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_1.default.getMessage('fileButton')}</label>
+        <i class="dara-icon help-icon"></i>
+      </span>
+    </div>
+    <div class="dara-file-list"></div>
+    `;
   }
   getValue() {
-    const files = [];
-    const filelist = this.element.files;
-    if (filelist && (filelist === null || filelist === void 0 ? void 0 : filelist.length) > 0) {
-      for (const file of filelist) {
-        files.push(file);
-      }
-    }
-    return files.length > 0 ? files : null;
+    return {
+      uploadFile: Object.values(this.uploadFiles),
+      removeIds: this.removeIds
+    };
   }
   setValue(value) {
     this.element.value = value;
@@ -593,8 +704,8 @@ class FileRender {
     return this.element;
   }
   valid() {
-    const validResult = (0, fileValidator_1.fileValidator)(this.element, this.field);
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    const validResult = (0, fileValidator_1.fileValidator)(this.element, this.field, this.fileList);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -627,7 +738,11 @@ class NumberRender {
     (0, renderEvents_1.inputEvent)(this.element, this);
   }
   static template(field) {
-    return `<input type="number" name="${field.name}" class="form-field number" />`;
+    return `
+        <div class="dara-form-field">
+            <input type="number" name="${field.name}" class="form-field number help-icon" /></i>
+        </div> 
+       `;
   }
   getValue() {
     return this.element.value;
@@ -644,7 +759,7 @@ class NumberRender {
   }
   valid() {
     const validResult = (0, numberValidator_1.numberValidator)(this.getValue(), this.field);
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -677,7 +792,11 @@ class PasswordRender {
     (0, renderEvents_1.inputEvent)(this.element, this);
   }
   static template(field) {
-    return `<input type="password" name="${field.name}" class="form-field password" autocomplete="off" />`;
+    return `
+            <div class="dara-form-field">
+                <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
+            </div>
+        `;
   }
   getValue() {
     return this.element.value;
@@ -695,7 +814,7 @@ class PasswordRender {
   valid() {
     // TODO password 관련 사항 처리 할것. 
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -722,18 +841,19 @@ class RadioRender {
   constructor(field, rowElement) {
     this.field = field;
     this.rowElement = rowElement;
-    this.defaultCheckValue = this.field.value[0].value;
-    this.field.value.forEach(val => {
+    this.defaultCheckValue = this.field.values[0].value;
+    this.field.values.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
       }
     });
   }
+  initEvent() {}
   static template(field) {
     const templates = [];
     const fieldName = field.name;
-    templates.push(`<div class="field-group">`);
-    field.value.forEach(val => {
+    templates.push(`<div class="dara-form-field"><div class="field-group">`);
+    field.values.forEach(val => {
       templates.push(`<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                 <label>
                     <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" ${val.selected ? 'checked' : ''} />
@@ -742,7 +862,7 @@ class RadioRender {
                 </span>
                 `);
     });
-    templates.push(`</div>`);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div> `);
     return templates.join('');
   }
   getValue() {
@@ -768,7 +888,7 @@ class RadioRender {
     const value = this.getValue();
     let validResult = true;
     if (this.field.required) {
-      if (util_1.default.isEmpty(value)) {
+      if (util_1.default.isBlank(value)) {
         validResult = {
           name: this.field.name,
           constraint: []
@@ -776,7 +896,7 @@ class RadioRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
@@ -809,7 +929,11 @@ class TextAreaRender {
     (0, renderEvents_1.inputEvent)(this.element, this);
   }
   static template(field) {
-    return `<textarea name="${field.name}" class="form-field textarea"></textarea>`;
+    return `
+            <div class="dara-form-field">
+            <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
+            </div> 
+        `;
   }
   getValue() {
     return this.element.value;
@@ -826,7 +950,7 @@ class TextAreaRender {
   }
   valid() {
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -859,7 +983,11 @@ class TextRender {
     (0, renderEvents_1.inputEvent)(this.element, this);
   }
   static template(field) {
-    return `<input type="text" name="${field.name}" class="form-field text" />`;
+    return `
+    <div class="dara-form-field">
+      <input type="text" name="${field.name}" class="form-field text help-icon" />
+     </div> 
+     `;
   }
   getValue() {
     return this.element.value;
@@ -876,7 +1004,7 @@ class TextRender {
   }
   valid() {
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.setInvalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -897,25 +1025,24 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports.fileValidator = void 0;
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const fileValidator = (element, field) => {
+/**
+ * file validator
+ *
+ * @param {HTMLInputElement} element
+ * @param {FormField} field
+ * @param {FielInfo[]} fileList
+ * @returns {(ValidResult | boolean)}
+ */
+const fileValidator = (element, field, fileList) => {
   const result = {
     name: field.name,
     constraint: []
   };
   if (field.required && element.files && element.files.length < 1) {
-    result.constraint.push(constants_1.RULES.REQUIRED);
-  }
-  const rule = field.rule;
-  if (rule) {
-    /*
-    const valueLength = value.length;
-      if (valueLength < rule.minLength) {
-        result.constraint.push(RULES.MIN_LENGTH);
+    if (fileList.length < 1) {
+      result.constraint.push(constants_1.RULES.REQUIRED);
+      return result;
     }
-      if (valueLength > rule.maxLength) {
-        result.constraint.push(RULES.MAX_LENGTH);
-    }
-    */
   }
   if (result.constraint.length > 0) {
     return result;
@@ -941,22 +1068,65 @@ exports.numberValidator = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
+const validator_1 = __webpack_require__(/*! ./validator */ "./src/rule/validator.ts");
 const numberValidator = (value, field) => {
   const result = {
     name: field.name,
     constraint: []
   };
   const numValue = Number(value);
-  if (field.required && (util_1.default.isEmpty(value) || isNaN(numValue))) {
+  if (field.required && !util_1.default.isNumber(value)) {
     result.constraint.push(constants_1.RULES.REQUIRED);
+    return result;
+  }
+  if ((0, validator_1.validator)(value, field, result) !== true) {
+    return result;
   }
   const rule = field.rule;
   if (rule) {
-    if (numValue < rule.min) {
-      result.constraint.push(constants_1.RULES.MIN);
+    const isMinimum = util_1.default.isNumber(rule.minimum),
+      isMaximum = util_1.default.isNumber(rule.maximum);
+    let minRule = false,
+      minExclusive = false,
+      maxRule = false,
+      maxExclusive = false;
+    if (isMinimum) {
+      if (rule.exclusiveMinimum && numValue < rule.minimum) {
+        minExclusive = true;
+      } else if (numValue <= rule.minimum) {
+        minRule = true;
+      }
     }
-    if (numValue > rule.max) {
-      result.constraint.push(constants_1.RULES.MAX);
+    if (isMaximum) {
+      if (rule.exclusiveMaximum && numValue > rule.maximum) {
+        maxExclusive = true;
+      } else if (numValue >= rule.maximum) {
+        maxRule = true;
+      }
+    }
+    if (isMinimum && isMaximum && (minRule || minExclusive || maxRule || maxExclusive)) {
+      if (minExclusive && maxExclusive) {
+        result.constraint.push(constants_1.RULES.BETWEEN_EXCLUSIVE_MINMAX);
+      } else if (minExclusive) {
+        result.constraint.push(constants_1.RULES.BETWEEN_EXCLUSIVE_MIN);
+      } else if (maxExclusive) {
+        result.constraint.push(constants_1.RULES.BETWEEN_EXCLUSIVE_MAX);
+      } else {
+        result.constraint.push(constants_1.RULES.BETWEEN);
+      }
+    } else {
+      if (minExclusive) {
+        result.constraint.push(constants_1.RULES.EXCLUSIVE_MIN);
+      }
+      if (maxExclusive) {
+        result.constraint.push(constants_1.RULES.EXCLUSIVE_MAX);
+      }
+      if (minRule) {
+        result.constraint.push(constants_1.RULES.MIN);
+      }
+      if (maxRule) {
+        result.constraint.push(constants_1.RULES.MAX);
+      }
     }
   }
   if (result.constraint.length > 0) {
@@ -965,6 +1135,47 @@ const numberValidator = (value, field) => {
   return true;
 };
 exports.numberValidator = numberValidator;
+
+/***/ }),
+
+/***/ "./src/rule/regexpValidator.ts":
+/*!*************************************!*\
+  !*** ./src/rule/regexpValidator.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.regexpValidator = void 0;
+const regexp = {
+  'mobile': /^\d{3}-\d{3,4}-\d{4}$/,
+  'email': /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  'url': /^(?:(?:https?|HTTPS?|ftp|FTP):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-zA-Z\u00a1-\uffff0-9]-*)*[a-zA-Z\u00a1-\uffff0-9]+)(?:\.(?:[a-zA-Z\u00a1-\uffff0-9]-*)*[a-zA-Z\u00a1-\uffff0-9]+)*(?:\.(?:[a-zA-Z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/,
+  'number': /[-+]?[0-9]*[.,]?[0-9]+/,
+  'alpha': /^[a-zA-Z]+$/,
+  'alpha-num': /^[a-zA-Z0-9]+$/,
+  'variable': /^[a-zA-Z0-9_$][a-zA-Z0-9_$]*$/
+};
+const regexpValidator = (value, field, result) => {
+  if (typeof result === 'undefined') {
+    result = {
+      name: field.name,
+      constraint: []
+    };
+  }
+  const regexpType = field.regexpType;
+  if (regexpType) {
+    if (!regexp[regexpType].test(value)) {
+      result.regexp = regexpType;
+      return result;
+    }
+  }
+  return result;
+};
+exports.regexpValidator = regexpValidator;
 
 /***/ }),
 
@@ -983,22 +1194,49 @@ exports.stringValidator = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
+const validator_1 = __webpack_require__(/*! ./validator */ "./src/rule/validator.ts");
+/**
+ * string validator
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @returns {(ValidResult | boolean)}
+ */
 const stringValidator = (value, field) => {
-  const result = {
+  let result = {
     name: field.name,
     constraint: []
   };
-  if (field.required && util_1.default.isEmpty(value)) {
+  if (field.required && util_1.default.isBlank(value)) {
     result.constraint.push(constants_1.RULES.REQUIRED);
+    return result;
+  }
+  const validResult = (0, validator_1.validator)(value, field, result);
+  if (validResult !== true) {
+    return validResult;
   }
   const rule = field.rule;
   if (rule) {
     const valueLength = value.length;
-    if (valueLength < rule.minLength) {
-      result.constraint.push(constants_1.RULES.MIN_LENGTH);
+    const isMinNumber = util_1.default.isNumber(rule.minLength),
+      isMaxNumber = util_1.default.isNumber(rule.maxLength);
+    let minRule = false,
+      maxRule = false;
+    if (isMaxNumber && valueLength <= rule.minLength) {
+      minRule = true;
     }
-    if (valueLength > rule.maxLength) {
-      result.constraint.push(constants_1.RULES.MAX_LENGTH);
+    if (isMaxNumber && valueLength >= rule.maxLength) {
+      maxRule = true;
+    }
+    if (isMinNumber && isMaxNumber && (minRule || maxRule)) {
+      result.constraint.push(constants_1.RULES.BETWEEN);
+    } else {
+      if (minRule) {
+        result.constraint.push(constants_1.RULES.MIN_LENGTH);
+      }
+      if (maxRule) {
+        result.constraint.push(constants_1.RULES.MAX_LENGTH);
+      }
     }
   }
   if (result.constraint.length > 0) {
@@ -1010,10 +1248,10 @@ exports.stringValidator = stringValidator;
 
 /***/ }),
 
-/***/ "./src/template.ts":
-/*!*************************!*\
-  !*** ./src/template.ts ***!
-  \*************************/
+/***/ "./src/rule/validator.ts":
+/*!*******************************!*\
+  !*** ./src/rule/validator.ts ***!
+  \*******************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -1021,22 +1259,30 @@ exports.stringValidator = stringValidator;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.getRenderTemplate = exports.getRenderer = void 0;
-const constants_1 = __webpack_require__(/*! ./constants */ "./src/constants.ts");
-const getRenderer = field => {
-  let renderType = field.renderType;
-  if (!renderType) {
-    renderType = field.type == 'number' ? 'number' : 'text';
+exports.validator = void 0;
+const regexpValidator_1 = __webpack_require__(/*! ./regexpValidator */ "./src/rule/regexpValidator.ts");
+/**
+ *  validator  ,  regexp 체크 .
+ *
+ * @param {string} value field value
+ * @param {FormField} field field 정보
+ * @param {ValidResult} result
+ * @returns {(ValidResult | boolean)}
+ */
+const validator = (value, field, result) => {
+  if (field.validator) {
+    result.validator = field.validator(field, value);
+    if (typeof result.validator === 'object') {
+      return result;
+    }
   }
-  let render = constants_1.RENDER_TEMPLATE[renderType];
-  return render ? render : constants_1.RENDER_TEMPLATE['text'];
+  result = (0, regexpValidator_1.regexpValidator)(value, field, result);
+  if (result.regexp) {
+    return result;
+  }
+  return true;
 };
-exports.getRenderer = getRenderer;
-const getRenderTemplate = field => {
-  let render = (0, exports.getRenderer)(field);
-  return render.template(field);
-};
-exports.getRenderTemplate = getRenderTemplate;
+exports.validator = validator;
 
 /***/ }),
 
@@ -1054,43 +1300,82 @@ Object.defineProperty(exports, "__esModule", ({
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 let localeMessage = {
   required: "{label} 필수 입력사항입니다.",
+  fileButton: '파일찾기',
   string: {
     minLength: "{minLength} 글자 이상으로 입력하세요.",
     maxLength: "{maxLength} 글자 이하로 입력하세요.",
     between: "{minLength} ~ {maxLength} 사이의 글자를 입력하세요."
   },
   number: {
-    min: "{min} 보다 커야 합니다",
-    max: "{max} 보다 커야 합니다",
-    between: "{min}~{max} 사이의 숫자를 입력하세요."
+    minimum: "{minimum} 값과 같거나 커야 합니다",
+    exclusiveMinimum: "{minimum} 보다 커야 합니다",
+    maximum: "{maximum} 값과 같거나 작아야 합니다",
+    exclusiveMaximum: "{maximum} 보다 작아야 합니다.",
+    between: "{minimum}~{maximum} 사이의 값을 입력하세요.",
+    betweenExclusiveMin: "{minimum} 보다 크고 {maximum} 보다 같거나 작아야 합니다",
+    betweenExclusiveMax: "{minimum} 보다 같거나 크고 {maximum} 보다 작아야 합니다",
+    betweenExclusiveMinMax: "{minimum} 보다 크고 {maximum} 보다 작아야 합니다"
   },
-  validator: {
-    email: "이메일이 유효하지 않습니다.",
-    url: "URL이 유효하지 않습니다.",
-    alpha: "영문만 입력가능합니다.",
-    alphaNum: "영문과 숫자만 입력가능힙니다."
+  regexp: {
+    'mobile': "핸드폰 번호가 유효하지 않습니다.",
+    'email': "이메일이 유효하지 않습니다.",
+    'url': "URL이 유효하지 않습니다.",
+    'alpha': "영문만 입력가능합니다.",
+    'alpha-num': "영문과 숫자만 입력가능힙니다.",
+    'number': '숫자만 입력가능힙니다.',
+    'variable': '값이 유효하지 않습니다.'
   }
 };
+/**
+ * validation 메시지 처리.
+ *
+ * @class Language
+ * @typedef {Language}
+ */
 class Language {
   constructor() {
     this.lang = localeMessage;
   }
+  /**
+   * 다국어 메시지 등록
+   *
+   * @public
+   * @param {?Message} [lang] 둥록할 메시지
+   */
   set(lang) {
     this.lang = Object.assign({}, localeMessage, lang);
   }
+  /**
+   * 메시지 얻기
+   *
+   * @public
+   * @param {string} messageKey 메시지 키
+   * @returns {*}
+   */
+  getMessage(messageKey) {
+    return this.lang[messageKey];
+  }
+  /**
+   * ValidResult 값을 메시지로 변경.
+   *
+   * @public
+   * @param {FormField} field
+   * @param {ValidResult} validResult
+   * @returns {string[]}
+   */
   validMessage(field, validResult) {
     let messageFormat = "";
     let messageFormats = [];
+    if (validResult.regexp) {
+      messageFormat = this.lang.regexp[validResult.regexp];
+      messageFormats.push(messageFormat);
+    }
     validResult.constraint.forEach(constraint => {
       if (constraint === constants_1.RULES.REQUIRED) {
         messageFormat = message(this.lang.required, field);
         messageFormats.push(messageFormat);
       }
-      if (field.validator) {
-        messageFormat = this.lang.validator[constraint];
-        messageFormats.push(messageFormat);
-      }
-      if (field.type == "number") {
+      if (field.type == "number" || field.renderType == "number") {
         messageFormat = this.lang.number[constraint];
         messageFormats.push(messageFormat);
       } else {
@@ -1108,6 +1393,9 @@ class Language {
         reMessage.push(message(msgFormat, msgParam));
       }
     });
+    if (validResult.validator) {
+      reMessage.push(validResult.validator.message);
+    }
     return reMessage;
   }
 }
@@ -1131,8 +1419,7 @@ exports["default"] = new Language();
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.fileChangeEvent = exports.dropdownChangeEvent = exports.inputEvent = void 0;
-const instanceMap = new Map();
+exports.dropdownChangeEvent = exports.inputEvent = void 0;
 const inputEvent = (element, rederInfo) => {
   element.addEventListener('input', e => {
     rederInfo.valid();
@@ -1145,12 +1432,33 @@ const dropdownChangeEvent = (element, rederInfo) => {
   });
 };
 exports.dropdownChangeEvent = dropdownChangeEvent;
-const fileChangeEvent = (element, rederInfo) => {
-  element.addEventListener('change', e => {
-    rederInfo.valid();
-  });
+
+/***/ }),
+
+/***/ "./src/util/renderFactory.ts":
+/*!***********************************!*\
+  !*** ./src/util/renderFactory.ts ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.getRenderTemplate = exports.getRenderer = void 0;
+const constants_1 = __webpack_require__(/*! ../constants */ "./src/constants.ts");
+const getRenderer = field => {
+  let renderType = field.renderType || 'text';
+  let render = constants_1.RENDER_TEMPLATE[renderType];
+  return render ? render : constants_1.RENDER_TEMPLATE['text'];
 };
-exports.fileChangeEvent = fileChangeEvent;
+exports.getRenderer = getRenderer;
+const getRenderTemplate = field => {
+  let render = (0, exports.getRenderer)(field);
+  return render.template(field);
+};
+exports.getRenderTemplate = getRenderTemplate;
 
 /***/ }),
 
@@ -1197,8 +1505,9 @@ exports["default"] = {
     }
     return '';
   },
-  isEmpty(value) {
+  isBlank(value) {
     if (value === null) return true;
+    if (value === '') return true;
     if (typeof value === 'undefined') return true;
     if (typeof value === 'string' && (value === '' || value.replace(/\s/g, '') === '')) return true;
     return false;
@@ -1211,6 +1520,12 @@ exports["default"] = {
   },
   isString(value) {
     return typeof value === 'string';
+  },
+  isNumber(value) {
+    if (this.isBlank(value)) {
+      return false;
+    }
+    return !isNaN(value);
   }
 };
 
@@ -1227,10 +1542,10 @@ exports["default"] = {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.resetRowElementStyleClass = exports.setInvalidMessage = void 0;
+exports.resetRowElementStyleClass = exports.invalidMessage = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Lanauage */ "./src/util/Lanauage.ts"));
-const setInvalidMessage = (field, rowElement, validResult) => {
+const invalidMessage = (field, rowElement, validResult) => {
   if (validResult === true) {
     rowElement.classList.remove("invalid");
     if (!rowElement.classList.contains("valid")) {
@@ -1258,7 +1573,7 @@ const setInvalidMessage = (field, rowElement, validResult) => {
     }
   }
 };
-exports.setInvalidMessage = setInvalidMessage;
+exports.invalidMessage = invalidMessage;
 /**
  * remove row element style class
  *
@@ -1293,9 +1608,13 @@ exports.resetRowElementStyleClass = resetRowElementStyleClass;
 
 var ___CSS_LOADER_URL_IMPORT_0___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+ */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+"), __webpack_require__.b);
 var ___CSS_LOADER_URL_IMPORT_1___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg== */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg=="), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_2___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+"), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_3___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+"), __webpack_require__.b);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 var ___CSS_LOADER_URL_REPLACEMENT_0___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_0___);
 var ___CSS_LOADER_URL_REPLACEMENT_1___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_1___);
+var ___CSS_LOADER_URL_REPLACEMENT_2___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_2___);
+var ___CSS_LOADER_URL_REPLACEMENT_3___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_3___);
 // Module
 ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
   --border-color: #dfe1e5;
@@ -1304,7 +1623,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
   --font-color: #70757a;
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
-  --invalid-background-color: #FDD; }
+  --invalid-background-color: #FDD;
+  --background-button-hover: #ebebeb; }
 
 .dara-form {
   padding: 0px;
@@ -1315,6 +1635,18 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
     box-sizing: border-box; }
   .dara-form .dara-form-field-container .dara-form-field {
     position: relative; }
+    .dara-form .dara-form-field-container .dara-form-field .file-wrapper {
+      border: 1px solid var(--border-color);
+      text-align: center;
+      display: block;
+      width: 100%;
+      padding: 0.375rem 0.75rem;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      background-clip: padding-box;
+      border-radius: 4px;
+      transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
   .dara-form.horizontal {
     margin: 0px 0px;
     display: table;
@@ -1340,18 +1672,22 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
     .dara-form > .dara-form-row .help-message {
       display: none; }
     .dara-form > .dara-form-row .help-icon {
-      display: none;
-      position: absolute;
-      z-index: 1;
-      top: 0px;
-      right: 0px;
       background-repeat: no-repeat;
-      height: 100%;
-      width: 20px;
-      margin-right: 10px;
       background-position-y: center; }
+      .dara-form > .dara-form-row .help-icon.form-field {
+        background-position-x: calc(100% - 15px); }
+      .dara-form > .dara-form-row .help-icon.dara-icon {
+        display: none;
+        position: absolute;
+        z-index: 1;
+        top: 0px;
+        right: 0px;
+        height: 100%;
+        width: 20px;
+        margin-right: 15px; }
     .dara-form > .dara-form-row.invalid .form-field {
-      border-color: var(--invalid-border-color); }
+      border-color: var(--invalid-border-color);
+      outline-color: var(--invalid-border-color); }
     .dara-form > .dara-form-row.invalid .help-icon {
       display: block;
       background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___}); }
@@ -1361,6 +1697,37 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
     .dara-form > .dara-form-row.valid .help-icon {
       display: block;
       background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___}); }
+    .dara-form > .dara-form-row .dara-file-list .file-icon {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      vertical-align: middle;
+      cursor: pointer; }
+      .dara-form > .dara-form-row .dara-file-list .file-icon:hover {
+        background-color: var(--background-button-hover); }
+      .dara-form > .dara-form-row .dara-file-list .file-icon.download {
+        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___}); }
+      .dara-form > .dara-form-row .dara-file-list .file-icon.remove {
+        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___}); }
+    .dara-form > .dara-form-row .dara-file-list .file-name {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-wrap: normal;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      width: calc(100% - 55px); }
+  .dara-form .file-label {
+    border: 1px solid var(--border-color);
+    display: inline;
+    width: 100%;
+    padding: 3px 15px;
+    line-height: 1;
+    background-clip: padding-box;
+    border-radius: 4px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+    .dara-form .file-label:hover {
+      background-color: var(--background-button-hover); }
   .dara-form .form-field {
     border: 1px solid var(--border-color);
     display: block;
@@ -1381,11 +1748,15 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
       -moz-appearance: none; }
     .dara-form .form-field.textarea {
       padding-right: 0px; }
+    .dara-form .form-field[type="number"] {
+      padding-right: 3px; }
+    .dara-form .form-field.file {
+      display: none; }
   .dara-form .field-group .field.vertical {
     display: block; }
   .dara-form .field-group .field.horizontal {
     display: inline; }
-`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"AAAA;EACI,uBAAe;EACf,uBAAe;EACf,4BAAoB;EACpB,qBAAa;EACb,6BAAqB;EACrB,+BAAuB;EACvB,gCAA2B,EAAA;;AAG/B;EACI,YAAY;EACZ,wBAAwB,EAAA;EAF5B;;;IAOQ,sBAAsB,EAAA;EAP9B;IAYY,kBAAkB,EAAA;EAZ9B;IAiBQ,eAAe;IACf,cAAc;IACd,WAAW,EAAA;IAnBnB;MAsBY,kBAAkB,EAAA;MAtB9B;QAyBgB,UAAU;QACV,mBAAmB,EAAA;MA1BnC;QA8BgB,mBAAmB;QACnB,oBAAoB,EAAA;EA/BpC;IAuCY,cAAc,EAAA;EAvC1B;IA4CQ,WAAW;IACX,wBAAwB,EAAA;IA7ChC;MAuDgB,0BAA0B,EAAA;MAvD1C;QAmDoB,YAAY;QACZ,sBAAsB,EAAA;IApD1C;MA4DY,aAAa,EAAA;IA5DzB;MAgEY,aAAa;MACb,kBAAkB;MAClB,UAAU;MACV,QAAQ;MACR,UAAU;MACV,4BAA4B;MAC5B,YAAY;MACZ,WAAW;MACX,kBAAiB;MACjB,6BAA6B,EAAA;IAzEzC;MA+EgB,yCAAyC,EAAA;IA/EzD;MAmFgB,cAAc;MACd,yDAAqX,EAAA;IApFrY;MAwFgB,cAAc;MACd,gCAAgC,EAAA;IAzFhD;MA+FgB,cAAc;MACd,yDAA6T,EAAA;EAhG7U;IAyGQ,qCAAqC;IACrC,cAAc;IACd,WAAW;IACX,yBAAyB;IACzB,eAAe;IACf,gBAAgB;IAChB,gBAAgB;IAChB,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IAlH9E;MAsHY,WAAW;MACX,eAAe,EAAA;IAvH3B;MA2HY,gBAAgB;MAChB,wBAAwB;MACxB,qBAAqB,EAAA;IA7HjC;MAiIY,kBAAkB,EAAA;EAjI9B;IA4IgB,cAAc,EAAA;EA5I9B;IAgJgB,eAAe,EAAA","sourcesContent":[":root .dara-form {\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n}\r\n\r\n.dara-form {\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .dara-form-field-container{\r\n        .dara-form-field{\r\n            position: relative;\r\n        }\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.dara-form-row {\r\n            display: table-row;\r\n\r\n            >.dara-form-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.dara-form-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.dara-form-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    >.dara-form-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n\r\n        >.dara-form-label {\r\n\r\n            .require {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon{\r\n            display: none;\r\n            position: absolute;\r\n            z-index: 1;\r\n            top: 0px;\r\n            right: 0px;\r\n            background-repeat: no-repeat;\r\n            height: 100%;\r\n            width: 20px;\r\n            margin-right:10px;\r\n            background-position-y: center;\r\n\r\n        }\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon{\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid{\r\n            .help-icon{\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');                \r\n            }\r\n\r\n            \r\n        }\r\n\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-size: 1rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n        \r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown{\r\n            appearance :none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea{\r\n            padding-right: 0px;\r\n        }\r\n        \r\n    }\r\n\r\n    \r\n    \r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n}"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"AAAA;EACI,uBAAe;EACf,uBAAe;EACf,4BAAoB;EACpB,qBAAa;EACb,6BAAqB;EACrB,+BAAuB;EACvB,gCAA2B;EAC3B,kCAA0B,EAAA;;AAG9B;EACI,YAAY;EACZ,wBAAwB,EAAA;EAF5B;;;IAOQ,sBAAsB,EAAA;EAP9B;IAYY,kBAAkB,EAAA;IAZ9B;MAegB,qCAAqC;MACrC,kBAAkB;MAClB,cAAc;MACd,WAAW;MACX,yBAAyB;MACzB,eAAe;MACf,gBAAgB;MAChB,gBAAgB;MAChB,4BAA4B;MAC5B,kBAAkB;MAClB,sEAAsE,EAAA;EAzBtF;IA+BQ,eAAe;IACf,cAAc;IACd,WAAW,EAAA;IAjCnB;MAoCY,kBAAkB,EAAA;MApC9B;QAuCgB,UAAU;QACV,mBAAmB,EAAA;MAxCnC;QA4CgB,mBAAmB;QACnB,oBAAoB,EAAA;EA7CpC;IAqDY,cAAc,EAAA;EArD1B;IA0DQ,WAAW;IACX,wBAAwB,EAAA;IA3DhC;MAqEgB,0BAA0B,EAAA;MArE1C;QAiEoB,YAAY;QACZ,sBAAsB,EAAA;IAlE1C;MA0EY,aAAa,EAAA;IA1EzB;MA8EY,4BAA4B;MAC5B,6BAA6B,EAAA;MA/EzC;QAkFgB,wCAAwC,EAAA;MAlFxD;QAsFgB,aAAa;QACb,kBAAkB;QAClB,UAAU;QACV,QAAQ;QACR,UAAU;QACV,YAAY;QACZ,WAAW;QACX,kBAAkB,EAAA;IA7FlC;MAmGgB,yCAAyC;MACzC,0CAA0C,EAAA;IApG1D;MAwGgB,cAAc;MACd,yDAAqX,EAAA;IAzGrY;MA6GgB,cAAc;MACd,gCAAgC,EAAA;IA9GhD;MAoHgB,cAAc;MACd,yDAA6T,EAAA;IArH7U;MA2HgB,WAAW;MACX,YAAY;MACZ,qBAAqB;MACrB,sBAAsB;MACtB,eAAe,EAAA;MA/H/B;QAkIoB,gDAAgD,EAAA;MAlIpE;QAsIoB,yDAA+e,EAAA;MAtIngB;QA0IoB,yDAAmY,EAAA;IA1IvZ;MA+IgB,uBAAuB;MACvB,mBAAmB;MACnB,iBAAiB;MACjB,gBAAgB;MAChB,qBAAqB;MACrB,sBAAsB;MACtB,wBAAwB,EAAA;EArJxC;IA4JQ,qCAAqC;IACrC,eAAe;IACf,WAAW;IACX,iBAAiB;IACjB,cAAc;IACd,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IAnK9E;MAsKY,gDAAgD,EAAA;EAtK5D;IA2KQ,qCAAqC;IACrC,cAAc;IACd,WAAW;IACX,yBAAyB;IACzB,eAAe;IACf,gBAAgB;IAChB,gBAAgB;IAChB,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IApL9E;MAwLY,WAAW;MACX,eAAe,EAAA;IAzL3B;MA6LY,gBAAgB;MAChB,wBAAwB;MACxB,qBAAqB,EAAA;IA/LjC;MAmMY,kBAAkB,EAAA;IAnM9B;MAuMY,kBAAkB,EAAA;IAvM9B;MA2MY,aAAa,EAAA;EA3MzB;IAmNgB,cAAc,EAAA;EAnN9B;IAuNgB,eAAe,EAAA","sourcesContent":[":root .dara-form {\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n}\r\n\r\n.dara-form {\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .dara-form-field-container {\r\n        .dara-form-field {\r\n            position: relative;\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-size: 1rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.dara-form-row {\r\n            display: table-row;\r\n\r\n            >.dara-form-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.dara-form-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.dara-form-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    >.dara-form-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n\r\n        >.dara-form-label {\r\n\r\n            .require {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-size: 1rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n\r\n\r\n}"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -1543,53 +1914,6 @@ module.exports = function (item) {
   }
   return [content].join("\n");
 };
-
-/***/ }),
-
-/***/ "./node_modules/preact/dist/preact.module.js":
-/*!***************************************************!*\
-  !*** ./node_modules/preact/dist/preact.module.js ***!
-  \***************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Component: () => (/* binding */ b),
-/* harmony export */   Fragment: () => (/* binding */ k),
-/* harmony export */   cloneElement: () => (/* binding */ F),
-/* harmony export */   createContext: () => (/* binding */ G),
-/* harmony export */   createElement: () => (/* binding */ y),
-/* harmony export */   createRef: () => (/* binding */ _),
-/* harmony export */   h: () => (/* binding */ y),
-/* harmony export */   hydrate: () => (/* binding */ E),
-/* harmony export */   isValidElement: () => (/* binding */ t),
-/* harmony export */   options: () => (/* binding */ l),
-/* harmony export */   render: () => (/* binding */ D),
-/* harmony export */   toChildArray: () => (/* binding */ S)
-/* harmony export */ });
-var n,l,u,t,i,o,r,f,e,c={},s=[],a=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i,h=Array.isArray;function v(n,l){for(var u in l)n[u]=l[u];return n}function p(n){var l=n.parentNode;l&&l.removeChild(n)}function y(l,u,t){var i,o,r,f={};for(r in u)"key"==r?i=u[r]:"ref"==r?o=u[r]:f[r]=u[r];if(arguments.length>2&&(f.children=arguments.length>3?n.call(arguments,2):t),"function"==typeof l&&null!=l.defaultProps)for(r in l.defaultProps)void 0===f[r]&&(f[r]=l.defaultProps[r]);return d(l,f,i,o,null)}function d(n,t,i,o,r){var f={type:n,props:t,key:i,ref:o,__k:null,__:null,__b:0,__e:null,__d:void 0,__c:null,__h:null,constructor:void 0,__v:null==r?++u:r};return null==r&&null!=l.vnode&&l.vnode(f),f}function _(){return{current:null}}function k(n){return n.children}function b(n,l){this.props=n,this.context=l}function g(n,l){if(null==l)return n.__?g(n.__,n.__.__k.indexOf(n)+1):null;for(var u;l<n.__k.length;l++)if(null!=(u=n.__k[l])&&null!=u.__e)return u.__e;return"function"==typeof n.type?g(n):null}function m(n){var l,u;if(null!=(n=n.__)&&null!=n.__c){for(n.__e=n.__c.base=null,l=0;l<n.__k.length;l++)if(null!=(u=n.__k[l])&&null!=u.__e){n.__e=n.__c.base=u.__e;break}return m(n)}}function w(n){(!n.__d&&(n.__d=!0)&&i.push(n)&&!x.__r++||o!==l.debounceRendering)&&((o=l.debounceRendering)||r)(x)}function x(){var n,l,u,t,o,r,e,c,s;for(i.sort(f);n=i.shift();)n.__d&&(l=i.length,t=void 0,o=void 0,r=void 0,c=(e=(u=n).__v).__e,(s=u.__P)&&(t=[],o=[],(r=v({},e)).__v=e.__v+1,L(s,e,r,u.__n,void 0!==s.ownerSVGElement,null!=e.__h?[c]:null,t,null==c?g(e):c,e.__h,o),M(t,e,o),e.__e!=c&&m(e)),i.length>l&&i.sort(f));x.__r=0}function P(n,l,u,t,i,o,r,f,e,a,v){var p,y,_,b,g,m,w,x,P,S,H=0,I=t&&t.__k||s,T=I.length,j=T,z=l.length;for(u.__k=[],p=0;p<z;p++)null!=(b=u.__k[p]=null==(b=l[p])||"boolean"==typeof b||"function"==typeof b?null:"string"==typeof b||"number"==typeof b||"bigint"==typeof b?d(null,b,null,null,b):h(b)?d(k,{children:b},null,null,null):b.__b>0?d(b.type,b.props,b.key,b.ref?b.ref:null,b.__v):b)&&(b.__=u,b.__b=u.__b+1,-1===(x=A(b,I,w=p+H,j))?_=c:(_=I[x]||c,I[x]=void 0,j--),L(n,b,_,i,o,r,f,e,a,v),g=b.__e,(y=b.ref)&&_.ref!=y&&(_.ref&&O(_.ref,null,b),v.push(y,b.__c||g,b)),null!=g&&(null==m&&(m=g),S=!(P=_===c||null===_.__v)&&x===w,P?-1==x&&H--:x!==w&&(x===w+1?(H++,S=!0):x>w?j>z-w?(H+=x-w,S=!0):H--:H=x<w&&x==w-1?x-w:0),w=p+H,S=S||x==p&&!P,"function"!=typeof b.type||x===w&&_.__k!==b.__k?"function"==typeof b.type||S?void 0!==b.__d?(e=b.__d,b.__d=void 0):e=g.nextSibling:e=$(n,g,e):e=C(b,e,n),"function"==typeof u.type&&(u.__d=e)));for(u.__e=m,p=T;p--;)null!=I[p]&&("function"==typeof u.type&&null!=I[p].__e&&I[p].__e==u.__d&&(u.__d=I[p].__e.nextSibling),q(I[p],I[p]))}function C(n,l,u){for(var t,i=n.__k,o=0;i&&o<i.length;o++)(t=i[o])&&(t.__=n,l="function"==typeof t.type?C(t,l,u):$(u,t.__e,l));return l}function S(n,l){return l=l||[],null==n||"boolean"==typeof n||(h(n)?n.some(function(n){S(n,l)}):l.push(n)),l}function $(n,l,u){return null==u||u.parentNode!==n?n.insertBefore(l,null):l==u&&null!=l.parentNode||n.insertBefore(l,u),l.nextSibling}function A(n,l,u,t){var i=n.key,o=n.type,r=u-1,f=u+1,e=l[u];if(null===e||e&&i==e.key&&o===e.type)return u;if(t>(null!=e?1:0))for(;r>=0||f<l.length;){if(r>=0){if((e=l[r])&&i==e.key&&o===e.type)return r;r--}if(f<l.length){if((e=l[f])&&i==e.key&&o===e.type)return f;f++}}return-1}function H(n,l,u,t,i){var o;for(o in u)"children"===o||"key"===o||o in l||T(n,o,null,u[o],t);for(o in l)i&&"function"!=typeof l[o]||"children"===o||"key"===o||"value"===o||"checked"===o||u[o]===l[o]||T(n,o,l[o],u[o],t)}function I(n,l,u){"-"===l[0]?n.setProperty(l,null==u?"":u):n[l]=null==u?"":"number"!=typeof u||a.test(l)?u:u+"px"}function T(n,l,u,t,i){var o;n:if("style"===l)if("string"==typeof u)n.style.cssText=u;else{if("string"==typeof t&&(n.style.cssText=t=""),t)for(l in t)u&&l in u||I(n.style,l,"");if(u)for(l in u)t&&u[l]===t[l]||I(n.style,l,u[l])}else if("o"===l[0]&&"n"===l[1])o=l!==(l=l.replace(/Capture$/,"")),l=l.toLowerCase()in n?l.toLowerCase().slice(2):l.slice(2),n.l||(n.l={}),n.l[l+o]=u,u?t||n.addEventListener(l,o?z:j,o):n.removeEventListener(l,o?z:j,o);else if("dangerouslySetInnerHTML"!==l){if(i)l=l.replace(/xlink(H|:h)/,"h").replace(/sName$/,"s");else if("width"!==l&&"height"!==l&&"href"!==l&&"list"!==l&&"form"!==l&&"tabIndex"!==l&&"download"!==l&&"rowSpan"!==l&&"colSpan"!==l&&l in n)try{n[l]=null==u?"":u;break n}catch(n){}"function"==typeof u||(null==u||!1===u&&"-"!==l[4]?n.removeAttribute(l):n.setAttribute(l,u))}}function j(n){return this.l[n.type+!1](l.event?l.event(n):n)}function z(n){return this.l[n.type+!0](l.event?l.event(n):n)}function L(n,u,t,i,o,r,f,e,c,s){var a,p,y,d,_,g,m,w,x,C,S,$,A,H,I,T=u.type;if(void 0!==u.constructor)return null;null!=t.__h&&(c=t.__h,e=u.__e=t.__e,u.__h=null,r=[e]),(a=l.__b)&&a(u);try{n:if("function"==typeof T){if(w=u.props,x=(a=T.contextType)&&i[a.__c],C=a?x?x.props.value:a.__:i,t.__c?m=(p=u.__c=t.__c).__=p.__E:("prototype"in T&&T.prototype.render?u.__c=p=new T(w,C):(u.__c=p=new b(w,C),p.constructor=T,p.render=B),x&&x.sub(p),p.props=w,p.state||(p.state={}),p.context=C,p.__n=i,y=p.__d=!0,p.__h=[],p._sb=[]),null==p.__s&&(p.__s=p.state),null!=T.getDerivedStateFromProps&&(p.__s==p.state&&(p.__s=v({},p.__s)),v(p.__s,T.getDerivedStateFromProps(w,p.__s))),d=p.props,_=p.state,p.__v=u,y)null==T.getDerivedStateFromProps&&null!=p.componentWillMount&&p.componentWillMount(),null!=p.componentDidMount&&p.__h.push(p.componentDidMount);else{if(null==T.getDerivedStateFromProps&&w!==d&&null!=p.componentWillReceiveProps&&p.componentWillReceiveProps(w,C),!p.__e&&(null!=p.shouldComponentUpdate&&!1===p.shouldComponentUpdate(w,p.__s,C)||u.__v===t.__v)){for(u.__v!==t.__v&&(p.props=w,p.state=p.__s,p.__d=!1),u.__e=t.__e,u.__k=t.__k,u.__k.forEach(function(n){n&&(n.__=u)}),S=0;S<p._sb.length;S++)p.__h.push(p._sb[S]);p._sb=[],p.__h.length&&f.push(p);break n}null!=p.componentWillUpdate&&p.componentWillUpdate(w,p.__s,C),null!=p.componentDidUpdate&&p.__h.push(function(){p.componentDidUpdate(d,_,g)})}if(p.context=C,p.props=w,p.__P=n,p.__e=!1,$=l.__r,A=0,"prototype"in T&&T.prototype.render){for(p.state=p.__s,p.__d=!1,$&&$(u),a=p.render(p.props,p.state,p.context),H=0;H<p._sb.length;H++)p.__h.push(p._sb[H]);p._sb=[]}else do{p.__d=!1,$&&$(u),a=p.render(p.props,p.state,p.context),p.state=p.__s}while(p.__d&&++A<25);p.state=p.__s,null!=p.getChildContext&&(i=v(v({},i),p.getChildContext())),y||null==p.getSnapshotBeforeUpdate||(g=p.getSnapshotBeforeUpdate(d,_)),P(n,h(I=null!=a&&a.type===k&&null==a.key?a.props.children:a)?I:[I],u,t,i,o,r,f,e,c,s),p.base=u.__e,u.__h=null,p.__h.length&&f.push(p),m&&(p.__E=p.__=null)}else null==r&&u.__v===t.__v?(u.__k=t.__k,u.__e=t.__e):u.__e=N(t.__e,u,t,i,o,r,f,c,s);(a=l.diffed)&&a(u)}catch(n){u.__v=null,(c||null!=r)&&(u.__e=e,u.__h=!!c,r[r.indexOf(e)]=null),l.__e(n,u,t)}}function M(n,u,t){for(var i=0;i<t.length;i++)O(t[i],t[++i],t[++i]);l.__c&&l.__c(u,n),n.some(function(u){try{n=u.__h,u.__h=[],n.some(function(n){n.call(u)})}catch(n){l.__e(n,u.__v)}})}function N(l,u,t,i,o,r,f,e,s){var a,v,y,d=t.props,_=u.props,k=u.type,b=0;if("svg"===k&&(o=!0),null!=r)for(;b<r.length;b++)if((a=r[b])&&"setAttribute"in a==!!k&&(k?a.localName===k:3===a.nodeType)){l=a,r[b]=null;break}if(null==l){if(null===k)return document.createTextNode(_);l=o?document.createElementNS("http://www.w3.org/2000/svg",k):document.createElement(k,_.is&&_),r=null,e=!1}if(null===k)d===_||e&&l.data===_||(l.data=_);else{if(r=r&&n.call(l.childNodes),v=(d=t.props||c).dangerouslySetInnerHTML,y=_.dangerouslySetInnerHTML,!e){if(null!=r)for(d={},b=0;b<l.attributes.length;b++)d[l.attributes[b].name]=l.attributes[b].value;(y||v)&&(y&&(v&&y.__html==v.__html||y.__html===l.innerHTML)||(l.innerHTML=y&&y.__html||""))}if(H(l,_,d,o,e),y)u.__k=[];else if(P(l,h(b=u.props.children)?b:[b],u,t,i,o&&"foreignObject"!==k,r,f,r?r[0]:t.__k&&g(t,0),e,s),null!=r)for(b=r.length;b--;)null!=r[b]&&p(r[b]);e||("value"in _&&void 0!==(b=_.value)&&(b!==l.value||"progress"===k&&!b||"option"===k&&b!==d.value)&&T(l,"value",b,d.value,!1),"checked"in _&&void 0!==(b=_.checked)&&b!==l.checked&&T(l,"checked",b,d.checked,!1))}return l}function O(n,u,t){try{"function"==typeof n?n(u):n.current=u}catch(n){l.__e(n,t)}}function q(n,u,t){var i,o;if(l.unmount&&l.unmount(n),(i=n.ref)&&(i.current&&i.current!==n.__e||O(i,null,u)),null!=(i=n.__c)){if(i.componentWillUnmount)try{i.componentWillUnmount()}catch(n){l.__e(n,u)}i.base=i.__P=null,n.__c=void 0}if(i=n.__k)for(o=0;o<i.length;o++)i[o]&&q(i[o],u,t||"function"!=typeof n.type);t||null==n.__e||p(n.__e),n.__=n.__e=n.__d=void 0}function B(n,l,u){return this.constructor(n,u)}function D(u,t,i){var o,r,f,e;l.__&&l.__(u,t),r=(o="function"==typeof i)?null:i&&i.__k||t.__k,f=[],e=[],L(t,u=(!o&&i||t).__k=y(k,null,[u]),r||c,c,void 0!==t.ownerSVGElement,!o&&i?[i]:r?null:t.firstChild?n.call(t.childNodes):null,f,!o&&i?i:r?r.__e:t.firstChild,o,e),M(f,u,e)}function E(n,l){D(n,l,E)}function F(l,u,t){var i,o,r,f,e=v({},l.props);for(r in l.type&&l.type.defaultProps&&(f=l.type.defaultProps),u)"key"==r?i=u[r]:"ref"==r?o=u[r]:e[r]=void 0===u[r]&&void 0!==f?f[r]:u[r];return arguments.length>2&&(e.children=arguments.length>3?n.call(arguments,2):t),d(l.type,e,i||l.key,o||l.ref,null)}function G(n,l){var u={__c:l="__cC"+e++,__:n,Consumer:function(n,l){return n.children(l)},Provider:function(n){var u,t;return this.getChildContext||(u=[],(t={})[l]=this,this.getChildContext=function(){return t},this.shouldComponentUpdate=function(n){this.props.value!==n.value&&u.some(function(n){n.__e=!0,w(n)})},this.sub=function(n){u.push(n);var l=n.componentWillUnmount;n.componentWillUnmount=function(){u.splice(u.indexOf(n),1),l&&l.call(n)}}),n.children}};return u.Provider.__=u.Consumer.contextType=u}n=s.slice,l={__e:function(n,l,u,t){for(var i,o,r;l=l.__;)if((i=l.__c)&&!i.__)try{if((o=i.constructor)&&null!=o.getDerivedStateFromError&&(i.setState(o.getDerivedStateFromError(n)),r=i.__d),null!=i.componentDidCatch&&(i.componentDidCatch(n,t||{}),r=i.__d),r)return i.__E=i}catch(l){n=l}throw n}},u=0,t=function(n){return null!=n&&void 0===n.constructor},b.prototype.setState=function(n,l){var u;u=null!=this.__s&&this.__s!==this.state?this.__s:this.__s=v({},this.state),"function"==typeof n&&(n=n(v({},u),this.props)),n&&v(u,n),null!=n&&this.__v&&(l&&this._sb.push(l),w(this))},b.prototype.forceUpdate=function(n){this.__v&&(this.__e=!0,n&&this.__h.push(n),w(this))},b.prototype.render=k,i=[],r="function"==typeof Promise?Promise.prototype.then.bind(Promise.resolve()):setTimeout,f=function(n,l){return n.__v.__b-l.__v.__b},x.__r=0,e=0;
-//# sourceMappingURL=preact.module.js.map
-
-
-/***/ }),
-
-/***/ "./node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js ***!
-  \*******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Fragment: () => (/* reexport safe */ preact__WEBPACK_IMPORTED_MODULE_0__.Fragment),
-/* harmony export */   jsx: () => (/* binding */ o),
-/* harmony export */   jsxDEV: () => (/* binding */ o),
-/* harmony export */   jsxs: () => (/* binding */ o)
-/* harmony export */ });
-/* harmony import */ var preact__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! preact */ "./node_modules/preact/dist/preact.module.js");
-var _=0;function o(o,e,n,t,f,l){var s,u,a={};for(u in e)"ref"==u?s=e[u]:a[u]=e[u];var i={type:o,props:a,key:n,ref:s,__k:null,__:null,__b:0,__e:null,__d:void 0,__c:null,__h:null,constructor:void 0,__v:--_,__source:f,__self:l};if("function"==typeof o&&(s=o.defaultProps))for(u in s)void 0===a[u]&&(a[u]=s[u]);return preact__WEBPACK_IMPORTED_MODULE_0__.options.vnode&&preact__WEBPACK_IMPORTED_MODULE_0__.options.vnode(i),i}
-//# sourceMappingURL=jsxRuntime.module.js.map
-
 
 /***/ }),
 
@@ -1931,6 +2255,26 @@ module.exports = "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My
 /***/ ((module) => {
 
 module.exports = "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==";
+
+/***/ }),
+
+/***/ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+ ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+module.exports = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+";
+
+/***/ }),
+
+/***/ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+ ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((module) => {
+
+module.exports = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+";
 
 /***/ }),
 
