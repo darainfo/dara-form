@@ -612,7 +612,7 @@ class FileRender {
       }
       this.valid();
     });
-    this.fileList.map(file => {
+    this.fileList.forEach(file => {
       file.$seq = this.fileSeq += 1;
     });
     this.setFileList(this.fileList);
@@ -620,9 +620,7 @@ class FileRender {
   addFiles(files) {
     let addFlag = false;
     const newFiles = [];
-    //수정할것.
-    for (let i = 0; i < files.length; i++) {
-      const item = files[i];
+    for (let item of files) {
       const fileCheckList = this.fileList.filter(fileItem => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified);
       if (fileCheckList.length > 0) continue;
       this.fileSeq += 1;
@@ -644,18 +642,20 @@ class FileRender {
   setFileList(fileList) {
     const fileListElement = this.rowElement.querySelector('.dara-file-list');
     if (fileListElement) {
-      fileListElement.insertAdjacentHTML('beforeend', `${fileList.map(file => `
+      const fileTemplateHtml = [];
+      fileList.forEach(file => {
+        fileTemplateHtml.push(`
         <div class="file-item" data-seq="${file.$seq}">
           ${file.fileId ? '<span class="file-icon download"></span>' : '<span class="file-icon"></span>'} <span class="file-icon remove"></span>
           <span class="file-name">${file.fileName}</span > 
-        </div>
-      `).join('')}`);
+        </div>`);
+      });
+      fileListElement.insertAdjacentHTML('beforeend', fileTemplateHtml.join(''));
       fileList.forEach(item => {
         const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
         if (ele) {
           ele.addEventListener('click', evt => {
-            const targetEle = evt.target;
-            const fileItemElement = targetEle.closest('.file-item');
+            const fileItemElement = evt.target.closest('.file-item');
             if (fileItemElement) {
               const attrSeq = fileItemElement.getAttribute("data-seq");
               if (attrSeq) {
