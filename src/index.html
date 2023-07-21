@@ -44,10 +44,10 @@
         , maxLength: '{size} 글자 이상 입력할 수 없습니다.'
       }
       , "number": {
-        min: '{size} 보다 커야 합니다'
-        , min: '{size} 보다 커야 합니다'
+        minimum: '{size} 보다 커야 합니다'
+        , miximum: '{size} 보다 커야 합니다'
       }
-      , "type": {
+      , "regexp": {
         email: '이메일이 유효하지 않습니다.'
         , url: 'URL이 유효하지 않습니다.'
       }
@@ -61,6 +61,14 @@
           minLength: 3
           , maxLength: 100
         }
+        , validator: (param => {
+          console.log(param)
+          /*
+          return {
+            message: 'asdfasdf'
+          }
+          */
+        })
         , callback: {
           message: '이미 존재하는 아이디 입니다.',
           callback: function (value, validator, $field) {
@@ -81,7 +89,7 @@
         name: 'uemail'
         , label: '이메일'
         , required: true
-        , validator: 'email'
+        , regexpType: 'email'
         , rule: {
           maxLength: 100
         }
@@ -96,7 +104,8 @@
         , renderType: 'number'
         , required: true
         , rule: {
-          maxLength: 100
+          minimum: 10,
+          maximum: 20
         }
         , typeMessage: 'The input is not a valid email address'
         , isValid: function (fieldInfo) {

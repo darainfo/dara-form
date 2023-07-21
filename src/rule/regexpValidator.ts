@@ -12,14 +12,18 @@ const regexp = {
     'variable': /^[a-zA-Z0-9_$][a-zA-Z0-9_$]*$/
 };
 
-export const regexpValidator = (value: string, field: FormField): ValidResult | boolean => {
-    const result: ValidResult = { name: field.name, constraint: [] };
-    if (field.regexpType) {
-        if (!regexp[field.regexpType].test(value)) {
-            result.validator = field.regexpType;
+export const regexpValidator = (value: string, field: FormField, result: ValidResult | undefined): ValidResult => {
+    if (typeof result === 'undefined') {
+        result = { name: field.name, constraint: [] };
+    }
+
+    const regexpType = field.regexpType;
+    if (regexpType) {
+        if (!regexp[regexpType].test(value)) {
+            result.regexp = regexpType;
             return result;
         }
     }
 
-    return true;
+    return result;
 }

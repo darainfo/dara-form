@@ -1,8 +1,4 @@
-import { StringKeyMap } from "@t/DataMap";
-import utils from './util';
 import Render from "src/renderer/Render";
-
-const instanceMap = new Map();
 
 export const inputEvent = (element: Element, rederInfo: Render) => {
     element.addEventListener('input', (e: Event) => {

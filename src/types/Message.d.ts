@@ -1,18 +1,29 @@
 export interface Message {
-  required: string; //'{name} 필수 입력사항입니다.'
-  fileButton: string,
+  required: string;
+  fileButton: string;
+
+  // string
   string: {
-    minLength: string; //'{size} 글자 이상으로 입력하세요.'
-    maxLength: string; //'{size} 글자 이하로 입력하세요.'
-    between: string; //'{min} ~ {max} 사이의 글자를 입력하세요.'
+    minLength: string;
+    maxLength: string;
+    between: string;
   };
+
+  // number message
   number: {
-    min: string; //'{size} 보다 커야 합니다'
-    max: string; //'{size} 보다 커야 합니다'
-    between: string; // '{min}~{max} 사이의 숫자를 입력하세요.'
+    minimum: string;
+    exclusiveMinimum: string;
+    maximum: string;
+    exclusiveMaximum: string;
+    between: string;
+    betweenExclusiveMin: string;
+    betweenExclusiveMax: string;
+    betweenExclusiveMinMax: string;
   };
-  validator: { //'{type}이 유효하지 않습니다.'
-    'mobile': string
+
+  // 정규식 메시지
+  regexp: {
+    'mobile': string;
     'email': string;
     'url': string;
     'number': string

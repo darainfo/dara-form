@@ -36,8 +36,9 @@ export default {
         return '';
     }
 
-    , isEmpty(value: any): boolean {
+    , isBlank(value: any): boolean {
         if (value === null) return true;
+        if (value === '') return true;
         if (typeof value === 'undefined') return true;
         if (typeof value === 'string' && (value === '' || value.replace(/\s/g, '') === '')) return true;
 
@@ -54,6 +55,12 @@ export default {
 
     , isString(value: any): value is string {
         return typeof value === 'string';
+    }
+    , isNumber(value: any): value is number {
+        if (this.isBlank(value)) {
+            return false;
+        }
+        return !isNaN(value);
     }
 
 }

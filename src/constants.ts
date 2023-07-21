@@ -16,7 +16,11 @@ export const RULES = {
     EXCLUSIVE_MAX: 'exclusiveMaximum',
     MIN_LENGTH: 'minLength',
     MAX_LENGTH: 'maxLength',
-    PATTERN: 'pattern',
+    BETWEEN: 'between',
+    BETWEEN_EXCLUSIVE_MIN: 'betweenExclusiveMin',
+    BETWEEN_EXCLUSIVE_MAX: 'betweenExclusiveMax',
+    BETWEEN_EXCLUSIVE_MINMAX: 'betweenExclusiveMinMax',
+    REGEXP: 'regexp',
     REQUIRED: 'required',
     VALIDATOR: 'validator',
 } as const;

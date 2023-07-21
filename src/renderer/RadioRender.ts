@@ -75,7 +75,7 @@ export default class RadioRender implements Render {
         let validResult: ValidResult | boolean = true;
 
         if (this.field.required) {
-            if (util.isEmpty(value)) {
+            if (util.isBlank(value)) {
                 validResult = { name: this.field.name, constraint: [] };
                 validResult.constraint.push(RULES.REQUIRED);
             }

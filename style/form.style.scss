@@ -109,6 +109,7 @@
         &.invalid {
             .form-field {
                 border-color: var(--invalid-border-color);
+                outline-color: var(--invalid-border-color);
             }
 
             .help-icon {

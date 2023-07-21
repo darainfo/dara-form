@@ -2,31 +2,53 @@ import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 import util from "src/util/util";
-import { regexpValidator } from "./regexpValidator";
+import { validator } from "./validator";
 
+
+/**
+ * string validator
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @returns {(ValidResult | boolean)}
+ */
 export const stringValidator = (value: string, field: FormField): ValidResult | boolean => {
-    const result: ValidResult = { name: field.name, constraint: [] };
+    let result: ValidResult = { name: field.name, constraint: [] };
 
-    if (field.required && util.isEmpty(value)) {
+    if (field.required && util.isBlank(value)) {
         result.constraint.push(RULES.REQUIRED);
         return result;
     }
-
-    const regexpResult = regexpValidator(value, field);
-    if (regexpResult !== true) {
-        return regexpResult;
+    const validResult = validator(value, field, result);
+    if (validResult !== true) {
+        return validResult;
     }
 
     const rule = field.rule;
     if (rule) {
         const valueLength = value.length;
 
-        if (valueLength < rule.minLength) {
-            result.constraint.push(RULES.MIN_LENGTH);
+        const isMinNumber = util.isNumber(rule.minLength)
+            , isMaxNumber = util.isNumber(rule.maxLength);
+
+        let minRule = false, maxRule = false;
+        if (isMaxNumber && valueLength <= rule.minLength) {
+            minRule = true;
+        }
+        if (isMaxNumber && valueLength >= rule.maxLength) {
+            maxRule = true;
         }
 
-        if (valueLength > rule.maxLength) {
-            result.constraint.push(RULES.MAX_LENGTH);
+        if ((isMinNumber && isMaxNumber) && (minRule || maxRule)) {
+            result.constraint.push(RULES.BETWEEN);
+        } else {
+            if (minRule) {
+                result.constraint.push(RULES.MIN_LENGTH);
+            }
+
+            if (maxRule) {
+                result.constraint.push(RULES.MAX_LENGTH);
+            }
         }
     }
 

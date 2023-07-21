@@ -1,9 +1,16 @@
 import { FielInfo, FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import FileRender from "src/renderer/FileRender";
-import util from "src/util/util";
 
+
+/**
+ * file validator 
+ *
+ * @param {HTMLInputElement} element
+ * @param {FormField} field
+ * @param {FielInfo[]} fileList
+ * @returns {(ValidResult | boolean)}
+ */
 export const fileValidator = (element: HTMLInputElement, field: FormField, fileList: FielInfo[]): ValidResult | boolean => {
     const result: ValidResult = { name: field.name, constraint: [] };
 
@@ -12,21 +19,6 @@ export const fileValidator = (element: HTMLInputElement, field: FormField, fileL
             result.constraint.push(RULES.REQUIRED);
             return result;
         }
-    }
-
-    const rule = field.rule;
-    if (rule) {
-        /*
-        const valueLength = value.length;
-
-        if (valueLength < rule.minLength) {
-            result.constraint.push(RULES.MIN_LENGTH);
-        }
-
-        if (valueLength > rule.maxLength) {
-            result.constraint.push(RULES.MAX_LENGTH);
-        }
-        */
     }
 
     if (result.constraint.length > 0) {

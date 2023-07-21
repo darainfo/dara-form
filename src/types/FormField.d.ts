@@ -30,8 +30,10 @@ export interface FormField {
     , rule: {
         minLength: number // 3
         , maxLength: number //100
-        , min: number
-        , max: number
+        , minimum: number
+        , exclusiveMinimum: booealn
+        , maximum: number
+        , exclusiveMaximum: booealn
     }
     , template: OptionCallback | string
     , values: any[]

@@ -12,11 +12,17 @@ let localeMessage: Message = {
     between: "{minLength} ~ {maxLength} 사이의 글자를 입력하세요.",
   },
   number: {
-    min: "{min} 보다 커야 합니다",
-    max: "{max} 보다 커야 합니다",
-    between: "{min}~{max} 사이의 숫자를 입력하세요.",
+    minimum: "{minimum} 값과 같거나 커야 합니다",
+    exclusiveMinimum: "{minimum} 보다 커야 합니다",
+    maximum: "{maximum} 값과 같거나 작아야 합니다",
+    exclusiveMaximum: "{maximum} 보다 작아야 합니다.",
+    between: "{minimum}~{maximum} 사이의 값을 입력하세요.",
+    betweenExclusiveMin: "{minimum} 보다 크고 {maximum} 보다 같거나 작아야 합니다",
+    betweenExclusiveMax: "{minimum} 보다 같거나 크고 {maximum} 보다 작아야 합니다",
+    betweenExclusiveMinMax: "{minimum} 보다 크고 {maximum} 보다 작아야 합니다",
+
   },
-  validator: {
+  regexp: {
     'mobile': "핸드폰 번호가 유효하지 않습니다.",
     'email': "이메일이 유효하지 않습니다.",
     'url': "URL이 유효하지 않습니다.",
@@ -73,8 +79,8 @@ class Language {
 
     let messageFormats: string[] = [];
 
-    if (validResult.validator) {
-      messageFormat = (this.lang.validator as any)[validResult.validator];
+    if (validResult.regexp) {
+      messageFormat = (this.lang.regexp as any)[validResult.regexp];
       messageFormats.push(messageFormat);
     }
 
@@ -102,6 +108,10 @@ class Language {
         reMessage.push(message(msgFormat, msgParam));
       }
     })
+
+    if (validResult.validator) {
+      reMessage.push(validResult.validator.message);
+    }
 
     return reMessage;
   }
