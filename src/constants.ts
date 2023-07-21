@@ -43,3 +43,5 @@ export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';
 export type RENDER_TYPE = 'number' | 'text' | 'file' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group' | 'custom';
 
 export type REGEXP_TYPE = 'email' | 'url' | 'alpha' | 'alpha-num';
+
+export type PASSWORD_TYPE = 'number' | 'upper' | 'upper-special' | 'upper-special-number'; // 숫자 | 대문자 포함, 대문자 특수문자 포함, 대문자 특수문자 숫자 

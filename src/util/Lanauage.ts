@@ -29,7 +29,12 @@ let localeMessage: Message = {
     'alpha': "영문만 입력가능합니다.",
     'alpha-num': "영문과 숫자만 입력가능힙니다.",
     'number': '숫자만 입력가능힙니다.',
-    'variable': '값이 유효하지 않습니다.'
+    'variable': '값이 유효하지 않습니다.',
+    'number-char': '숫자 하나이상 문자 하나 이상 포함되어야합니다.',
+    'upper-char': '대문자 하나 이상 포함되어야합니다.',
+    'upper-char-special': '대문자 하나 이상 포함되어야합니다.',
+    'upper-char-special-number': '대문자 하나 이상 포함되어야합니다.',
+
   },
 };
 
