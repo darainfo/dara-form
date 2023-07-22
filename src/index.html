@@ -110,7 +110,10 @@
         name: 'upw'
         , label: '비밀번호'
         , renderType: 'password'
-        , regexp: 'number-char'
+        , regexpType: 'number-char'
+        , rule :{
+          minLength : 8
+        }
         , different: {
           field: 'uid',
           message: '아이디와 달라야 합니다.'

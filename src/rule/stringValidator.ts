@@ -24,7 +24,11 @@ export const stringValidator = (value: string, field: FormField): ValidResult | 
         return validResult;
     }
 
+   
+
     const rule = field.rule;
+
+    console.log(rule)
     if (rule) {
         const valueLength = value.length;
 
@@ -32,7 +36,7 @@ export const stringValidator = (value: string, field: FormField): ValidResult | 
             , isMaxNumber = util.isNumber(rule.maxLength);
 
         let minRule = false, maxRule = false;
-        if (isMaxNumber && valueLength <= rule.minLength) {
+        if (isMinNumber && valueLength <= rule.minLength) {
             minRule = true;
         }
         if (isMaxNumber && valueLength >= rule.maxLength) {

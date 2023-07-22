@@ -30,10 +30,10 @@ let localeMessage: Message = {
     'alpha-num': "영문과 숫자만 입력가능힙니다.",
     'number': '숫자만 입력가능힙니다.',
     'variable': '값이 유효하지 않습니다.',
-    'number-char': '숫자 하나이상 문자 하나 이상 포함되어야합니다.',
-    'upper-char': '대문자 하나 이상 포함되어야합니다.',
-    'upper-char-special': '대문자 하나 이상 포함되어야합니다.',
-    'upper-char-special-number': '대문자 하나 이상 포함되어야합니다.',
+    'number-char': '숫자, 문자 각각 하나 이상 포함 되어야 합니다.',
+    'upper-char': '대문자가 하나 이상 포함 되어야 합니다.',
+    'upper-char-special': '대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.',
+    'upper-char-special-number': '대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다.',
 
   },
 };

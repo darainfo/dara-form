@@ -46,7 +46,6 @@ export default class PasswordRender implements Render {
     }
 
     valid(): any {
-        // TODO password 관련 사항 처리 할것. 
         const validResult = stringValidator(this.getValue(), this.field);
 
         invalidMessage(this.field, this.rowElement, validResult);
