@@ -185,7 +185,7 @@ export default class DaraForm {
     getFieldElement(fieldName: string) {
         const field = this.allFieldInfo[fieldName];
 
-        if (field && field.$renderer) {
+        if (field?.$renderer) {
             return field.$renderer.getElement();
         }
 

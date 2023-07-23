@@ -14,11 +14,9 @@ import { RULES } from "src/constants";
 export const fileValidator = (element: HTMLInputElement, field: FormField, fileList: FielInfo[]): ValidResult | boolean => {
     const result: ValidResult = { name: field.name, constraint: [] };
 
-    if (field.required && element.files && element.files.length < 1) {
-        if (fileList.length < 1) {
-            result.constraint.push(RULES.REQUIRED);
-            return result;
-        }
+    if (field.required && fileList.length < 1) {
+        result.constraint.push(RULES.REQUIRED);
+        return result;
     }
 
     if (result.constraint.length > 0) {

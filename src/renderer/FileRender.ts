@@ -146,6 +146,7 @@ export default class FileRender implements Render {
   }
 
   valid(): any {
+
     const validResult = fileValidator(this.element, this.field, this.fileList);
 
     invalidMessage(this.field, this.rowElement, validResult);
