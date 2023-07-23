@@ -33,8 +33,8 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    //mode: 'horizontal',
-    mode: 'vertical',
+    mode: 'horizontal',
+    //mode: 'vertical',
     //width: '600px',
     labelWidth: '150px',
     message: {
@@ -78,6 +78,43 @@
           minLength: 2,
           maxLength: 100
         }
+      }
+
+      ,{
+        label: '주소'
+        , viewMode : 'horizontal'  // 'vertical , horizontal'
+        ,children:[
+            {
+            name: 'newAddress'
+            , label: '신규주소여부'
+            , hideLabel : true
+            , required: true
+            , renderType: 'checkbox'
+            , values: [
+              { label: 'option1', value: '1' }
+            ]
+          }
+          ,{
+            name: 'address'
+            , label: '주소'
+            , hideLabel : true
+            , required: true
+            , rule: {
+              minLength: 2,
+              maxLength: 100
+            }
+          }
+          ,{
+            name: 'address2'
+            , label: '주소1'
+            , hideLabel : true
+            , required: true
+            , rule: {
+              minLength: 2,
+              maxLength: 100
+            }
+          }
+        ]
       }
       , {
         name: 'uemail'

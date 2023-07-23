@@ -21,6 +21,7 @@ export interface FielInfo {
 
 export interface FormField {
     label: string // '아이디'
+    , hideLabel: boolean
     , viewMode: string //'horizontal' // horizontal , vertical /   // radio, checkbox, group
     , name: string // 'uid'
     , type: FORM_FIELD_TYPE
@@ -37,7 +38,7 @@ export interface FormField {
     }
     , template: OptionCallback | string
     , values: any[]
-    , childen: FormField[]
+    , children: FormField[]
     , validator?: OptionCallback
     , renderer: Render
     , $renderer: Render

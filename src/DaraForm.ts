@@ -88,14 +88,21 @@ export default class DaraForm {
         this.addRowFields.forEach(fieldName => {
             const fileldInfo = this.allFieldInfo[fieldName];
             fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
-            fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, rowElement);
+
+            const fieldElement = rowElement.querySelector(`.sub-row [name="${fileldInfo.$xssName}"]`);
+
+            if(fieldElement){ // sub group 일경우 sub-row 를 row element 로 처리.
+                fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldElement?.closest('.sub-row'));
+            }else{
+                fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, rowElement);
+            }
         })
     }
 
     rowTemplate(field: FormField) {
         let fieldHtml = '';
 
-        if (field.childen) {
+        if (field.children) {
             fieldHtml = this.groupTemplate(field);
         } else {
             fieldHtml = this.getFieldTempate(field);
@@ -107,7 +114,6 @@ export default class DaraForm {
             </div>
             <div class="dara-form-field-container">
                 ${fieldHtml}
-                <div class="help-message"></div>
             </div>
         `;
     }
@@ -120,14 +126,15 @@ export default class DaraForm {
      */
     groupTemplate(field: FormField) {
         const childTemplae = [];
-        childTemplae.push(`<ul class="sub-field-group ${field.renderType === 'group' ? 'group-inline' : 'group-row'}">`);
-        field.childen.forEach(childField => {
-            if (childField.childen) {
+        
+        childTemplae.push(`<ul class="sub-field-group ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">`);
+        field.children.forEach(childField => {
+            if (childField.children) {
                 childTemplae.push(this.rowTemplate(field));
             } else {
                 replaceXssField(childField);
                 childTemplae.push(`<li class="sub-row">
-                        <span class="sub-label">${childField.label}</span>
+                        ${childField.hideLabel ? '' : `<span class="sub-label">${childField.label}</span>`}
                         <span class="sub-field">${this.getFieldTempate(childField)}</span>
                     </li>`
                 );
@@ -146,10 +153,16 @@ export default class DaraForm {
      * @returns {string}
      */
     getFieldTempate(field: FormField): string {
+
+        if(this.allFieldInfo[field.name]){
+            throw new Error(`Duplicate field name "${field.name}"`)
+        }
         this.allFieldInfo[field.name] = field;
-        this.addRowFields.push(field.name);
+
+        if(field.name) this.addRowFields.push(field.name);
+
         field.$renderer = getRenderer(field);
-        return (field.$renderer as any).template(field);
+        return (field.$renderer as any).template(field)+ '<div class="help-message"></div>';
     }
 
 

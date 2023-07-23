@@ -20,9 +20,23 @@ export default class CheckboxRender implements Render {
                 this.defaultCheckValue.push(val.value);
             }
         });
+
+        this.initEvent();
     }
 
-    public initEvent() { }
+    public initEvent() {
+        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+        
+        checkboxes.forEach(ele=>{
+            ele.addEventListener('change', (e: Event) => {
+                this.valid();
+            })
+        })
+    }
+
+    public getSelector(){
+        return `input[type="checkbox"][name="${this.field.$xssName}"]`;
+    }
 
     static template(field: FormField): string {
         const templates: string[] = [];
@@ -63,17 +77,20 @@ export default class CheckboxRender implements Render {
         } else {
             valueArr.push(value);
         }
+
+        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+        
+        checkboxes.forEach(ele=>{
+            (ele as HTMLInputElement).checked = false;
+        })
+
         valueArr.forEach(val => {
             const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`) as HTMLInputElement;
-            ele.checked = true;
+            if(ele) ele.checked = true;
         })
     }
 
     reset() {
-        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
-            (item as HTMLInputElement).checked = false;
-        })
-
         this.setValue(this.defaultCheckValue);
         resetRowElementStyleClass(this.rowElement);
     }

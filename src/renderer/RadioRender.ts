@@ -20,9 +20,22 @@ export default class RadioRender implements Render {
                 this.defaultCheckValue = val.value;
             }
         });
+        this.initEvent();
     }
 
-    public initEvent() { }
+    public initEvent() {
+        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+        
+        checkboxes.forEach(ele=>{
+            ele.addEventListener('change', (e: Event) => {
+                this.valid();
+            })
+        })
+    }
+
+    public getSelector(){
+        return `input[type="radio"][name="${this.field.$xssName}"]`;
+    }
 
     static template(field: FormField): string {
         const templates: string[] = [];
@@ -51,22 +64,26 @@ export default class RadioRender implements Render {
     }
 
     setValue(value: any): void {
-        const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`) as HTMLInputElement;
-        ele.checked = true;
+
+        const elements = this.rowElement.querySelectorAll(this.getSelector());
+        
+        elements.forEach(ele=>{
+            let radioEle = ele as HTMLInputElement;
+            if(radioEle.value == value){
+                radioEle.checked = true;
+            }else{
+                radioEle.checked = false;
+            }
+        })
     }
 
     reset() {
-        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
-            (item as HTMLInputElement).checked = false;
-        })
-
-        console.log('this.defaultCheckValue : ', this.defaultCheckValue)
         this.setValue(this.defaultCheckValue);
         resetRowElementStyleClass(this.rowElement);
     }
 
     getElement(): any {
-        return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
+        return this.rowElement.querySelectorAll(this.getSelector());
     }
 
     valid(): any {
