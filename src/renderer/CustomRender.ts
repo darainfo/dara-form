@@ -1,16 +1,15 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
-import { $dom } from "src/util/domCtrl";
-import { inputEvent } from "src/util/renderEvents";
+import { resetRowElementStyleClass } from "src/util/validUtils";
+import DaraForm from "src/DaraForm";
 
-export default class CustomRender implements Render {
+export default class CustomRender extends Render {
   private rowElement: Element;
   private field;
   private customFunction;
 
-  constructor(field: FormField, rowElement: HTMLElement) {
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm);
     this.field = field;
     this.rowElement = rowElement;
     this.customFunction = field.renderer;
@@ -25,7 +24,7 @@ export default class CustomRender implements Render {
 
   static template(field: FormField): string {
     if ((field.renderer as any).template) {
-      return ` <div class="dara-form-field">${(field.renderer as any).template()}</div>`;
+      return ` <div class="dara-form-field">${(field.renderer as any).template()}</div><div class="help-message"></div>`;
     }
     return '';
   }

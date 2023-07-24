@@ -1,40 +1,44 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import XssUtil from "src/util/util";
+import XssUtil from "src/util/utils";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
+import { customChangeEventCall } from "src/event/renderEvents";
+import util from "src/util/utils";
+import DaraForm from "src/DaraForm";
 
-export default class CheckboxRender implements Render {
+export default class CheckboxRender extends Render {
     private rowElement: HTMLElement;
     private field;
-    private defaultCheckValue: any[]
+    private defaultCheckValue: any[] = [];
 
-    constructor(field: FormField, rowElement: HTMLElement) {
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+        super(daraForm);
         this.field = field;
         this.rowElement = rowElement;
-        this.defaultCheckValue = [];
-
-        this.field.values.forEach((val) => {
-            if (val.selected) {
-                this.defaultCheckValue.push(val.value);
-            }
-        });
 
         this.initEvent();
     }
 
     public initEvent() {
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-        
-        checkboxes.forEach(ele=>{
+        this.defaultCheckValue = [];
+        this.field.values.forEach((val) => {
+            if (val.selected) {
+                this.defaultCheckValue.push(val.value);
+            }
+        });
+
+        checkboxes.forEach(ele => {
             ele.addEventListener('change', (e: Event) => {
+                customChangeEventCall(this.field, e, this);
                 this.valid();
             })
         })
     }
 
-    public getSelector(){
+    public getSelector() {
         return `input[type="checkbox"][name="${this.field.$xssName}"]`;
     }
 
@@ -54,20 +58,41 @@ export default class CheckboxRender implements Render {
                 </span>
             `);
         })
-        templates.push(`<i class="dara-icon help-icon"></i></div></div>`);
+        templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        <div class="help-message"></div>
+        `);
+
 
         return templates.join('');
     }
 
-    getValue(): any[] {
-        const checkValue: any[] = [];
+    public setValueItems(items: any): void {
 
-        this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).forEach(item => {
-            checkValue.push((item as HTMLInputElement).value);
+        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        if (containerEle) {
+            this.field.values = items;
+            containerEle.innerHTML = CheckboxRender.template(this.field);
 
-        })
+            this.initEvent();
+        }
+    }
 
-        return checkValue;
+    getValue() {
+
+        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+
+        if (checkboxes.length > 1) {
+            const checkValue: any[] = [];
+            checkboxes.forEach(ele => {
+                const checkEle = ele as HTMLInputElement;
+                if (checkEle.checked) {
+                    checkValue.push(checkEle.value);
+                }
+            });
+            return checkValue;
+        } else {
+            return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).length > 0;
+        }
     }
 
     setValue(value: any): void {
@@ -79,14 +104,14 @@ export default class CheckboxRender implements Render {
         }
 
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-        
-        checkboxes.forEach(ele=>{
+
+        checkboxes.forEach(ele => {
             (ele as HTMLInputElement).checked = false;
         })
 
         valueArr.forEach(val => {
             const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`) as HTMLInputElement;
-            if(ele) ele.checked = true;
+            if (ele) ele.checked = true;
         })
     }
 
@@ -104,8 +129,9 @@ export default class CheckboxRender implements Render {
 
         let validResult: ValidResult | boolean = true;
 
-        if (this.field.required) {
-            if (value.length < 1) {
+        if (this.field.required && util.isArray(value)) {
+
+            if ((value as any[]).length < 1) {
                 validResult = { name: this.field.name, constraint: [] };
                 validResult.constraint.push(RULES.REQUIRED);
             }

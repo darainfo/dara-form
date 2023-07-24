@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import util from "src/util/util";
+import util from "src/util/utils";
 import { validator } from "./validator";
 
 
@@ -24,11 +24,8 @@ export const stringValidator = (value: string, field: FormField): ValidResult | 
         return validResult;
     }
 
-   
-
     const rule = field.rule;
 
-    console.log(rule)
     if (rule) {
         const valueLength = value.length;
 

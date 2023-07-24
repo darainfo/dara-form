@@ -1,12 +1,15 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
+import DaraForm from "src/DaraForm";
 
-export default class GroupRender implements Render {
-    private element;
+export default class GroupRender extends Render {
+    private rowElement;
     private field;
-    constructor(field: FormField, element: HTMLTextAreaElement) {
+
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+        super(daraForm);
         this.field = field;
-        this.element = element;
+        this.rowElement = rowElement;
     }
 
     public initEvent() { }
@@ -23,19 +26,19 @@ export default class GroupRender implements Render {
     }
 
     getValue() {
-        return this.element.value;
+        return null;
     }
 
     setValue(value: any): void {
-        this.element.value = value;
+        //this.rowElement.value = value;
     }
 
     reset() {
-        this.element.value = '';
+        //this.rowElement.value = '';
     }
 
     getElement(): HTMLElement {
-        return this.element;
+        return this.rowElement;
     }
 
     valid(): any {

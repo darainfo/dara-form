@@ -1,15 +1,17 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
-import { inputEvent } from "src/util/renderEvents";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
+import { inputEvent } from "src/event/renderEvents";
+import DaraForm from "src/DaraForm";
 
-export default class PasswordRender implements Render {
+export default class PasswordRender extends Render {
     private element: HTMLInputElement;
     private rowElement: HTMLElement;
     private field;
 
-    constructor(field: FormField, rowElement: HTMLElement) {
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+        super(daraForm);
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
@@ -17,7 +19,7 @@ export default class PasswordRender implements Render {
     }
 
     initEvent() {
-        inputEvent(this.element, this);
+        inputEvent(this.field, this.element, this);
     }
 
     static template(field: FormField): string {
@@ -25,6 +27,7 @@ export default class PasswordRender implements Render {
             <div class="dara-form-field">
                 <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
             </div>
+            <div class="help-message"></div>
         `;
     }
 

@@ -2,15 +2,18 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
-import util from "src/util/util";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
+import util from "src/util/utils";
+import { customChangeEventCall } from "src/event/renderEvents";
+import DaraForm from "src/DaraForm";
 
-export default class RadioRender implements Render {
+export default class RadioRender extends Render {
     private rowElement: HTMLElement;
     private field;
     private defaultCheckValue;
 
-    constructor(field: FormField, rowElement: HTMLElement) {
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+        super(daraForm);
         this.field = field;
         this.rowElement = rowElement;
         this.defaultCheckValue = this.field.values[0].value;
@@ -25,15 +28,17 @@ export default class RadioRender implements Render {
 
     public initEvent() {
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-        
-        checkboxes.forEach(ele=>{
+
+        checkboxes.forEach(ele => {
             ele.addEventListener('change', (e: Event) => {
+                customChangeEventCall(this.field, e, this);
+
                 this.valid();
             })
         })
     }
 
-    public getSelector(){
+    public getSelector() {
         return `input[type="radio"][name="${this.field.$xssName}"]`;
     }
 
@@ -54,9 +59,23 @@ export default class RadioRender implements Render {
                 `
             )
         })
-        templates.push(`<i class="dara-icon help-icon"></i></div></div> `);
+        templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        <div class="help-message"></div>
+         `);
+
 
         return templates.join('');
+    }
+
+    public setValueItems(items: any): void {
+
+        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        if (containerEle) {
+            this.field.values = items;
+            containerEle.innerHTML = RadioRender.template(this.field);
+
+            this.initEvent();
+        }
     }
 
     getValue() {
@@ -66,12 +85,12 @@ export default class RadioRender implements Render {
     setValue(value: any): void {
 
         const elements = this.rowElement.querySelectorAll(this.getSelector());
-        
-        elements.forEach(ele=>{
+
+        elements.forEach(ele => {
             let radioEle = ele as HTMLInputElement;
-            if(radioEle.value == value){
+            if (radioEle.value == value) {
                 radioEle.checked = true;
-            }else{
+            } else {
                 radioEle.checked = false;
             }
         })

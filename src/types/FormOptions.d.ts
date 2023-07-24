@@ -9,6 +9,7 @@ export interface FormOptions {
     mode: string //'horizontal' // horizontal , vertical // 가로 세로 모드
     , width: string //'100%'
     , labelWidth: string// '20%'
+    , autoFocus: boolean//  default true
     , notValidMessage: string//'This value is not valid'
     , message: {
         required: string // '{name} 필수 입력사항입니다.'
@@ -18,7 +19,7 @@ export interface FormOptions {
         }
         , "number": {
             min: string //'{size} 보다 커야 합니다'
-            , max : string //'{size} 보다 커야 합니다'
+            , max: string //'{size} 보다 커야 합니다'
         }
         , "type": {
             message: string // '{type} 유효하지 않습니다.'

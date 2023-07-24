@@ -2,16 +2,18 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
-import { dropdownChangeEvent } from "src/util/renderEvents";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
+import { dropdownChangeEvent } from "src/event/renderEvents";
+import DaraForm from "src/DaraForm";
 
-export default class DropdownRender implements Render {
+export default class DropdownRender extends Render {
     private element: HTMLSelectElement;
     private rowElement: HTMLElement;
     private field;
     private defaultCheckValue;
 
-    constructor(field: FormField, rowElement: HTMLElement) {
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+        super(daraForm);
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
@@ -28,7 +30,7 @@ export default class DropdownRender implements Render {
     }
 
     initEvent() {
-        dropdownChangeEvent(this.element, this);
+        dropdownChangeEvent(this.field, this.element, this);
     }
 
     static template(field: FormField): string {
@@ -38,8 +40,21 @@ export default class DropdownRender implements Render {
             template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
         })
 
-        template += `</select> <i class="help-icon"></i></div>`;
+        template += `</select> <i class="help-icon"></i></div>
+                    <div class="help-message"></div>
+        `;
         return template;
+    }
+
+    public setValueItems(items: any): void {
+
+        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        if (containerEle) {
+            this.field.values = items;
+            containerEle.innerHTML = DropdownRender.template(this.field);
+
+            this.initEvent();
+        }
     }
 
     getValue() {

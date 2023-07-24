@@ -40,6 +40,7 @@ export interface FormField {
     , values: any[]
     , children: FormField[]
     , validator?: OptionCallback
+    , onChange: OptionCallback
     , renderer: Render
     , $renderer: Render
     , $isCustomRenderer: boolean

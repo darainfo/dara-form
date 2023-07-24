@@ -1,10 +1,12 @@
 import { FielInfo, FormField } from "@t/FormField";
 import Render from "./Render";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtil";
+import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { fileValidator } from "src/rule/fileValidator";
 import Lanauage from "src/util/Lanauage";
+import { customChangeEventCall } from "src/event/renderEvents";
+import DaraForm from "src/DaraForm";
 
-export default class FileRender implements Render {
+export default class FileRender extends Render {
   private element: HTMLInputElement;
   private rowElement: Element;
   private field;
@@ -13,7 +15,9 @@ export default class FileRender implements Render {
   private fileList: any[] = [];
   private fileSeq = 0;
 
-  constructor(field: FormField, rowElement: HTMLElement) {
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm);
+
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
@@ -29,6 +33,7 @@ export default class FileRender implements Render {
       if (files) {
         this.addFiles(files);
       }
+      customChangeEventCall(this.field, e, this);
       this.valid();
     })
 
@@ -122,6 +127,7 @@ export default class FileRender implements Render {
       </span>
     </div>
     <div class="dara-file-list"></div>
+    <div class="help-message"></div>
     `;
   }
 

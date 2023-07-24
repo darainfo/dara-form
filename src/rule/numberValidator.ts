@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
-import util from "src/util/util";
+import util from "src/util/utils";
 import { validator } from "./validator";
 
 export const numberValidator = (value: string, field: FormField): ValidResult | boolean => {

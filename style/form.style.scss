@@ -37,45 +37,55 @@
             }
         }
 
-        .sub-field-group{
+        .sub-field-group {
             padding: 0px;
             margin: 0px;
             list-style: none;
-            
 
-            &.vertical{
-                display: block;
+            .sub-row {
+                .field-group {
+                    position: relative;
 
-                .sub-row{
-                    padding-bottom:5px;
-                }
-
-                .sub-row:last-child{
-                    padding-bottom:0px;
+                    .help-icon {
+                        margin-right: -16px;
+                    }
                 }
             }
 
-            &.horizontal{
+
+            &.vertical {
+                display: block;
+
+                .sub-row {
+                    padding-bottom: 5px;
+                }
+
+                .sub-row:last-child {
+                    padding-bottom: 0px;
+                }
+            }
+
+            &.horizontal {
                 display: table;
 
-                .sub-row{
+                .sub-row {
                     display: table-cell;
                     padding-right: 15px;
-    
-                    .sub-label{
+
+                    .sub-label {
                         padding-right: 10px;
                     }
-    
-                    >span{
+
+                    >span {
                         display: table-cell;
                     }
                 }
             }
 
-            
+
         }
 
-       
+
     }
 
     &.horizontal {
@@ -105,7 +115,7 @@
         }
     }
 
-    >.dara-form-row{
+    >.dara-form-row {
         width: 100%;
         margin: 0px 0px 10px 0px;
 
@@ -144,7 +154,7 @@
                 margin-right: 15px;
             }
         }
-        
+
         .dara-file-list {
             .file-icon {
                 width: 20px;
@@ -178,8 +188,9 @@
         }
     }
 
-    >.dara-form-row ,.sub-row  {
-        
+    >.dara-form-row,
+    .sub-row {
+
         &.invalid {
             .form-field {
                 border-color: var(--invalid-border-color);

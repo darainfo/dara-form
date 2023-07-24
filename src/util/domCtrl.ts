@@ -1,5 +1,5 @@
 import { StringKeyMap } from "@t/DataMap";
-import utils from './util';
+import utils from './utils';
 
 const instanceMap = new Map();
 

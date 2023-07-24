@@ -36,6 +36,7 @@
     mode: 'horizontal',
     //mode: 'vertical',
     //width: '600px',
+    //autoFocus: false,
     labelWidth: '150px',
     message: {
       empty: '{name} 필수 입력사항입니다.',
@@ -62,8 +63,9 @@
           , maxLength: 100
         }
         , validator: (param => {
-          console.log(param)
+
           /*
+          console.log(param)
           return {
             message: 'asdfasdf'
           }
@@ -78,36 +80,42 @@
           minLength: 2,
           maxLength: 100
         }
+        , onChange: (arg) => {
+          console.log(arg);
+        }
       }
 
-      ,{
+      , {
         label: '주소'
-        , viewMode : 'horizontal'  // 'vertical , horizontal'
-        ,children:[
-            {
+        , viewMode: 'vertical'  // 'vertical , horizontal'
+        , children: [
+          {
             name: 'newAddress'
             , label: '신규주소여부'
-            , hideLabel : true
+            , hideLabel: true
             , required: true
             , renderType: 'checkbox'
             , values: [
               { label: 'option1', value: '1' }
             ]
+            , onChange: (arg) => {
+              console.log(arg);
+            }
           }
-          ,{
+          , {
             name: 'address'
             , label: '주소'
-            , hideLabel : true
+            , hideLabel: true
             , required: true
             , rule: {
               minLength: 2,
               maxLength: 100
             }
           }
-          ,{
+          , {
             name: 'address2'
             , label: '주소1'
-            , hideLabel : true
+            , hideLabel: true
             , required: true
             , rule: {
               minLength: 2,
@@ -148,8 +156,8 @@
         , label: '비밀번호'
         , renderType: 'password'
         , regexpType: 'number-char'
-        , rule :{
-          minLength : 8
+        , rule: {
+          minLength: 8
         }
         , different: {
           field: 'uid',
@@ -212,7 +220,7 @@
         ]
       }
       , {
-        name: 'textarea"></textarea>aaaa<textarea "aaa" class="form-field textarea" '
+        name: 'textarea'
         , label: '텍스트 area'
         , renderType: 'textarea'
       }

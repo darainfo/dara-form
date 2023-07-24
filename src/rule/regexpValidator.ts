@@ -23,13 +23,11 @@ export const regexpValidator = (value: string, field: FormField, result: ValidRe
 
     const regexpType = field.regexpType;
 
-    console.log('regexpType ', regexpType)
     if (regexpType) {
         if (!regexp[regexpType].test(value)) {
             result.regexp = regexpType;
             return result;
         }
-
     }
 
     return result;

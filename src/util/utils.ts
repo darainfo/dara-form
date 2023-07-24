@@ -1,3 +1,5 @@
+import { FormField } from "@t/FormField";
+
 const xssFilter = {
     "&": "&amp;"
     , "<": "&lt;"
@@ -62,5 +64,15 @@ export default {
         }
         return !isNaN(value);
     }
+
+    , isArray(value: any) {
+        return Array.isArray(value);
+    }
+
+    , replaceXssField(field: FormField) {
+        field.name = this.replace(field.name);
+        field.label = this.replace(field.label);
+    }
+
 
 }
