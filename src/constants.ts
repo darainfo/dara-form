@@ -7,6 +7,7 @@ import RadioRender from "src/renderer/RadioRender";
 import PasswordRender from "src/renderer/PasswordRender";
 import FileRender from "src/renderer/FileRender";
 import CustomRender from "./renderer/CustomRender";
+import GroupRender from "./renderer/GroupRender";
 
 
 export const RULES = {
@@ -25,6 +26,7 @@ export const RULES = {
     VALIDATOR: 'validator',
 } as const;
 
+export const FIELD_PREFIX = 'dff'; // dara form field
 
 export const RENDER_TEMPLATE: any = {
     'number': NumberRender
@@ -36,6 +38,7 @@ export const RENDER_TEMPLATE: any = {
     , 'password': PasswordRender
     , 'file': FileRender
     , 'custom': CustomRender
+    , 'group': GroupRender
 };
 
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';

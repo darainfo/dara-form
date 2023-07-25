@@ -1,6 +1,5 @@
 import { FormOptions } from '@t/FormOptions';
 import { FormField } from '@t/FormField';
-import { getRenderer } from './util/renderFactory';
 import utils from './util/utils';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
@@ -8,7 +7,8 @@ import Lanauage from './util/Lanauage';
 import { stringValidator } from './rule/stringValidator';
 import { numberValidator } from './rule/numberValidator';
 import { regexpValidator } from './rule/regexpValidator';
-import util from './util/utils';
+import FieldInfoMap from 'src/FieldInfoMap';
+import GroupRender from './renderer/GroupRender';
 
 let defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
@@ -30,7 +30,7 @@ export default class DaraForm {
 
     private formElement;
 
-    private allFieldInfo: FieldMap = {};
+    private fieldInfoMap;
 
     private addRowFields: string[] = [];
 
@@ -40,6 +40,7 @@ export default class DaraForm {
         daraFormIdx += 1;
 
         Lanauage.set(message);
+        this.fieldInfoMap = new FieldInfoMap(selector);
 
         this.isHorizontal = this.options.mode === 'horizontal';
 
@@ -61,6 +62,7 @@ export default class DaraForm {
         fields.forEach((field) => {
             this.addRow(field);
         })
+        this.conditionCheck();
     }
 
     /**
@@ -73,8 +75,6 @@ export default class DaraForm {
         const rowElement = document.createElement("div");
         rowElement.className = `dara-form-row`;
 
-        util.replaceXssField(field);
-
         let rednerTemplate = '';
         if (field.renderer) {
             field.$isCustomRenderer = true;
@@ -82,21 +82,19 @@ export default class DaraForm {
 
         rednerTemplate = this.rowTemplate(field);
 
+        rowElement.setAttribute('id', field.$key);
+
         rowElement.innerHTML = rednerTemplate;
 
         this.formElement.appendChild(rowElement); // Append the element
 
-        this.addRowFields.forEach(fieldName => {
-            const fileldInfo = this.allFieldInfo[fieldName];
+        this.addRowFields.forEach(fieldSeq => {
+            const fileldInfo = this.fieldInfoMap.get(fieldSeq);
             fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
 
-            const fieldElement = rowElement.querySelector(`.sub-row [name="${fileldInfo.$xssName}"]`);
-
-            if (fieldElement) { // sub group 일경우 sub-row 를 row element 로 처리.
-                fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldElement?.closest('.sub-row'), this);
-            } else {
-                fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, rowElement, this);
-            }
+            const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+            fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldRowElement, this);
+            fieldRowElement?.removeAttribute('id');
         })
     }
 
@@ -104,6 +102,7 @@ export default class DaraForm {
         let fieldHtml = '';
 
         if (field.children) {
+            this.addRowFieldInfo(field);
             fieldHtml = this.groupTemplate(field);
         } else {
             fieldHtml = this.getFieldTempate(field);
@@ -120,6 +119,17 @@ export default class DaraForm {
     }
 
     /**
+     * add row file map
+     *
+     * @param {FormField} field
+     */
+    addRowFieldInfo(field: FormField) {
+        utils.replaceXssField(field);
+        this.fieldInfoMap.addField(field);
+        this.addRowFields.push(field.$key);
+    }
+
+    /**
      * 그룹 템플릿
      *
      * @param {FormField} field
@@ -133,10 +143,10 @@ export default class DaraForm {
             if (childField.children) {
                 childTemplae.push(this.rowTemplate(field));
             } else {
-                util.replaceXssField(childField);
-                childTemplae.push(`<li class="sub-row">
+                const childTempate = this.getFieldTempate(childField);
+                childTemplae.push(`<li class="sub-row" id="${childField.$key}">
                         ${childField.hideLabel ? '' : `<span class="sub-label">${childField.label}</span>`}
-                        <span class="dara-form-field-container">${this.getFieldTempate(childField)}</span>
+                        <span class="dara-form-field-container">${childTempate}</span>
                     </li>`
                 );
             }
@@ -155,24 +165,22 @@ export default class DaraForm {
      */
     getFieldTempate(field: FormField): string {
 
-        if (this.allFieldInfo[field.name]) {
+        if (this.fieldInfoMap.hasFieldName(field.name)) {
             throw new Error(`Duplicate field name "${field.name}"`)
         }
-        this.allFieldInfo[field.name] = field;
 
-        if (field.name) this.addRowFields.push(field.name);
+        this.addRowFieldInfo(field);
 
-        field.$renderer = getRenderer(field);
         return (field.$renderer as any).template(field);
     }
-
 
     /**
      * 폼 데이터 reset
      */
     resetForm = () => {
-        for (const fieldName in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldName];
+        const fieldMap = this.fieldInfoMap.getAllFieldInfo();
+        for (const seq in fieldMap) {
+            const filedInfo = fieldMap[seq];
             const renderInfo = filedInfo.$renderer;
 
             if (renderInfo && typeof renderInfo.reset === 'function') {
@@ -186,9 +194,8 @@ export default class DaraForm {
      * @param fieldName 필드명
      */
     resetField = (fieldName: string) => {
-        this.allFieldInfo[fieldName].$renderer.reset();
+        this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
     }
-
 
     /**
      * 필드 element 얻기
@@ -197,7 +204,7 @@ export default class DaraForm {
      * @returns {*}
      */
     getFieldElement(fieldName: string) {
-        const field = this.allFieldInfo[fieldName];
+        const field = this.fieldInfoMap.getFieldName(fieldName);
 
         if (field?.$renderer) {
             return field.$renderer.getElement();
@@ -214,7 +221,7 @@ export default class DaraForm {
      */
     getFieldValue = (fieldName: string) => {
 
-        const field = this.allFieldInfo[fieldName];
+        const field = this.fieldInfoMap.getFieldName(fieldName);
 
         if (field) {
             return field.$renderer.getValue();
@@ -228,24 +235,7 @@ export default class DaraForm {
      * @returns 
      */
     getValue = (isValid: boolean): any => {
-
-        let reval = {} as any;
-        Object.keys(this.allFieldInfo).forEach((fieldName) => {
-            const filedInfo = this.allFieldInfo[fieldName];
-            const renderInfo = filedInfo.$renderer;
-            if (isValid) {
-                let fieldValid = renderInfo.valid();
-
-                if (fieldValid !== true) {
-                    fieldValid = fieldValid as ValidResult;
-                    throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
-                }
-            }
-
-            reval[fieldName] = renderInfo.getValue();
-        })
-
-        return reval;
+        return this.fieldInfoMap.getAllFieldValue(isValid);
     }
 
     /**
@@ -255,7 +245,7 @@ export default class DaraForm {
     setValue = (values: any) => {
         Object.keys(values).forEach((fieldName) => {
             const value = values[fieldName];
-            const filedInfo = this.allFieldInfo[fieldName];
+            const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
 
             if (filedInfo) {
                 const renderInfo = filedInfo.$renderer;
@@ -266,7 +256,7 @@ export default class DaraForm {
 
     setFieldItems = (fieldName: string, values: any) => {
 
-        const field = this.allFieldInfo[fieldName];
+        const field = this.fieldInfoMap.getFieldName(fieldName);
 
         if (field) {
             return field.$renderer.setValueItems(values);
@@ -281,6 +271,7 @@ export default class DaraForm {
     addField = (field: FormField) => {
         this.options.fields.push(field);
         this.addRow(field);
+        this.conditionCheck();
     }
 
     /**
@@ -294,7 +285,7 @@ export default class DaraForm {
         if (element != null) {
             element.closest('.dara-form-row')?.remove();
 
-            delete this.allFieldInfo[fieldName];
+            this.fieldInfoMap.removeFieldInfo(fieldName);
         }
     }
 
@@ -308,7 +299,6 @@ export default class DaraForm {
         return result.length > 0 ? false : true;
     }
 
-
     /**
      * 유효성 검증 폼 검증여부 리턴
      *
@@ -317,9 +307,13 @@ export default class DaraForm {
     validForm = (): any[] => {
         let validResult = [] as any;
         let firstFlag = this.options.autoFocus !== false ? true : false;
-        for (const fieldName in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldName];
+
+        const fieldMap = this.fieldInfoMap.getAllFieldInfo();
+        for (const fieldKey in fieldMap) {
+            const filedInfo = fieldMap[fieldKey];
             const renderInfo = filedInfo.$renderer;
+
+            console.log(fieldKey, filedInfo, renderInfo)
 
             let fieldValid = renderInfo.valid();
 
@@ -336,7 +330,7 @@ export default class DaraForm {
     }
 
     isValidField = (fieldName: string): boolean => {
-        const filedInfo = this.allFieldInfo[fieldName];
+        const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
 
         if (typeof filedInfo === 'undefined') {
             throw new Error(`Field name [${fieldName}] not found`);
@@ -352,6 +346,10 @@ export default class DaraForm {
 
     getOptions = () => {
         return this.options;
+    }
+
+    conditionCheck() {
+        this.fieldInfoMap.conditionCheck();
     }
 
     /*

@@ -4,12 +4,11 @@ import { resetRowElementStyleClass } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
 
 export default class CustomRender extends Render {
-  private rowElement: Element;
   private field;
   private customFunction;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm);
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.customFunction = field.renderer;

@@ -8,12 +8,11 @@ import DaraForm from "src/DaraForm";
 
 export default class DropdownRender extends Render {
     private element: HTMLSelectElement;
-    private rowElement: HTMLElement;
     private field;
     private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;

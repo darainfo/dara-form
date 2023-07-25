@@ -8,7 +8,6 @@ import DaraForm from "src/DaraForm";
 
 export default class FileRender extends Render {
   private element: HTMLInputElement;
-  private rowElement: Element;
   private field;
   private removeIds: any[] = [];
   private uploadFiles: any = {};
@@ -16,7 +15,7 @@ export default class FileRender extends Render {
   private fileSeq = 0;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm);
+    super(daraForm, rowElement);
 
     this.field = field;
     this.rowElement = rowElement;

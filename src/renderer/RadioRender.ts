@@ -8,12 +8,11 @@ import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class RadioRender extends Render {
-    private rowElement: HTMLElement;
     private field;
     private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
         this.defaultCheckValue = this.field.values[0].value;

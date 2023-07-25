@@ -7,11 +7,10 @@ import DaraForm from "src/DaraForm";
 
 export default class NumberRender extends Render {
     private element: HTMLInputElement;
-    private rowElement: HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;

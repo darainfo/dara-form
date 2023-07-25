@@ -96,7 +96,7 @@
             , required: true
             , renderType: 'checkbox'
             , values: [
-              { label: 'option1', value: '1' }
+              { label: 'option1', value: '1', selected: true }
             ]
             , onChange: (arg) => {
               console.log(arg);
@@ -111,6 +111,12 @@
               minLength: 2,
               maxLength: 100
             }
+            , conditional: {
+              show: true,
+              custom: function () {
+                return true;
+              }
+            }
           }
           , {
             name: 'address2'
@@ -120,6 +126,12 @@
             , rule: {
               minLength: 2,
               maxLength: 100
+            }
+            , conditional: {
+              show: false,
+              field: 'newAddress',
+              eq: true,
+              //custom?: OptionCallback
             }
           }
         ]

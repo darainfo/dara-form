@@ -19,6 +19,13 @@ export interface FielInfo {
     , lastModified?: any
 }
 
+export interface ConditionInfo {
+    show: boolean,
+    field: string,
+    eq: any,
+    custom?: OptionCallback
+}
+
 export interface FormField {
     label: string // '아이디'
     , hideLabel: boolean
@@ -42,8 +49,10 @@ export interface FormField {
     , validator?: OptionCallback
     , onChange: OptionCallback
     , renderer: Render
+    , conditional: ConditionInfo
     , $renderer: Render
     , $isCustomRenderer: boolean
     , $xssName: string
     , $type: string
+    , $key: string
 }

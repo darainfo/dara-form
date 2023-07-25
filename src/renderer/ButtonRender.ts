@@ -5,7 +5,7 @@ import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { inputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
-export default class TextRender extends Render {
+export default class ButtonRender extends Render {
   private element: HTMLInputElement;
   private field;
 

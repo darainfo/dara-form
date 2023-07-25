@@ -4,9 +4,12 @@ import DaraForm from "src/DaraForm";
 
 export default abstract class Render {
 
-    private daraForm;
-    constructor(form: DaraForm) {
+    protected daraForm;
+    protected rowElement;
+
+    constructor(form: DaraForm, rowElement: HTMLElement) {
         this.daraForm = form;
+        this.rowElement = rowElement;
     }
 
 
@@ -21,9 +24,7 @@ export default abstract class Render {
     public abstract getElement(): any;
     public abstract valid(): ValidResult | boolean;
 
-    public setValueItems(value: any): void {
-
-    };
+    public setValueItems(value: any): void { };
 
     public changeEventCall(field: FormField, e: Event, rederInfo: Render) {
         if (field.onChange) {
@@ -33,9 +34,22 @@ export default abstract class Render {
                 value: rederInfo.getValue()
             });
         }
+
+        this.daraForm.conditionCheck();
     }
 
     public focus() {
         this.getElement().focus();
     }
+
+    public show() {
+        this.rowElement.classList.remove('df-hidden');
+    }
+
+    public hide() {
+        if (!this.rowElement.classList.contains('df-hidden')) {
+            this.rowElement.classList.add('df-hidden');
+        };
+    }
+
 }

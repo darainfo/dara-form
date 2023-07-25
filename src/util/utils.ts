@@ -74,5 +74,16 @@ export default {
         field.label = this.replace(field.label);
     }
 
+    , getHashCode(str: string) {
+        let hash = 0;
+        if (str.length == 0) return hash;
+        for (let i = 0; i < str.length; i++) {
+            let tmpChar = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + tmpChar;
+            hash = hash & hash;
+        }
+        return hash;
+    }
+
 
 }

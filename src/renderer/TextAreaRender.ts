@@ -7,11 +7,10 @@ import DaraForm from "src/DaraForm";
 
 export default class TextAreaRender extends Render {
     private element: HTMLTextAreaElement;
-    private rowElement: HTMLElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;

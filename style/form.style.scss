@@ -37,32 +37,35 @@
             }
         }
 
+        .df-hidden {
+            display: none;
+        }
+
         .sub-field-group {
             padding: 0px;
             margin: 0px;
             list-style: none;
-
-            .sub-row {
-                .field-group {
-                    position: relative;
-
-                    .help-icon {
-                        margin-right: -16px;
-                    }
-                }
-            }
-
 
             &.vertical {
                 display: block;
 
                 .sub-row {
                     padding-bottom: 5px;
+
+                    +.sub-row {
+                        padding-bottom: 5px;
+                    }
+                }
+
+                .sub-row:has(~ .df-hidden) {
+                    padding-bottom: 0px;
                 }
 
                 .sub-row:last-child {
                     padding-bottom: 0px;
                 }
+
+
             }
 
             &.horizontal {
@@ -71,6 +74,14 @@
                 .sub-row {
                     display: table-cell;
                     padding-right: 15px;
+
+                    .field-group {
+                        position: relative;
+
+                        .help-icon {
+                            margin-right: -16px;
+                        }
+                    }
 
                     .sub-label {
                         padding-right: 10px;

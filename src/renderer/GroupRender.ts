@@ -3,11 +3,10 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class GroupRender extends Render {
-    private rowElement;
     private field;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
     }
@@ -15,14 +14,7 @@ export default class GroupRender extends Render {
     public initEvent() { }
 
     static template(field: FormField): string {
-        let template = `<select name="${field.name}" class="form-field dropdown">`;
-
-        field.values.forEach(val => {
-            template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
-        })
-
-        template += `</select>`;
-        return template;
+        return '';
     }
 
     getValue() {
@@ -30,11 +22,11 @@ export default class GroupRender extends Render {
     }
 
     setValue(value: any): void {
-        //this.rowElement.value = value;
+
     }
 
     reset() {
-        //this.rowElement.value = '';
+
     }
 
     getElement(): HTMLElement {
@@ -42,7 +34,7 @@ export default class GroupRender extends Render {
     }
 
     valid(): any {
-        return false;
+        return true;
     }
 
 

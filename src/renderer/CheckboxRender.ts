@@ -9,12 +9,11 @@ import util from "src/util/utils";
 import DaraForm from "src/DaraForm";
 
 export default class CheckboxRender extends Render {
-    private rowElement: HTMLElement;
     private field;
     private defaultCheckValue: any[] = [];
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm);
+        super(daraForm, rowElement);
         this.field = field;
         this.rowElement = rowElement;
 
