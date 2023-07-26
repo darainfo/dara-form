@@ -51,7 +51,7 @@ export default class CheckboxRender extends Render {
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${XssUtil.replace(val.value)}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        <input type="checkbox" name="${fieldName}" value="${val.value ? XssUtil.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
                         ${val.label}
                     </label>
                 </span>
@@ -95,6 +95,17 @@ export default class CheckboxRender extends Render {
     }
 
     setValue(value: any): void {
+        this.field.$value = value;
+        if (value === true) {
+            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = true;
+            return;
+        }
+
+        if (value === false) {
+            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = false;
+            return;
+        }
+
         let valueArr: any[] = [];
         if (Array.isArray(value)) {
             valueArr = value;

@@ -71,16 +71,16 @@ export default class DaraForm {
      * @param field 
      */
     addRow(field: FormField) {
+
+        if (this.checkHiddenField(field)) {
+            return;
+        }
+
         this.addRowFields = [];
         const rowElement = document.createElement("div");
         rowElement.className = `dara-form-row`;
 
-        let rednerTemplate = '';
-        if (field.renderer) {
-            field.$isCustomRenderer = true;
-        }
-
-        rednerTemplate = this.rowTemplate(field);
+        let rednerTemplate = this.rowTemplate(field);
 
         rowElement.setAttribute('id', field.$key);
 
@@ -102,10 +102,13 @@ export default class DaraForm {
         let fieldHtml = '';
 
         if (field.children) {
-            this.addRowFieldInfo(field);
             fieldHtml = this.groupTemplate(field);
         } else {
             fieldHtml = this.getFieldTempate(field);
+        }
+
+        if (this.checkHiddenField(field)) {
+            return '';
         }
 
         return `
@@ -119,17 +122,6 @@ export default class DaraForm {
     }
 
     /**
-     * add row file map
-     *
-     * @param {FormField} field
-     */
-    addRowFieldInfo(field: FormField) {
-        utils.replaceXssField(field);
-        this.fieldInfoMap.addField(field);
-        this.addRowFields.push(field.$key);
-    }
-
-    /**
      * 그룹 템플릿
      *
      * @param {FormField} field
@@ -139,39 +131,70 @@ export default class DaraForm {
         const childTemplae = [];
 
         childTemplae.push(`<ul class="sub-field-group ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">`);
-        field.children.forEach(childField => {
+
+        for (const childField of field.children) {
+            let childTempate = '';
             if (childField.children) {
-                childTemplae.push(this.rowTemplate(field));
+                childTempate = this.groupTemplate(childField);
             } else {
-                const childTempate = this.getFieldTempate(childField);
-                childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                        ${childField.hideLabel ? '' : `<span class="sub-label">${childField.label}</span>`}
-                        <span class="dara-form-field-container">${childTempate}</span>
-                    </li>`
-                );
+                if (this.checkHiddenField(childField)) {
+                    continue;
+                }
+
+                childTempate = this.getFieldTempate(childField);
             }
-        })
+
+            childTemplae.push(`<li class="sub-row" id="${childField.$key}">
+                ${childField.hideLabel ? '' : `<span class="sub-label">${childField.label}</span>`}
+                <span class="dara-form-field-container">${childTempate}</span>
+            </li>`
+            );
+
+        }
         childTemplae.push('</ul>');
 
         return childTemplae.join('');
     }
 
-
     /**
-     * field tempalte 구하기
-     *
-     * @param {FormField} field
-     * @returns {string}
-     */
+    * field tempalte 구하기
+    *
+    * @param {FormField} field
+    * @returns {string}
+    */
     getFieldTempate(field: FormField): string {
 
-        if (this.fieldInfoMap.hasFieldName(field.name)) {
+        if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
             throw new Error(`Duplicate field name "${field.name}"`)
         }
 
         this.addRowFieldInfo(field);
 
         return (field.$renderer as any).template(field);
+    }
+
+    checkHiddenField(field: FormField) {
+        const isHidden = utils.isHiddenField(field);
+
+        if (isHidden) {
+            this.fieldInfoMap.addField(field);
+            field.$renderer = new (field.$renderer as any)(field, null, this);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * add row file map
+     *
+     * @param {FormField} field
+     */
+    addRowFieldInfo(field: FormField) {
+        utils.replaceXssField(field);
+        this.fieldInfoMap.addField(field);
+        this.addRowFields.push(field.$key);
     }
 
     /**
@@ -187,6 +210,7 @@ export default class DaraForm {
                 renderInfo.reset();
             }
         }
+        this.conditionCheck();
     }
 
     /**
@@ -195,6 +219,7 @@ export default class DaraForm {
      */
     resetField = (fieldName: string) => {
         this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
+        this.conditionCheck();
     }
 
     /**
@@ -246,12 +271,20 @@ export default class DaraForm {
         Object.keys(values).forEach((fieldName) => {
             const value = values[fieldName];
             const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+            console.log(fieldName)
 
             if (filedInfo) {
                 const renderInfo = filedInfo.$renderer;
                 renderInfo.setValue(value);
             }
         })
+        this.conditionCheck();
+    }
+
+    setFieldValue = (fieldName: string, values: any) => {
+        const value = {} as any;
+        value[fieldName] = values;
+        this.setValue(value);
     }
 
     setFieldItems = (fieldName: string, values: any) => {

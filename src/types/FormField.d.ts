@@ -44,6 +44,7 @@ export interface FormField {
         , exclusiveMaximum: booealn
     }
     , template: OptionCallback | string
+    , defaultValue: string
     , values: any[]
     , children: FormField[]
     , validator?: OptionCallback
@@ -51,8 +52,8 @@ export interface FormField {
     , renderer: Render
     , conditional: ConditionInfo
     , $renderer: Render
-    , $isCustomRenderer: boolean
     , $xssName: string
     , $type: string
     , $key: string
+    , $value: string
 }

@@ -35,6 +35,7 @@ export default class PasswordRender extends Render {
     }
 
     setValue(value: any): void {
+        this.field.$value = value;
         this.element.value = value;
     }
 

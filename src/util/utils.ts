@@ -69,9 +69,10 @@ export default {
         return Array.isArray(value);
     }
 
-    , replaceXssField(field: FormField) {
+    , replaceXssField(field: FormField): FormField {
         field.name = this.replace(field.name);
         field.label = this.replace(field.label);
+        return field;
     }
 
     , getHashCode(str: string) {
@@ -83,6 +84,13 @@ export default {
             hash = hash & hash;
         }
         return hash;
+    }
+
+    , isHiddenField(field: FormField): boolean {
+        if (field.renderType === 'hidden') {
+            return true;
+        }
+        return false;
     }
 
 

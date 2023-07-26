@@ -1,45 +1,39 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { inputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
-export default class ButtonRender extends Render {
-
+export default class HiddenRender extends Render {
   private field;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
-    this.initEvent();
+    this.field.$value = field.defaultValue;
   }
 
   initEvent() {
-    // inputEvent(this.field, this.element, this);
+
   }
 
   static template(field: FormField): string {
-    return `
-      <button type="button" class="df-btn">${field.label}</button>
-     `;
+    return ``;
   }
 
   getValue() {
-    return '';
+    return this.field.$value;
   }
 
   setValue(value: any): void {
-
+    this.field.$value = value;
   }
 
   reset() {
-
+    this.setValue(this.field.defaultValue);
   }
 
   getElement() {
-    return null;
+    return;
   }
 
   valid(): any {

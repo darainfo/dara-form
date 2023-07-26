@@ -11,6 +11,7 @@ export interface Message {
 
   // number message
   number: {
+    nan: string;
     minimum: string;
     exclusiveMinimum: string;
     maximum: string;

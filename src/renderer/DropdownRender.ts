@@ -61,6 +61,7 @@ export default class DropdownRender extends Render {
     }
 
     setValue(value: any): void {
+        this.field.$value = value;
         this.element.value = value;
     }
 

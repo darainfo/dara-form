@@ -82,6 +82,16 @@ export default class RadioRender extends Render {
     }
 
     setValue(value: any): void {
+        this.field.$value = value;
+        if (value === true) {
+            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = true;
+            return;
+        }
+
+        if (value === false) {
+            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = false;
+            return;
+        }
 
         const elements = this.rowElement.querySelectorAll(this.getSelector());
 

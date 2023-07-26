@@ -36,6 +36,7 @@ export default class CustomRender extends Render {
   }
 
   setValue(value: any): void {
+    this.field.$value = value;
     if (this.customFunction.setValue) {
       (this.customFunction.setValue as any).call(this, value, this.field, this.rowElement);
     }

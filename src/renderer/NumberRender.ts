@@ -2,7 +2,7 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { numberValidator } from "src/rule/numberValidator";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { inputEvent } from "src/event/renderEvents";
+import { inputEvent, numberInputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class NumberRender extends Render {
@@ -18,7 +18,7 @@ export default class NumberRender extends Render {
     }
 
     initEvent() {
-        inputEvent(this.field, this.element, this);
+        numberInputEvent(this.field, this.element, this);
     }
 
     static template(field: FormField): string {
@@ -35,6 +35,7 @@ export default class NumberRender extends Render {
     }
 
     setValue(value: any): void {
+        this.field.$value = value;
         this.element.value = value;
     }
 

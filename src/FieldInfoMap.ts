@@ -143,7 +143,6 @@ export default class FieldInfoMap {
      * @public
      */
     public conditionCheck() {
-
         this.conditionFields.forEach(fieldKey => {
             const filedInfo = this.allFieldInfo[fieldKey];
 

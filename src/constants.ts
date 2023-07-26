@@ -8,9 +8,12 @@ import PasswordRender from "src/renderer/PasswordRender";
 import FileRender from "src/renderer/FileRender";
 import CustomRender from "./renderer/CustomRender";
 import GroupRender from "./renderer/GroupRender";
+import HiddenRender from "./renderer/HiddenRender";
+import ButtonRender from "./renderer/ButtonRender";
 
 
 export const RULES = {
+    NAN: 'nan',
     MIN: 'minimum',
     EXCLUSIVE_MIN: 'exclusiveMinimum',
     MAX: 'maximum',
@@ -39,6 +42,8 @@ export const RENDER_TEMPLATE: any = {
     , 'file': FileRender
     , 'custom': CustomRender
     , 'group': GroupRender
+    , 'hidden': HiddenRender
+    , 'button': ButtonRender
 };
 
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';

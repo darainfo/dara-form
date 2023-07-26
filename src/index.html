@@ -55,6 +55,11 @@
     }
     , fields: [
       {
+        name: 'hiddenMode'
+        , renderType: 'hidden'
+        , defaultValue: 'asdf'
+      }
+      , {
         name: 'uid'
         , label: '아이디'
         , required: true
@@ -64,12 +69,6 @@
         }
         , validator: (param => {
 
-          /*
-          console.log(param)
-          return {
-            message: 'asdfasdf'
-          }
-          */
         })
       }
       , {
@@ -85,6 +84,7 @@
         }
       }
 
+
       , {
         label: '주소'
         , viewMode: 'vertical'  // 'vertical , horizontal'
@@ -96,7 +96,7 @@
             , required: true
             , renderType: 'checkbox'
             , values: [
-              { label: 'option1', value: '1', selected: true }
+              { label: 'option1', selected: true }
             ]
             , onChange: (arg) => {
               console.log(arg);
@@ -132,6 +132,34 @@
               field: 'newAddress',
               eq: true,
               //custom?: OptionCallback
+            }
+          }
+          , {
+            name: 'hiddenMode1'
+            , renderType: 'hidden'
+            , label: '주소 하위1'
+            //, viewMode: 'vertical'  // 'vertical , horizontal'
+            , hideLabel: true
+            , children: [
+              {
+                name: 'address22222'
+                , label: '주소1'
+                , renderType: 'hidden'
+              }
+              , {
+                name: 'address222333322'
+                , label: '주소1'
+                , renderType: 'hidden'
+              }
+            ]
+
+          }
+          , {
+            label: '버튼'
+            , hideLabel: true
+            , renderType: 'button'
+            , onClick: (arg) => {
+              console.log(arg);
             }
           }
         ]

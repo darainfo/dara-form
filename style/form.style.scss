@@ -38,7 +38,9 @@
         }
 
         .df-hidden {
-            display: none;
+            max-height: 0vh !important;
+            transition: all 0.25s ease-out;
+            visibility: hidden;
         }
 
         .sub-field-group {
@@ -50,26 +52,36 @@
                 display: block;
 
                 .sub-row {
-                    padding-bottom: 5px;
+                    padding-top: 5px;
+                    max-height: 100vh;
+                    transition: all 0.25s ease-in;
 
                     +.sub-row {
-                        padding-bottom: 5px;
+                        padding-top: 5px;
+                    }
+
+                    +.df-hidden {
+                        padding-top: 0px;
                     }
                 }
 
-                .sub-row:has(~ .df-hidden) {
-                    padding-bottom: 0px;
+                .sub-row:first-child {
+                    padding-top: 0px;
                 }
 
-                .sub-row:last-child {
-                    padding-bottom: 0px;
+                .df-hidden:first-child:has(~ .sub-row) {
+                    padding-top: 0px;
                 }
-
-
             }
 
             &.horizontal {
                 display: table;
+
+                .df-hidden {
+                    width: 0px;
+                    padding-right: 0px !important;
+                    display: none !important;
+                }
 
                 .sub-row {
                     display: table-cell;
@@ -291,6 +303,14 @@
         }
     }
 
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
 
+        }
 
+        to {
+            opacity: 0;
+        }
+    }
 }
