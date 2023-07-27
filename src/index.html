@@ -184,12 +184,13 @@
       , {
         name: 'age'
         , label: '나이'
-        , renderType: 'number'
+        , renderType: 'range'
         , required: true
         , rule: {
-          minimum: 10,
-          maximum: 20
+          minimum: 0,
+          maximum: 200
         }
+        , defaultValue: 0
         , typeMessage: 'The input is not a valid email address'
         , isValid: function (fieldInfo) {
 

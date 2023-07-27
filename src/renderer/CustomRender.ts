@@ -10,6 +10,7 @@ export default class CustomRender extends Render {
     super(daraForm, field, rowElement);
     this.customFunction = field.renderer;
     this.initEvent();
+    this.setDefaultInfo();
   }
 
   initEvent() {

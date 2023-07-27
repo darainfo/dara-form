@@ -44,8 +44,6 @@ export default class DaraForm {
 
         this.isHorizontal = this.options.mode === 'horizontal';
 
-        console.log('asfd', this.isHorizontal, this.options.mode)
-
         const formElement = document.querySelector(selector);
         if (formElement) {
             formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;

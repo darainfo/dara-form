@@ -2,21 +2,30 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { numberValidator } from "src/rule/numberValidator";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { numberInputEvent } from "src/event/renderEvents";
+import { customChangeEventCall, numberInputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
-export default class NumberRender extends Render {
+export default class RangeRender extends Render {
     private element: HTMLInputElement;
+    private rangeNumElement: Element;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
+        this.rangeNumElement = rowElement.querySelector('.range-num') as Element;
+
         this.initEvent();
         this.setDefaultInfo();
     }
 
     initEvent() {
-        numberInputEvent(this.field, this.element, this);
+        this.element.addEventListener('input', (e: any) => {
+            this.rangeNumElement.innerHTML = e.target.value;
+
+            this.element.setAttribute('title', e.target.value);
+            customChangeEventCall(this.field, e, this);
+            this.valid();
+        })
     }
 
     static template(field: FormField): string {
@@ -24,7 +33,7 @@ export default class NumberRender extends Render {
 
         return `
         <div class="df-field">
-            <input type="text" name="${field.name}" class="form-field number help-icon" />
+        <span class="range-num">${field.defaultValue ? field.defaultValue : '0'}</span><input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
         ${desc}
         <div class="help-message"></div>

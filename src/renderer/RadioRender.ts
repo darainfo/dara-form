@@ -20,6 +20,8 @@ export default class RadioRender extends Render {
             }
         });
         this.initEvent();
+
+        this.setDefaultInfo();
     }
 
     public initEvent() {

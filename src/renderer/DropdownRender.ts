@@ -23,6 +23,7 @@ export default class DropdownRender extends Render {
         });
 
         this.initEvent();
+        this.setDefaultInfo();
     }
 
     initEvent() {

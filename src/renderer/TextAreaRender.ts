@@ -12,6 +12,7 @@ export default class TextAreaRender extends Render {
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
         this.initEvent();
+        this.setDefaultInfo();
     }
 
     initEvent() {

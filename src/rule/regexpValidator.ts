@@ -16,6 +16,15 @@ const regexp = {
     , 'upper-char-special-number': /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]/
 };
 
+
+/**
+ * 정규식 유효성 체크. 
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @param {(ValidResult | undefined)} result
+ * @returns {ValidResult}
+ */
 export const regexpValidator = (value: string, field: FormField, result: ValidResult | undefined): ValidResult => {
     if (typeof result === 'undefined') {
         result = { name: field.name, constraint: [] };

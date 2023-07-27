@@ -1,6 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import DaraForm from "src/DaraForm";
+import utils from "src/util/utils";
 
 export default abstract class Render {
 
@@ -16,6 +17,12 @@ export default abstract class Render {
         if (field.tooltip) rowElement.querySelector('.df-tooltip')?.setAttribute('tooltip', field.tooltip);
     }
 
+    public setDefaultInfo() {
+
+        if (!utils.isUndefined(this.field.defaultValue)) {
+            this.setValue(this.field.defaultValue);
+        }
+    }
 
     public getForm(): DaraForm {
         return this.daraForm;

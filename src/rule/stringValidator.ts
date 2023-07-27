@@ -51,10 +51,9 @@ export const stringValidator = (value: string, field: FormField): ValidResult | 
                 result.constraint.push(RULES.MAX_LENGTH);
             }
         }
-    }
-
-    if (result.constraint.length > 0) {
-        return result;
+        if (result.constraint.length > 0) {
+            return result;
+        }
     }
 
     return true;

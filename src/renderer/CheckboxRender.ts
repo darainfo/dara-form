@@ -14,6 +14,8 @@ export default class CheckboxRender extends Render {
         super(daraForm, field, rowElement);
 
         this.initEvent();
+
+        this.setDefaultInfo();
     }
 
     public initEvent() {

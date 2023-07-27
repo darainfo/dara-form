@@ -4,6 +4,14 @@ import { RULES } from "src/constants";
 import { validator } from "./validator";
 import utils from "src/util/utils";
 
+
+/**
+ * 숫자 유효성 체크
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @returns {(ValidResult | boolean)}
+ */
 export const numberValidator = (value: string, field: FormField): ValidResult | boolean => {
     const result: ValidResult = { name: field.name, constraint: [] };
     const numValue = Number(value);

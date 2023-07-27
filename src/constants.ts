@@ -10,6 +10,7 @@ import CustomRender from "./renderer/CustomRender";
 import GroupRender from "./renderer/GroupRender";
 import HiddenRender from "./renderer/HiddenRender";
 import ButtonRender from "./renderer/ButtonRender";
+import RangeRender from "./renderer/RangeRender";
 
 
 export const RULES = {
@@ -44,6 +45,7 @@ export const RENDER_TEMPLATE: any = {
     , 'group': GroupRender
     , 'hidden': HiddenRender
     , 'button': ButtonRender
+    , 'range': RangeRender
 };
 
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';
