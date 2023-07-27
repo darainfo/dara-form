@@ -4,13 +4,10 @@ import { resetRowElementStyleClass } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
 
 export default class CustomRender extends Render {
-  private field;
   private customFunction;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.customFunction = field.renderer;
     this.initEvent();
   }
@@ -22,8 +19,12 @@ export default class CustomRender extends Render {
   }
 
   static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
+
     if ((field.renderer as any).template) {
-      return ` <div class="dara-form-field">${(field.renderer as any).template()}</div><div class="help-message"></div>`;
+      return ` <div class="df-field">${(field.renderer as any).template()}</div>
+      ${desc}
+        <div class="help-message"></div>`;
     }
     return '';
   }

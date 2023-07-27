@@ -1,14 +1,14 @@
 import { FielInfo, FormField } from "@t/FormField";
 import Render from "./Render";
-export default class FileRender implements Render {
+import DaraForm from "src/DaraForm";
+export default class FileRender extends Render {
     private element;
-    private rowElement;
     private field;
     private removeIds;
     private uploadFiles;
     private fileList;
     private fileSeq;
-    constructor(field: FormField, rowElement: HTMLElement);
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
     addFiles(files: FileList): void;
     setFileList(fileList: FielInfo[]): void;

@@ -1,12 +1,12 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-export default class GroupRender implements Render {
-    private element;
+import DaraForm from "src/DaraForm";
+export default class GroupRender extends Render {
     private field;
-    constructor(field: FormField, element: HTMLTextAreaElement);
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
     static template(field: FormField): string;
-    getValue(): string;
+    getValue(): null;
     setValue(value: any): void;
     reset(): void;
     getElement(): HTMLElement;

@@ -44,14 +44,19 @@ export default class DaraForm {
 
         this.isHorizontal = this.options.mode === 'horizontal';
 
-        const formElement = document.createElement("form");
-        formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
-        formElement.setAttribute('style', `width:${this.options.width};`);
+        console.log('asfd', this.isHorizontal, this.options.mode)
 
-        document.querySelector(selector)?.appendChild(formElement);
+        const formElement = document.querySelector(selector);
+        if (formElement) {
+            formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
+            formElement.setAttribute('style', `width:${this.options.width};`);
 
-        this.formElement = formElement;
-        this.createForm(this.options.fields);
+            this.formElement = formElement;
+            this.createForm(this.options.fields);
+        } else {
+            throw new Error(`${selector} form selector not found`);
+        }
+
     }
 
     public static setMessage(message: Message): void {
@@ -78,7 +83,7 @@ export default class DaraForm {
 
         this.addRowFields = [];
         const rowElement = document.createElement("div");
-        rowElement.className = `dara-form-row`;
+        rowElement.className = `df-row`;
 
         let rednerTemplate = this.rowTemplate(field);
 
@@ -102,6 +107,7 @@ export default class DaraForm {
         let fieldHtml = '';
 
         if (field.children) {
+            this.addRowFieldInfo(field);
             fieldHtml = this.groupTemplate(field);
         } else {
             fieldHtml = this.getFieldTempate(field);
@@ -112,13 +118,20 @@ export default class DaraForm {
         }
 
         return `
-            <div class="dara-form-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
-                <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
+            <div class="df-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
+                <span>${this.getLabelTemplate(field)}</span>
             </div>
-            <div class="dara-form-field-container">
+            <div class="df-field-container">
                 ${fieldHtml}
             </div>
         `;
+    }
+
+    getLabelTemplate(field: FormField) {
+        const requiredTemplate = field.required ? `<span class="required"></span>` : '';
+        const tooltipTemplate = utils.isBlank(field.tooltip) ? '' : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+
+        return `${field.label} ${tooltipTemplate} ${requiredTemplate}`;
     }
 
     /**
@@ -130,7 +143,22 @@ export default class DaraForm {
     groupTemplate(field: FormField) {
         const childTemplae = [];
 
-        childTemplae.push(`<ul class="sub-field-group ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">`);
+        let viewStyleClass = '';
+        let childLabelWidth = '';
+        let isHorizontal = false;
+        if (field.viewMode === 'vertical') {
+            viewStyleClass = 'vertical';
+        } else {
+            if (field.viewMode === "horizontal-row") {
+                childLabelWidth = field.childLabelWidth ? `width:${field.childLabelWidth};` : '';
+                viewStyleClass = 'horizontal-row';
+            } else {
+                isHorizontal = true;
+                viewStyleClass = 'horizontal';
+            }
+        }
+
+        childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
 
         for (const childField of field.children) {
             let childTempate = '';
@@ -144,9 +172,13 @@ export default class DaraForm {
                 childTempate = this.getFieldTempate(childField);
             }
 
+            if (isHorizontal) {
+                childLabelWidth = childField.labelWidth ? `width:${childField.labelWidth};` : '';
+            }
+
             childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${childField.hideLabel ? '' : `<span class="sub-label">${childField.label}</span>`}
-                <span class="dara-form-field-container">${childTempate}</span>
+                ${childField.hideLabel ? '' : `<span class="sub-label" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+                <span class="df-field-container">${childTempate}</span>
             </li>`
             );
 
@@ -316,7 +348,7 @@ export default class DaraForm {
         const element = this.getFieldElement(fieldName);
 
         if (element != null) {
-            element.closest('.dara-form-row')?.remove();
+            element.closest('.df-row')?.remove();
 
             this.fieldInfoMap.removeFieldInfo(fieldName);
         }
@@ -345,8 +377,6 @@ export default class DaraForm {
         for (const fieldKey in fieldMap) {
             const filedInfo = fieldMap[fieldKey];
             const renderInfo = filedInfo.$renderer;
-
-            console.log(fieldKey, filedInfo, renderInfo)
 
             let fieldValid = renderInfo.valid();
 

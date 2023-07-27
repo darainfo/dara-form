@@ -8,13 +8,10 @@ import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class RadioRender extends Render {
-    private field;
     private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, rowElement);
-        this.field = field;
-        this.rowElement = rowElement;
+        super(daraForm, field, rowElement);
         this.defaultCheckValue = this.field.values[0].value;
 
         this.field.values.forEach((val) => {
@@ -45,7 +42,9 @@ export default class RadioRender extends Render {
         const templates: string[] = [];
         const fieldName = field.name;
 
-        templates.push(`<div class="dara-form-field"><div class="field-group">`);
+        const desc = field.description ? `<div>${field.description}</div>` : '';
+
+        templates.push(`<div class="df-field"><div class="field-group">`);
         field.values.forEach((val) => {
 
             templates.push(
@@ -59,6 +58,7 @@ export default class RadioRender extends Render {
             )
         })
         templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        ${desc}
         <div class="help-message"></div>
          `);
 
@@ -68,7 +68,7 @@ export default class RadioRender extends Render {
 
     public setValueItems(items: any): void {
 
-        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        const containerEle = this.rowElement.querySelector('.df-field-container');
         if (containerEle) {
             this.field.values = items;
             containerEle.innerHTML = RadioRender.template(this.field);

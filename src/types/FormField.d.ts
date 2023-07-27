@@ -29,8 +29,14 @@ export interface ConditionInfo {
 export interface FormField {
     label: string // '아이디'
     , hideLabel: boolean
-    , viewMode: string //'horizontal' // horizontal , vertical /   // radio, checkbox, group
+    , labelWidth: string
+    , childLabelWidth: string
+    , tooltip: string
+    , description: string
+    , example: string
+    , viewMode: string //'horizontal' // horizontal , vertical, horizontal-row /   // radio, checkbox, group
     , name: string // 'uid'
+    , style: string
     , type: FORM_FIELD_TYPE
     , renderType?: RENDER_TYPE | string
     , required?: boolean //true
@@ -49,6 +55,7 @@ export interface FormField {
     , children: FormField[]
     , validator?: OptionCallback
     , onChange: OptionCallback
+    , onClick: OptionCallback
     , renderer: Render
     , conditional: ConditionInfo
     , $renderer: Render

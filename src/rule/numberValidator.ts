@@ -8,20 +8,15 @@ export const numberValidator = (value: string, field: FormField): ValidResult | 
     const result: ValidResult = { name: field.name, constraint: [] };
     const numValue = Number(value);
 
-    console.log('awef1111', value, field.required, utils.isBlank(value), utils.isNumber(value));
-
     if (field.required && utils.isBlank(value)) {
         result.constraint.push(RULES.REQUIRED);
         return result;
     }
-    console.log('awef');
 
     if (!utils.isNumber(value)) {
         result.constraint.push(RULES.NAN);
         return result;
     }
-
-    console.log('awef222');
 
     if (validator(value, field, result) !== true) {
         return result;

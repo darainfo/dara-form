@@ -24,9 +24,12 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
-const renderFactory_1 = __webpack_require__(/*! ./util/renderFactory */ "./src/util/renderFactory.ts");
-const util_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/util */ "./src/util/util.ts"));
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
 const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/Lanauage */ "./src/util/Lanauage.ts"));
+const stringValidator_1 = __webpack_require__(/*! ./rule/stringValidator */ "./src/rule/stringValidator.ts");
+const numberValidator_1 = __webpack_require__(/*! ./rule/numberValidator */ "./src/rule/numberValidator.ts");
+const regexpValidator_1 = __webpack_require__(/*! ./rule/regexpValidator */ "./src/rule/regexpValidator.ts");
+const FieldInfoMap_1 = tslib_1.__importDefault(__webpack_require__(/*! src/FieldInfoMap */ "./src/FieldInfoMap.ts"));
 let defaultOptions = {
   mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
   ,
@@ -39,27 +42,28 @@ let defaultOptions = {
 let daraFormIdx = 0;
 class DaraForm {
   constructor(selector, options, message) {
-    var _a;
-    this.allFieldInfo = {};
     this.addRowFields = [];
     /**
      * 폼 데이터 reset
      */
     this.resetForm = () => {
-      for (const fieldName in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldName];
+      const fieldMap = this.fieldInfoMap.getAllFieldInfo();
+      for (const seq in fieldMap) {
+        const filedInfo = fieldMap[seq];
         const renderInfo = filedInfo.$renderer;
         if (renderInfo && typeof renderInfo.reset === 'function') {
           renderInfo.reset();
         }
       }
+      this.conditionCheck();
     };
     /**
      * field 값 reset
      * @param fieldName 필드명
      */
     this.resetField = fieldName => {
-      this.allFieldInfo[fieldName].$renderer.reset();
+      this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
+      this.conditionCheck();
     };
     /**
      * field 값 얻기
@@ -68,7 +72,7 @@ class DaraForm {
      * @returns
      */
     this.getFieldValue = fieldName => {
-      const field = this.allFieldInfo[fieldName];
+      const field = this.fieldInfoMap.getFieldName(fieldName);
       if (field) {
         return field.$renderer.getValue();
       }
@@ -80,20 +84,7 @@ class DaraForm {
      * @returns
      */
     this.getValue = isValid => {
-      let reval = {};
-      Object.keys(this.allFieldInfo).forEach(fieldName => {
-        const filedInfo = this.allFieldInfo[fieldName];
-        const renderInfo = filedInfo.$renderer;
-        if (isValid) {
-          let fieldValid = renderInfo.valid();
-          if (fieldValid !== true) {
-            fieldValid = fieldValid;
-            throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
-          }
-        }
-        reval[fieldName] = renderInfo.getValue();
-      });
-      return reval;
+      return this.fieldInfoMap.getAllFieldValue(isValid);
     };
     /**
      * 폼 필드 value 셋팅
@@ -102,12 +93,25 @@ class DaraForm {
     this.setValue = values => {
       Object.keys(values).forEach(fieldName => {
         const value = values[fieldName];
-        const filedInfo = this.allFieldInfo[fieldName];
+        const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+        console.log(fieldName);
         if (filedInfo) {
           const renderInfo = filedInfo.$renderer;
           renderInfo.setValue(value);
         }
       });
+      this.conditionCheck();
+    };
+    this.setFieldValue = (fieldName, values) => {
+      const value = {};
+      value[fieldName] = values;
+      this.setValue(value);
+    };
+    this.setFieldItems = (fieldName, values) => {
+      const field = this.fieldInfoMap.getFieldName(fieldName);
+      if (field) {
+        return field.$renderer.setValueItems(values);
+      }
     };
     /**
      * field 추가
@@ -117,6 +121,7 @@ class DaraForm {
     this.addField = field => {
       this.options.fields.push(field);
       this.addRow(field);
+      this.conditionCheck();
     };
     /**
      * field 제거
@@ -127,8 +132,8 @@ class DaraForm {
       var _a;
       const element = this.getFieldElement(fieldName);
       if (element != null) {
-        (_a = element.closest('.dara-form-row')) === null || _a === void 0 ? void 0 : _a.remove();
-        delete this.allFieldInfo[fieldName];
+        (_a = element.closest('.df-row')) === null || _a === void 0 ? void 0 : _a.remove();
+        this.fieldInfoMap.removeFieldInfo(fieldName);
       }
     };
     /**
@@ -147,18 +152,28 @@ class DaraForm {
      */
     this.validForm = () => {
       let validResult = [];
-      for (const fieldName in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldName];
+      let firstFlag = this.options.autoFocus !== false ? true : false;
+      const fieldMap = this.fieldInfoMap.getAllFieldInfo();
+      for (const fieldKey in fieldMap) {
+        const filedInfo = fieldMap[fieldKey];
         const renderInfo = filedInfo.$renderer;
+        console.log(fieldKey, filedInfo, renderInfo);
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
+          if (firstFlag) {
+            renderInfo.focus();
+            firstFlag = false;
+          }
           validResult.push(fieldValid);
         }
       }
       return validResult;
     };
     this.isValidField = fieldName => {
-      const filedInfo = this.allFieldInfo[fieldName];
+      const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+      if (typeof filedInfo === 'undefined') {
+        throw new Error(`Field name [${fieldName}] not found`);
+      }
       const renderInfo = filedInfo.$renderer;
       if (renderInfo) {
         return renderInfo.valid() === true ? true : false;
@@ -171,13 +186,17 @@ class DaraForm {
     this.options = Object.assign({}, defaultOptions, options);
     daraFormIdx += 1;
     Lanauage_1.default.set(message);
+    this.fieldInfoMap = new FieldInfoMap_1.default(selector);
     this.isHorizontal = this.options.mode === 'horizontal';
-    const formElement = document.createElement("form");
-    formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
-    formElement.setAttribute('style', `width:${this.options.width};`);
-    (_a = document.querySelector(selector)) === null || _a === void 0 ? void 0 : _a.appendChild(formElement);
-    this.formElement = formElement;
-    this.createForm(this.options.fields);
+    const formElement = document.querySelector(selector);
+    if (formElement) {
+      formElement.className = `df df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
+      formElement.setAttribute('style', `width:${this.options.width};`);
+      this.formElement = formElement;
+      this.createForm(this.options.fields);
+    } else {
+      throw new Error(`${selector} form selector not found`);
+    }
   }
   static setMessage(message) {
     Lanauage_1.default.set(message);
@@ -186,6 +205,7 @@ class DaraForm {
     fields.forEach(field => {
       this.addRow(field);
     });
+    this.conditionCheck();
   }
   /**
    * field row 추가.
@@ -193,37 +213,40 @@ class DaraForm {
    * @param field
    */
   addRow(field) {
+    if (this.checkHiddenField(field)) {
+      return;
+    }
     this.addRowFields = [];
     const rowElement = document.createElement("div");
-    rowElement.className = `dara-form-row`;
-    replaceXssField(field);
-    let rednerTemplate = '';
-    if (field.renderer) {
-      field.$isCustomRenderer = true;
-    }
-    rednerTemplate = this.rowTemplate(field);
+    rowElement.className = `df-row`;
+    let rednerTemplate = this.rowTemplate(field);
+    rowElement.setAttribute('id', field.$key);
     rowElement.innerHTML = rednerTemplate;
     this.formElement.appendChild(rowElement); // Append the element
-    this.addRowFields.forEach(fieldName => {
-      const fileldInfo = this.allFieldInfo[fieldName];
-      fileldInfo.$xssName = util_1.default.unFieldName(fileldInfo.name);
-      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, rowElement);
+    this.addRowFields.forEach(fieldSeq => {
+      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
+      fileldInfo.$xssName = utils_1.default.unFieldName(fileldInfo.name);
+      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
+      fieldRowElement === null || fieldRowElement === void 0 ? void 0 : fieldRowElement.removeAttribute('id');
     });
   }
   rowTemplate(field) {
     let fieldHtml = '';
-    if (field.childen) {
+    if (field.children) {
       fieldHtml = this.groupTemplate(field);
     } else {
       fieldHtml = this.getFieldTempate(field);
     }
+    if (this.checkHiddenField(field)) {
+      return '';
+    }
     return `
-            <div class="dara-form-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
+            <div class="df-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
                 <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
             </div>
-            <div class="dara-form-field-container">
+            <div class="df-field-container">
                 ${fieldHtml}
-                <div class="help-message"></div>
             </div>
         `;
   }
@@ -235,32 +258,73 @@ class DaraForm {
    */
   groupTemplate(field) {
     const childTemplae = [];
-    childTemplae.push(`<ul class="sub-field-group ${field.renderType === 'group' ? 'group-inline' : 'group-row'}">`);
-    field.childen.forEach(childField => {
-      if (childField.childen) {
-        childTemplae.push(this.rowTemplate(field));
+    let viewStyleClass = '';
+    let childLabelWidth = '';
+    let isHorizontal = false;
+    if (field.viewMode === 'vertical') {
+      viewStyleClass = 'vertical';
+    } else {
+      if (field.viewMode === "horizontal-row") {
+        childLabelWidth = field.childLabelWidth ? `width:${field.childLabelWidth};` : '';
+        viewStyleClass = 'horizontal-row';
       } else {
-        replaceXssField(childField);
-        childTemplae.push(`<li class="sub-row">
-                        <span class="sub-label">${childField.label}</span>
-                        <span class="sub-field">${this.getFieldTempate(childField)}</span>
-                    </li>`);
+        isHorizontal = true;
+        viewStyleClass = 'horizontal';
       }
-    });
+    }
+    childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
+    for (const childField of field.children) {
+      let childTempate = '';
+      if (childField.children) {
+        childTempate = this.groupTemplate(childField);
+      } else {
+        if (this.checkHiddenField(childField)) {
+          continue;
+        }
+        childTempate = this.getFieldTempate(childField);
+      }
+      if (isHorizontal) {
+        childLabelWidth = childField.labelWidth ? `width:${childField.labelWidth};` : '';
+      }
+      childTemplae.push(`<li class="sub-row" id="${childField.$key}">
+                ${childField.hideLabel ? '' : `<span class="sub-label" style="${childLabelWidth}">${childField.label}</span>`}
+                <span class="df-field-container">${childTempate}</span>
+            </li>`);
+    }
     childTemplae.push('</ul>');
     return childTemplae.join('');
   }
   /**
-   * field tempalte 구하기
+  * field tempalte 구하기
+  *
+  * @param {FormField} field
+  * @returns {string}
+  */
+  getFieldTempate(field) {
+    if (!utils_1.default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
+      throw new Error(`Duplicate field name "${field.name}"`);
+    }
+    this.addRowFieldInfo(field);
+    return field.$renderer.template(field);
+  }
+  checkHiddenField(field) {
+    const isHidden = utils_1.default.isHiddenField(field);
+    if (isHidden) {
+      this.fieldInfoMap.addField(field);
+      field.$renderer = new field.$renderer(field, null, this);
+      return true;
+    }
+    return false;
+  }
+  /**
+   * add row file map
    *
    * @param {FormField} field
-   * @returns {string}
    */
-  getFieldTempate(field) {
-    this.allFieldInfo[field.name] = field;
-    this.addRowFields.push(field.name);
-    field.$renderer = (0, renderFactory_1.getRenderer)(field);
-    return field.$renderer.template(field);
+  addRowFieldInfo(field) {
+    utils_1.default.replaceXssField(field);
+    this.fieldInfoMap.addField(field);
+    this.addRowFields.push(field.$key);
   }
   /**
    * 필드 element 얻기
@@ -269,18 +333,190 @@ class DaraForm {
    * @returns {*}
    */
   getFieldElement(fieldName) {
-    const field = this.allFieldInfo[fieldName];
-    if (field && field.$renderer) {
+    const field = this.fieldInfoMap.getFieldName(fieldName);
+    if (field === null || field === void 0 ? void 0 : field.$renderer) {
       return field.$renderer.getElement();
     }
     return null;
   }
+  conditionCheck() {
+    this.fieldInfoMap.conditionCheck();
+  }
 }
 exports["default"] = DaraForm;
-function replaceXssField(field) {
-  field.name = util_1.default.replace(field.name);
-  field.label = util_1.default.replace(field.label);
+/*
+destroy = () => {
+    return this.options;
 }
+*/
+DaraForm.validator = {
+  string: (value, field) => {
+    return (0, stringValidator_1.stringValidator)(value, field);
+  },
+  number: (value, field) => {
+    return (0, numberValidator_1.numberValidator)(value, field);
+  },
+  regexp: (value, field) => {
+    let result = {
+      name: field.name,
+      constraint: []
+    };
+    return (0, regexpValidator_1.regexpValidator)(value, field, result);
+  }
+};
+
+/***/ }),
+
+/***/ "./src/FieldInfoMap.ts":
+/*!*****************************!*\
+  !*** ./src/FieldInfoMap.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
+const renderFactory_1 = __webpack_require__(/*! ./util/renderFactory */ "./src/util/renderFactory.ts");
+class FieldInfoMap {
+  constructor(selector) {
+    this.fieldIdx = 0;
+    this.allFieldInfo = {};
+    this.keyNameMap = {};
+    this.conditionFields = [];
+    this.fieldPrefix = `${constants_1.FIELD_PREFIX}-${utils_1.default.getHashCode(selector)}`;
+  }
+  /**
+   * add Field 정보
+   *
+   * @public
+   * @param {FormField} field 폼필드 정보
+   */
+  addField(field) {
+    this.fieldIdx += 1;
+    field.$key = `${this.fieldPrefix}-${this.fieldIdx}`;
+    this.keyNameMap[field.name] = field.$key;
+    this.allFieldInfo[field.$key] = field;
+    field.$renderer = (0, renderFactory_1.getRenderer)(field);
+    if (field.conditional) {
+      this.conditionFields.push(field.$key);
+    }
+  }
+  /**
+   * 필드명으로 필드 정부 구하기
+   *
+   * @public
+   * @param {string} fieldName 필드명
+   * @returns {FormField}
+   */
+  getFieldName(fieldName) {
+    return this.allFieldInfo[this.keyNameMap[fieldName]];
+  }
+  /**
+   * 필드 키로 정보 구하기
+   *
+   * @public
+   * @param {string} fieldKey
+   * @returns {FormField}
+   */
+  get(fieldKey) {
+    return this.allFieldInfo[fieldKey];
+  }
+  /**
+   * 필드명 있는지 여부 체크.
+   *
+   * @public
+   * @param {string} fieldName 필드명
+   * @returns {boolean}
+   */
+  hasFieldName(fieldName) {
+    if (this.keyNameMap[fieldName] && this.allFieldInfo[this.keyNameMap[fieldName]]) {
+      return true;
+    }
+    return false;
+  }
+  /**
+   * 모든 필드 정보
+   *
+   * @public
+   * @returns {NumberFieldMap}
+   */
+  getAllFieldInfo() {
+    return this.allFieldInfo;
+  }
+  /**
+   * 필드 정보 맵에서 지우기
+   *
+   * @public
+   * @param {string} fieldName
+   */
+  removeFieldInfo(fieldName) {
+    delete this.allFieldInfo[this.keyNameMap[fieldName]];
+  }
+  /**
+   * 모든 필드값 구하기
+   *
+   * @public
+   * @param {boolean} isValid
+   * @returns {*}
+   */
+  getAllFieldValue(isValid) {
+    let reval = {};
+    Object.keys(this.allFieldInfo).forEach(fieldSeq => {
+      const filedInfo = this.allFieldInfo[fieldSeq];
+      const renderInfo = filedInfo.$renderer;
+      if (isValid) {
+        let fieldValid = renderInfo.valid();
+        if (fieldValid !== true) {
+          fieldValid = fieldValid;
+          throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
+        }
+      }
+      reval[filedInfo.name] = renderInfo.getValue();
+    });
+    return reval;
+  }
+  /**
+   * 컬럼 로우 보이고 안보이기 체크.
+   *
+   * @public
+   */
+  conditionCheck() {
+    this.conditionFields.forEach(fieldKey => {
+      const filedInfo = this.allFieldInfo[fieldKey];
+      let condFlag = false;
+      if (filedInfo.conditional.field) {
+        const condField = this.getFieldName(filedInfo.conditional.field);
+        if (condField) {
+          if (filedInfo.conditional.eq == condField.$renderer.getValue()) {
+            condFlag = true;
+          }
+        }
+      }
+      if (!condFlag && filedInfo.conditional.custom) {
+        condFlag = filedInfo.conditional.custom.call(null, filedInfo);
+      }
+      if (condFlag) {
+        if (filedInfo.conditional.show) {
+          filedInfo.$renderer.show();
+        } else {
+          filedInfo.$renderer.hide();
+        }
+      } else {
+        if (filedInfo.conditional.show) {
+          filedInfo.$renderer.hide();
+        } else {
+          filedInfo.$renderer.show();
+        }
+      }
+    });
+  }
+}
+exports["default"] = FieldInfoMap;
 
 /***/ }),
 
@@ -295,7 +531,7 @@ function replaceXssField(field) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.RENDER_TEMPLATE = exports.RULES = void 0;
+exports.RENDER_TEMPLATE = exports.FIELD_PREFIX = exports.RULES = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const NumberRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/NumberRender */ "./src/renderer/NumberRender.ts"));
 const TextAreaRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/TextAreaRender */ "./src/renderer/TextAreaRender.ts"));
@@ -306,7 +542,11 @@ const RadioRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/render
 const PasswordRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/PasswordRender */ "./src/renderer/PasswordRender.ts"));
 const FileRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/FileRender */ "./src/renderer/FileRender.ts"));
 const CustomRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/CustomRender */ "./src/renderer/CustomRender.ts"));
+const GroupRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/GroupRender */ "./src/renderer/GroupRender.ts"));
+const HiddenRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/HiddenRender */ "./src/renderer/HiddenRender.ts"));
+const ButtonRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/ButtonRender */ "./src/renderer/ButtonRender.ts"));
 exports.RULES = {
+  NAN: 'nan',
   MIN: 'minimum',
   EXCLUSIVE_MIN: 'exclusiveMinimum',
   MAX: 'maximum',
@@ -321,6 +561,7 @@ exports.RULES = {
   REQUIRED: 'required',
   VALIDATOR: 'validator'
 };
+exports.FIELD_PREFIX = 'dff'; // dara form field
 exports.RENDER_TEMPLATE = {
   'number': NumberRender_1.default,
   'textarea': TextAreaRender_1.default,
@@ -330,8 +571,65 @@ exports.RENDER_TEMPLATE = {
   'text': TextRender_1.default,
   'password': PasswordRender_1.default,
   'file': FileRender_1.default,
-  'custom': CustomRender_1.default
+  'custom': CustomRender_1.default,
+  'group': GroupRender_1.default,
+  'hidden': HiddenRender_1.default,
+  'button': ButtonRender_1.default
 };
+
+/***/ }),
+
+/***/ "./src/event/renderEvents.ts":
+/*!***********************************!*\
+  !*** ./src/event/renderEvents.ts ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports.customChangeEventCall = exports.dropdownChangeEvent = exports.numberInputEvent = exports.inputEvent = void 0;
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
+const inputEvent = (field, element, renderInfo) => {
+  element.addEventListener('input', e => {
+    (0, exports.customChangeEventCall)(field, e, renderInfo);
+    renderInfo.valid();
+  });
+};
+exports.inputEvent = inputEvent;
+const numberInputEvent = (field, element, renderInfo) => {
+  element.addEventListener('keyup', e => {
+    const val = e.target.value;
+    if (!utils_1.default.isNumber(val)) {
+      element.value = val.replace(/[^0-9\.\-\+]/g, "");
+      e.preventDefault();
+    }
+    (0, exports.customChangeEventCall)(field, e, renderInfo);
+    renderInfo.valid();
+  });
+  /*
+  element.addEventListener('input', (e: any) => {
+      customChangeEventCall(field, e, renderInfo);
+      renderInfo.valid();
+  })
+  */
+};
+
+exports.numberInputEvent = numberInputEvent;
+const dropdownChangeEvent = (field, element, renderInfo) => {
+  element.addEventListener('change', e => {
+    (0, exports.customChangeEventCall)(field, e, renderInfo);
+    renderInfo.valid();
+  });
+};
+exports.dropdownChangeEvent = dropdownChangeEvent;
+const customChangeEventCall = (field, e, renderInfo) => {
+  renderInfo.changeEventCall(field, e, renderInfo);
+};
+exports.customChangeEventCall = customChangeEventCall;
 
 /***/ }),
 
@@ -350,6 +648,50 @@ module.exports = DaraForm_1.default;
 
 /***/ }),
 
+/***/ "./src/renderer/ButtonRender.ts":
+/*!**************************************!*\
+  !*** ./src/renderer/ButtonRender.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+class ButtonRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
+    this.field = field;
+    this.rowElement = rowElement;
+    this.initEvent();
+  }
+  initEvent() {
+    // inputEvent(this.field, this.element, this);
+  }
+  static template(field) {
+    return `
+      <button type="button" class="df-btn">${field.label}</button>
+     `;
+  }
+  getValue() {
+    return '';
+  }
+  setValue(value) {}
+  reset() {}
+  getElement() {
+    return null;
+  }
+  valid() {
+    return true;
+  }
+}
+exports["default"] = ButtonRender;
+
+/***/ }),
+
 /***/ "./src/renderer/CheckboxRender.ts":
 /*!****************************************!*\
   !*** ./src/renderer/CheckboxRender.ts ***!
@@ -362,63 +704,108 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
-const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-class CheckboxRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+const utils_2 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
+class CheckboxRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
+    this.defaultCheckValue = [];
     this.field = field;
     this.rowElement = rowElement;
+    this.initEvent();
+  }
+  initEvent() {
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
     this.defaultCheckValue = [];
     this.field.values.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue.push(val.value);
       }
     });
+    checkboxes.forEach(ele => {
+      ele.addEventListener('change', e => {
+        (0, renderEvents_1.customChangeEventCall)(this.field, e, this);
+        this.valid();
+      });
+    });
   }
-  initEvent() {}
+  getSelector() {
+    return `input[type="checkbox"][name="${this.field.$xssName}"]`;
+  }
   static template(field) {
     const templates = [];
     const fieldName = field.name;
-    templates.push(` <div class="dara-form-field"><div class="field-group">`);
+    templates.push(` <div class="df-field"><div class="field-group">`);
     field.values.forEach(val => {
       templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${util_1.default.replace(val.value)}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        <input type="checkbox" name="${fieldName}" value="${val.value ? utils_1.default.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
                         ${val.label}
                     </label>
                 </span>
             `);
     });
-    templates.push(`<i class="dara-icon help-icon"></i></div></div>`);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        <div class="help-message"></div>
+        `);
     return templates.join('');
   }
+  setValueItems(items) {
+    const containerEle = this.rowElement.querySelector('.df-field-container');
+    if (containerEle) {
+      this.field.values = items;
+      containerEle.innerHTML = CheckboxRender.template(this.field);
+      this.initEvent();
+    }
+  }
   getValue() {
-    const checkValue = [];
-    this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).forEach(item => {
-      checkValue.push(item.value);
-    });
-    return checkValue;
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+    if (checkboxes.length > 1) {
+      const checkValue = [];
+      checkboxes.forEach(ele => {
+        const checkEle = ele;
+        if (checkEle.checked) {
+          checkValue.push(checkEle.value);
+        }
+      });
+      return checkValue;
+    } else {
+      return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).length > 0;
+    }
   }
   setValue(value) {
+    this.field.$value = value;
+    if (value === true) {
+      this.rowElement.querySelector(`[name="${this.field.$xssName}"]`).checked = true;
+      return;
+    }
+    if (value === false) {
+      this.rowElement.querySelector(`[name="${this.field.$xssName}"]`).checked = false;
+      return;
+    }
     let valueArr = [];
     if (Array.isArray(value)) {
       valueArr = value;
     } else {
       valueArr.push(value);
     }
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+    checkboxes.forEach(ele => {
+      ele.checked = false;
+    });
     valueArr.forEach(val => {
       const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`);
-      ele.checked = true;
+      if (ele) ele.checked = true;
     });
   }
   reset() {
-    this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
-      item.checked = false;
-    });
     this.setValue(this.defaultCheckValue);
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
@@ -426,7 +813,7 @@ class CheckboxRender {
   valid() {
     const value = this.getValue();
     let validResult = true;
-    if (this.field.required) {
+    if (this.field.required && utils_2.default.isArray(value)) {
       if (value.length < 1) {
         validResult = {
           name: this.field.name,
@@ -435,7 +822,7 @@ class CheckboxRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
@@ -454,9 +841,12 @@ exports["default"] = CheckboxRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-class CustomRender {
-  constructor(field, rowElement) {
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+class CustomRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.customFunction = field.renderer;
@@ -469,7 +859,7 @@ class CustomRender {
   }
   static template(field) {
     if (field.renderer.template) {
-      return ` <div class="dara-form-field">${field.renderer.template()}</div>`;
+      return ` <div class="df-field">${field.renderer.template()}</div><div class="help-message"></div>`;
     }
     return '';
   }
@@ -480,13 +870,14 @@ class CustomRender {
     return '';
   }
   setValue(value) {
+    this.field.$value = value;
     if (this.customFunction.setValue) {
       this.customFunction.setValue.call(this, value, this.field, this.rowElement);
     }
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     if (this.customFunction.getElement) {
@@ -516,11 +907,14 @@ exports["default"] = CustomRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
-class DropdownRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class DropdownRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
@@ -533,25 +927,36 @@ class DropdownRender {
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.dropdownChangeEvent)(this.element, this);
+    (0, renderEvents_1.dropdownChangeEvent)(this.field, this.element, this);
   }
   static template(field) {
-    let template = ` <div class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
     field.values.forEach(val => {
       template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
     });
-    template += `</select> <i class="help-icon"></i></div>`;
+    template += `</select> <i class="help-icon"></i></div>
+                    <div class="help-message"></div>
+        `;
     return template;
+  }
+  setValueItems(items) {
+    const containerEle = this.rowElement.querySelector('.df-field-container');
+    if (containerEle) {
+      this.field.values = items;
+      containerEle.innerHTML = DropdownRender.template(this.field);
+      this.initEvent();
+    }
   }
   getValue() {
     return this.element.value;
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue(this.defaultCheckValue);
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
@@ -568,7 +973,7 @@ class DropdownRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
@@ -588,11 +993,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 const fileValidator_1 = __webpack_require__(/*! src/rule/fileValidator */ "./src/rule/fileValidator.ts");
 const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/Lanauage */ "./src/util/Lanauage.ts"));
-class FileRender {
-  constructor(field, rowElement) {
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class FileRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.removeIds = [];
     this.uploadFiles = {};
     this.fileList = [];
@@ -610,6 +1018,7 @@ class FileRender {
       if (files) {
         this.addFiles(files);
       }
+      (0, renderEvents_1.customChangeEventCall)(this.field, e, this);
       this.valid();
     });
     this.fileList.forEach(file => {
@@ -678,13 +1087,14 @@ class FileRender {
   }
   static template(field) {
     return `
-    <div class="dara-form-field">
+    <div class="df-field">
       <span class="file-wrapper">
         <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_1.default.getMessage('fileButton')}</label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
     <div class="dara-file-list"></div>
+    <div class="help-message"></div>
     `;
   }
   getValue() {
@@ -694,22 +1104,106 @@ class FileRender {
     };
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
   }
   valid() {
     const validResult = (0, fileValidator_1.fileValidator)(this.element, this.field, this.fileList);
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
 exports["default"] = FileRender;
+
+/***/ }),
+
+/***/ "./src/renderer/GroupRender.ts":
+/*!*************************************!*\
+  !*** ./src/renderer/GroupRender.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+class GroupRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
+    this.field = field;
+    this.rowElement = rowElement;
+  }
+  initEvent() {}
+  static template(field) {
+    return '';
+  }
+  getValue() {
+    return null;
+  }
+  setValue(value) {}
+  reset() {}
+  getElement() {
+    return this.rowElement;
+  }
+  valid() {
+    return true;
+  }
+}
+exports["default"] = GroupRender;
+
+/***/ }),
+
+/***/ "./src/renderer/HiddenRender.ts":
+/*!**************************************!*\
+  !*** ./src/renderer/HiddenRender.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+class HiddenRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
+    this.field = field;
+    this.rowElement = rowElement;
+    this.field.$value = field.defaultValue;
+  }
+  initEvent() {}
+  static template(field) {
+    return ``;
+  }
+  getValue() {
+    return this.field.$value;
+  }
+  setValue(value) {
+    this.field.$value = value;
+  }
+  reset() {
+    this.setValue(this.field.defaultValue);
+  }
+  getElement() {
+    return;
+  }
+  valid() {
+    return true;
+  }
+}
+exports["default"] = HiddenRender;
 
 /***/ }),
 
@@ -724,42 +1218,47 @@ exports["default"] = FileRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const numberValidator_1 = __webpack_require__(/*! src/rule/numberValidator */ "./src/rule/numberValidator.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
-class NumberRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class NumberRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.inputEvent)(this.element, this);
+    (0, renderEvents_1.numberInputEvent)(this.field, this.element, this);
   }
   static template(field) {
     return `
-        <div class="dara-form-field">
-            <input type="number" name="${field.name}" class="form-field number help-icon" /></i>
+        <div class="df-field">
+            <input type="text" name="${field.name}" class="form-field number help-icon" /></i>
         </div> 
+        <div class="help-message"></div>
        `;
   }
   getValue() {
     return this.element.value;
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
   }
   valid() {
     const validResult = (0, numberValidator_1.numberValidator)(this.getValue(), this.field);
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -778,43 +1277,47 @@ exports["default"] = NumberRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ "./src/rule/stringValidator.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
-class PasswordRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class PasswordRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.inputEvent)(this.element, this);
+    (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
     return `
-            <div class="dara-form-field">
+            <div class="df-field">
                 <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
             </div>
+            <div class="help-message"></div>
         `;
   }
   getValue() {
     return this.element.value;
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
   }
   valid() {
-    // TODO password 관련 사항 처리 할것. 
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -834,11 +1337,14 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
-class RadioRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class RadioRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.defaultCheckValue = this.field.values[0].value;
@@ -847,12 +1353,24 @@ class RadioRender {
         this.defaultCheckValue = val.value;
       }
     });
+    this.initEvent();
   }
-  initEvent() {}
+  initEvent() {
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+    checkboxes.forEach(ele => {
+      ele.addEventListener('change', e => {
+        (0, renderEvents_1.customChangeEventCall)(this.field, e, this);
+        this.valid();
+      });
+    });
+  }
+  getSelector() {
+    return `input[type="radio"][name="${this.field.$xssName}"]`;
+  }
   static template(field) {
     const templates = [];
     const fieldName = field.name;
-    templates.push(`<div class="dara-form-field"><div class="field-group">`);
+    templates.push(`<div class="df-field"><div class="field-group">`);
     field.values.forEach(val => {
       templates.push(`<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                 <label>
@@ -862,33 +1380,55 @@ class RadioRender {
                 </span>
                 `);
     });
-    templates.push(`<i class="dara-icon help-icon"></i></div></div> `);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        <div class="help-message"></div>
+         `);
     return templates.join('');
+  }
+  setValueItems(items) {
+    const containerEle = this.rowElement.querySelector('.df-field-container');
+    if (containerEle) {
+      this.field.values = items;
+      containerEle.innerHTML = RadioRender.template(this.field);
+      this.initEvent();
+    }
   }
   getValue() {
     var _a;
     return (_a = this.rowElement.querySelector(`[name="${this.field.$xssName}"]:checked`)) === null || _a === void 0 ? void 0 : _a.value;
   }
   setValue(value) {
-    const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${value}"]`);
-    ele.checked = true;
+    this.field.$value = value;
+    if (value === true) {
+      this.rowElement.querySelector(`[name="${this.field.$xssName}"]`).checked = true;
+      return;
+    }
+    if (value === false) {
+      this.rowElement.querySelector(`[name="${this.field.$xssName}"]`).checked = false;
+      return;
+    }
+    const elements = this.rowElement.querySelectorAll(this.getSelector());
+    elements.forEach(ele => {
+      let radioEle = ele;
+      if (radioEle.value == value) {
+        radioEle.checked = true;
+      } else {
+        radioEle.checked = false;
+      }
+    });
   }
   reset() {
-    this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`).forEach(item => {
-      item.checked = false;
-    });
-    console.log('this.defaultCheckValue : ', this.defaultCheckValue);
     this.setValue(this.defaultCheckValue);
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
-    return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
+    return this.rowElement.querySelectorAll(this.getSelector());
   }
   valid() {
     const value = this.getValue();
     let validResult = true;
     if (this.field.required) {
-      if (util_1.default.isBlank(value)) {
+      if (utils_1.default.isBlank(value)) {
         validResult = {
           name: this.field.name,
           constraint: []
@@ -896,11 +1436,58 @@ class RadioRender {
         validResult.constraint.push(constants_1.RULES.REQUIRED);
       }
     }
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return true;
   }
 }
 exports["default"] = RadioRender;
+
+/***/ }),
+
+/***/ "./src/renderer/Render.ts":
+/*!********************************!*\
+  !*** ./src/renderer/Render.ts ***!
+  \********************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+class Render {
+  constructor(form, rowElement) {
+    this.daraForm = form;
+    this.rowElement = rowElement;
+  }
+  getForm() {
+    return this.daraForm;
+  }
+  setValueItems(value) {}
+  changeEventCall(field, e, rederInfo) {
+    if (field.onChange) {
+      field.onChange.call(null, {
+        field: field,
+        evt: e,
+        value: rederInfo.getValue()
+      });
+    }
+    this.daraForm.conditionCheck();
+  }
+  focus() {
+    this.getElement().focus();
+  }
+  show() {
+    this.rowElement.classList.remove('df-hidden');
+  }
+  hide() {
+    if (!this.rowElement.classList.contains('df-hidden')) {
+      this.rowElement.classList.add('df-hidden');
+    }
+    ;
+  }
+}
+exports["default"] = Render;
 
 /***/ }),
 
@@ -915,42 +1502,47 @@ exports["default"] = RadioRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ "./src/rule/stringValidator.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
-class TextAreaRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class TextAreaRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.inputEvent)(this.element, this);
+    (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
     return `
-            <div class="dara-form-field">
+            <div class="df-field">
             <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
             </div> 
+            <div class="help-message"></div>
         `;
   }
   getValue() {
     return this.element.value;
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
   }
   valid() {
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -969,42 +1561,47 @@ exports["default"] = TextAreaRender;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ "./src/rule/stringValidator.ts");
-const validUtil_1 = __webpack_require__(/*! src/util/validUtil */ "./src/util/validUtil.ts");
-const renderEvents_1 = __webpack_require__(/*! src/util/renderEvents */ "./src/util/renderEvents.ts");
-class TextRender {
-  constructor(field, rowElement) {
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class TextRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, rowElement);
     this.field = field;
     this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
   }
   initEvent() {
-    (0, renderEvents_1.inputEvent)(this.element, this);
+    (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
     return `
-    <div class="dara-form-field">
+    <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div> 
+     <div class="help-message"></div>
      `;
   }
   getValue() {
     return this.element.value;
   }
   setValue(value) {
+    this.field.$value = value;
     this.element.value = value;
   }
   reset() {
     this.setValue('');
-    (0, validUtil_1.resetRowElementStyleClass)(this.rowElement);
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
     return this.element;
   }
   valid() {
     const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
-    (0, validUtil_1.invalidMessage)(this.field, this.rowElement, validResult);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
     return validResult;
   }
 }
@@ -1038,11 +1635,9 @@ const fileValidator = (element, field, fileList) => {
     name: field.name,
     constraint: []
   };
-  if (field.required && element.files && element.files.length < 1) {
-    if (fileList.length < 1) {
-      result.constraint.push(constants_1.RULES.REQUIRED);
-      return result;
-    }
+  if (field.required && fileList.length < 1) {
+    result.constraint.push(constants_1.RULES.REQUIRED);
+    return result;
   }
   if (result.constraint.length > 0) {
     return result;
@@ -1067,16 +1662,20 @@ Object.defineProperty(exports, "__esModule", ({
 exports.numberValidator = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
 const validator_1 = __webpack_require__(/*! ./validator */ "./src/rule/validator.ts");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 const numberValidator = (value, field) => {
   const result = {
     name: field.name,
     constraint: []
   };
   const numValue = Number(value);
-  if (field.required && !util_1.default.isNumber(value)) {
+  if (field.required && utils_1.default.isBlank(value)) {
     result.constraint.push(constants_1.RULES.REQUIRED);
+    return result;
+  }
+  if (!utils_1.default.isNumber(value)) {
+    result.constraint.push(constants_1.RULES.NAN);
     return result;
   }
   if ((0, validator_1.validator)(value, field, result) !== true) {
@@ -1084,8 +1683,8 @@ const numberValidator = (value, field) => {
   }
   const rule = field.rule;
   if (rule) {
-    const isMinimum = util_1.default.isNumber(rule.minimum),
-      isMaximum = util_1.default.isNumber(rule.maximum);
+    const isMinimum = utils_1.default.isNumber(rule.minimum),
+      isMaximum = utils_1.default.isNumber(rule.maximum);
     let minRule = false,
       minExclusive = false,
       maxRule = false,
@@ -1154,10 +1753,14 @@ const regexp = {
   'mobile': /^\d{3}-\d{3,4}-\d{4}$/,
   'email': /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   'url': /^(?:(?:https?|HTTPS?|ftp|FTP):\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-zA-Z\u00a1-\uffff0-9]-*)*[a-zA-Z\u00a1-\uffff0-9]+)(?:\.(?:[a-zA-Z\u00a1-\uffff0-9]-*)*[a-zA-Z\u00a1-\uffff0-9]+)*(?:\.(?:[a-zA-Z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#]\S*)?$/,
-  'number': /[-+]?[0-9]*[.,]?[0-9]+/,
+  'number': /\d$/,
   'alpha': /^[a-zA-Z]+$/,
   'alpha-num': /^[a-zA-Z0-9]+$/,
-  'variable': /^[a-zA-Z0-9_$][a-zA-Z0-9_$]*$/
+  'variable': /^[a-zA-Z0-9_$][a-zA-Z0-9_$]*$/,
+  'number-char': /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]/,
+  'upper-char': /^(?=.*?[A-Z])(?=.*?[a-z])/,
+  'upper-char-special': /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[#?!@$%^&*-])/,
+  'upper-char-special-number': /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]/
 };
 const regexpValidator = (value, field, result) => {
   if (typeof result === 'undefined') {
@@ -1193,7 +1796,7 @@ Object.defineProperty(exports, "__esModule", ({
 exports.stringValidator = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const util_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/util */ "./src/util/util.ts"));
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 const validator_1 = __webpack_require__(/*! ./validator */ "./src/rule/validator.ts");
 /**
  * string validator
@@ -1207,7 +1810,7 @@ const stringValidator = (value, field) => {
     name: field.name,
     constraint: []
   };
-  if (field.required && util_1.default.isBlank(value)) {
+  if (field.required && utils_1.default.isBlank(value)) {
     result.constraint.push(constants_1.RULES.REQUIRED);
     return result;
   }
@@ -1218,11 +1821,11 @@ const stringValidator = (value, field) => {
   const rule = field.rule;
   if (rule) {
     const valueLength = value.length;
-    const isMinNumber = util_1.default.isNumber(rule.minLength),
-      isMaxNumber = util_1.default.isNumber(rule.maxLength);
+    const isMinNumber = utils_1.default.isNumber(rule.minLength),
+      isMaxNumber = utils_1.default.isNumber(rule.maxLength);
     let minRule = false,
       maxRule = false;
-    if (isMaxNumber && valueLength <= rule.minLength) {
+    if (isMinNumber && valueLength <= rule.minLength) {
       minRule = true;
     }
     if (isMaxNumber && valueLength >= rule.maxLength) {
@@ -1307,6 +1910,7 @@ let localeMessage = {
     between: "{minLength} ~ {maxLength} 사이의 글자를 입력하세요."
   },
   number: {
+    nan: '숫자만 입력 가능 합니다.',
     minimum: "{minimum} 값과 같거나 커야 합니다",
     exclusiveMinimum: "{minimum} 보다 커야 합니다",
     maximum: "{maximum} 값과 같거나 작아야 합니다",
@@ -1320,10 +1924,14 @@ let localeMessage = {
     'mobile': "핸드폰 번호가 유효하지 않습니다.",
     'email': "이메일이 유효하지 않습니다.",
     'url': "URL이 유효하지 않습니다.",
-    'alpha': "영문만 입력가능합니다.",
-    'alpha-num': "영문과 숫자만 입력가능힙니다.",
-    'number': '숫자만 입력가능힙니다.',
-    'variable': '값이 유효하지 않습니다.'
+    'alpha': "영문만 입력 가능 합니다.",
+    'alpha-num': "영문과 숫자만 입력 가능 합니다.",
+    'number': '숫자만 입력 가능 합니다.',
+    'variable': '값이 유효하지 않습니다.',
+    'number-char': '숫자, 문자 각각 하나 이상 포함 되어야 합니다.',
+    'upper-char': '대문자가 하나 이상 포함 되어야 합니다.',
+    'upper-char-special': '대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.',
+    'upper-char-special-number': '대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다.'
   }
 };
 /**
@@ -1408,33 +2016,6 @@ exports["default"] = new Language();
 
 /***/ }),
 
-/***/ "./src/util/renderEvents.ts":
-/*!**********************************!*\
-  !*** ./src/util/renderEvents.ts ***!
-  \**********************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-
-
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports.dropdownChangeEvent = exports.inputEvent = void 0;
-const inputEvent = (element, rederInfo) => {
-  element.addEventListener('input', e => {
-    rederInfo.valid();
-  });
-};
-exports.inputEvent = inputEvent;
-const dropdownChangeEvent = (element, rederInfo) => {
-  element.addEventListener('change', e => {
-    rederInfo.valid();
-  });
-};
-exports.dropdownChangeEvent = dropdownChangeEvent;
-
-/***/ }),
-
 /***/ "./src/util/renderFactory.ts":
 /*!***********************************!*\
   !*** ./src/util/renderFactory.ts ***!
@@ -1450,6 +2031,9 @@ exports.getRenderTemplate = exports.getRenderer = void 0;
 const constants_1 = __webpack_require__(/*! ../constants */ "./src/constants.ts");
 const getRenderer = field => {
   let renderType = field.renderType || 'text';
+  if (field.children) {
+    return constants_1.RENDER_TEMPLATE['group'];
+  }
   let render = constants_1.RENDER_TEMPLATE[renderType];
   return render ? render : constants_1.RENDER_TEMPLATE['text'];
 };
@@ -1462,10 +2046,10 @@ exports.getRenderTemplate = getRenderTemplate;
 
 /***/ }),
 
-/***/ "./src/util/util.ts":
-/*!**************************!*\
-  !*** ./src/util/util.ts ***!
-  \**************************/
+/***/ "./src/util/utils.ts":
+/*!***************************!*\
+  !*** ./src/util/utils.ts ***!
+  \***************************/
 /***/ ((__unused_webpack_module, exports) => {
 
 
@@ -1526,15 +2110,39 @@ exports["default"] = {
       return false;
     }
     return !isNaN(value);
+  },
+  isArray(value) {
+    return Array.isArray(value);
+  },
+  replaceXssField(field) {
+    field.name = this.replace(field.name);
+    field.label = this.replace(field.label);
+    return field;
+  },
+  getHashCode(str) {
+    let hash = 0;
+    if (str.length == 0) return hash;
+    for (let i = 0; i < str.length; i++) {
+      let tmpChar = str.charCodeAt(i);
+      hash = (hash << 5) - hash + tmpChar;
+      hash = hash & hash;
+    }
+    return hash;
+  },
+  isHiddenField(field) {
+    if (field.renderType === 'hidden') {
+      return true;
+    }
+    return false;
   }
 };
 
 /***/ }),
 
-/***/ "./src/util/validUtil.ts":
-/*!*******************************!*\
-  !*** ./src/util/validUtil.ts ***!
-  \*******************************/
+/***/ "./src/util/validUtils.ts":
+/*!********************************!*\
+  !*** ./src/util/validUtils.ts ***!
+  \********************************/
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -1606,10 +2214,10 @@ exports.resetRowElementStyleClass = resetRowElementStyleClass;
 
 
 
-var ___CSS_LOADER_URL_IMPORT_0___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+ */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+"), __webpack_require__.b);
-var ___CSS_LOADER_URL_IMPORT_1___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg== */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg=="), __webpack_require__.b);
-var ___CSS_LOADER_URL_IMPORT_2___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+"), __webpack_require__.b);
-var ___CSS_LOADER_URL_IMPORT_3___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+"), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_0___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+"), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_1___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+ */ "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+"), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_2___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+ */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+"), __webpack_require__.b);
+var ___CSS_LOADER_URL_IMPORT_3___ = new URL(/* asset import */ __webpack_require__(/*! data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg== */ "data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg=="), __webpack_require__.b);
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_node_modules_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
 var ___CSS_LOADER_URL_REPLACEMENT_0___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_0___);
 var ___CSS_LOADER_URL_REPLACEMENT_1___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_1___);
@@ -1633,50 +2241,97 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
   .dara-form ::after,
   .dara-form ::before {
     box-sizing: border-box; }
-  .dara-form .dara-form-field-container .dara-form-field {
+  .dara-form .df-field-container .df-field {
     position: relative; }
-    .dara-form .dara-form-field-container .dara-form-field .file-wrapper {
+    .dara-form .df-field-container .df-field .file-wrapper {
       border: 1px solid var(--border-color);
       text-align: center;
       display: block;
       width: 100%;
       padding: 0.375rem 0.75rem;
-      font-size: 1rem;
       font-weight: 400;
       line-height: 1.5;
       background-clip: padding-box;
       border-radius: 4px;
       transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+  .dara-form .df-field-container .df-hidden {
+    max-height: 0vh !important;
+    transition: all 0.25s ease-out;
+    visibility: hidden; }
+  .dara-form .df-field-container .sub-field-group {
+    padding: 0px;
+    margin: 0px;
+    list-style: none; }
+    .dara-form .df-field-container .sub-field-group.vertical {
+      display: block; }
+      .dara-form .df-field-container .sub-field-group.vertical .sub-row {
+        padding-top: 5px;
+        max-height: 100vh;
+        transition: all 0.25s ease-in; }
+        .dara-form .df-field-container .sub-field-group.vertical .sub-row + .sub-row {
+          padding-top: 5px; }
+        .dara-form .df-field-container .sub-field-group.vertical .sub-row + .df-hidden {
+          padding-top: 0px; }
+      .dara-form .df-field-container .sub-field-group.vertical .sub-row:first-child {
+        padding-top: 0px; }
+      .dara-form .df-field-container .sub-field-group.vertical .df-hidden:first-child:has(~ .sub-row) {
+        padding-top: 0px; }
+    .dara-form .df-field-container .sub-field-group.horizontal-row {
+      display: table;
+      width: 100%; }
+      .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
+        display: table-row;
+        letter-spacing: 5px; }
+        .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
+          display: table-cell;
+          padding-top: 5px; }
+    .dara-form .df-field-container .sub-field-group.horizontal {
+      display: table; }
+      .dara-form .df-field-container .sub-field-group.horizontal .df-hidden {
+        width: 0px;
+        padding-right: 0px !important;
+        display: none !important; }
+      .dara-form .df-field-container .sub-field-group.horizontal .sub-row {
+        display: table-cell;
+        padding-right: 15px; }
+        .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group {
+          position: relative; }
+          .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
+            margin-right: -16px; }
+        .dara-form .df-field-container .sub-field-group.horizontal .sub-row .sub-label {
+          padding-right: 10px; }
+        .dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
+          display: table-cell; }
   .dara-form.horizontal {
     margin: 0px 0px;
     display: table;
     width: 100%; }
-    .dara-form.horizontal > .dara-form-row {
+    .dara-form.horizontal > .df-row {
       display: table-row; }
-      .dara-form.horizontal > .dara-form-row > .dara-form-label {
+      .dara-form.horizontal > .df-row > .df-label {
         width: 10%;
         display: table-cell; }
-      .dara-form.horizontal > .dara-form-row > .dara-form-field-container {
+      .dara-form.horizontal > .df-row > .df-field-container {
         display: table-cell;
         padding-bottom: 10px; }
-  .dara-form.vertical > .dara-form-row > * {
+  .dara-form.vertical > .df-row > * {
     display: block; }
-  .dara-form > .dara-form-row {
+  .dara-form > .df-row {
     width: 100%;
     margin: 0px 0px 10px 0px; }
-    .dara-form > .dara-form-row > .dara-form-label .require {
+    .dara-form > .df-row > .df-label .require {
       color: var(--color-danger); }
-      .dara-form > .dara-form-row > .dara-form-label .require::after {
+      .dara-form > .df-row > .df-label .require::after {
         content: "*";
         vertical-align: middle; }
-    .dara-form > .dara-form-row .help-message {
+    .dara-form > .df-row .help-message {
       display: none; }
-    .dara-form > .dara-form-row .help-icon {
+    .dara-form > .df-row .help-icon {
       background-repeat: no-repeat;
       background-position-y: center; }
-      .dara-form > .dara-form-row .help-icon.form-field {
+      .dara-form > .df-row .help-icon.form-field {
         background-position-x: calc(100% - 15px); }
-      .dara-form > .dara-form-row .help-icon.dara-icon {
+      .dara-form > .df-row .help-icon.dara-icon {
         display: none;
         position: absolute;
         z-index: 1;
@@ -1685,31 +2340,19 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
         height: 100%;
         width: 20px;
         margin-right: 15px; }
-    .dara-form > .dara-form-row.invalid .form-field {
-      border-color: var(--invalid-border-color);
-      outline-color: var(--invalid-border-color); }
-    .dara-form > .dara-form-row.invalid .help-icon {
-      display: block;
-      background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___}); }
-    .dara-form > .dara-form-row.invalid .help-message {
-      display: block;
-      color: var(--invalid-font-color); }
-    .dara-form > .dara-form-row.valid .help-icon {
-      display: block;
-      background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___}); }
-    .dara-form > .dara-form-row .dara-file-list .file-icon {
+    .dara-form > .df-row .dara-file-list .file-icon {
       width: 20px;
       height: 20px;
       display: inline-block;
       vertical-align: middle;
       cursor: pointer; }
-      .dara-form > .dara-form-row .dara-file-list .file-icon:hover {
+      .dara-form > .df-row .dara-file-list .file-icon:hover {
         background-color: var(--background-button-hover); }
-      .dara-form > .dara-form-row .dara-file-list .file-icon.download {
-        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___}); }
-      .dara-form > .dara-form-row .dara-file-list .file-icon.remove {
-        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___}); }
-    .dara-form > .dara-form-row .dara-file-list .file-name {
+      .dara-form > .df-row .dara-file-list .file-icon.download {
+        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___}); }
+      .dara-form > .df-row .dara-file-list .file-icon.remove {
+        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___}); }
+    .dara-form > .df-row .dara-file-list .file-name {
       text-overflow: ellipsis;
       white-space: nowrap;
       word-wrap: normal;
@@ -1717,6 +2360,22 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
       display: inline-block;
       vertical-align: middle;
       width: calc(100% - 55px); }
+  .dara-form > .df-row.invalid .form-field,
+  .dara-form .sub-row.invalid .form-field {
+    border-color: var(--invalid-border-color);
+    outline-color: var(--invalid-border-color); }
+  .dara-form > .df-row.invalid .help-icon,
+  .dara-form .sub-row.invalid .help-icon {
+    display: block;
+    background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___}); }
+  .dara-form > .df-row.invalid .help-message,
+  .dara-form .sub-row.invalid .help-message {
+    display: block;
+    color: var(--invalid-font-color); }
+  .dara-form > .df-row.valid .help-icon,
+  .dara-form .sub-row.valid .help-icon {
+    display: block;
+    background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___}); }
   .dara-form .file-label {
     border: 1px solid var(--border-color);
     display: inline;
@@ -1733,7 +2392,6 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
     display: block;
     width: 100%;
     padding: 0.375rem 0.75rem;
-    font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
     background-clip: padding-box;
@@ -1756,7 +2414,13 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
     display: block; }
   .dara-form .field-group .field.horizontal {
     display: inline; }
-`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"AAAA;EACI,uBAAe;EACf,uBAAe;EACf,4BAAoB;EACpB,qBAAa;EACb,6BAAqB;EACrB,+BAAuB;EACvB,gCAA2B;EAC3B,kCAA0B,EAAA;;AAG9B;EACI,YAAY;EACZ,wBAAwB,EAAA;EAF5B;;;IAOQ,sBAAsB,EAAA;EAP9B;IAYY,kBAAkB,EAAA;IAZ9B;MAegB,qCAAqC;MACrC,kBAAkB;MAClB,cAAc;MACd,WAAW;MACX,yBAAyB;MACzB,eAAe;MACf,gBAAgB;MAChB,gBAAgB;MAChB,4BAA4B;MAC5B,kBAAkB;MAClB,sEAAsE,EAAA;EAzBtF;IA+BQ,eAAe;IACf,cAAc;IACd,WAAW,EAAA;IAjCnB;MAoCY,kBAAkB,EAAA;MApC9B;QAuCgB,UAAU;QACV,mBAAmB,EAAA;MAxCnC;QA4CgB,mBAAmB;QACnB,oBAAoB,EAAA;EA7CpC;IAqDY,cAAc,EAAA;EArD1B;IA0DQ,WAAW;IACX,wBAAwB,EAAA;IA3DhC;MAqEgB,0BAA0B,EAAA;MArE1C;QAiEoB,YAAY;QACZ,sBAAsB,EAAA;IAlE1C;MA0EY,aAAa,EAAA;IA1EzB;MA8EY,4BAA4B;MAC5B,6BAA6B,EAAA;MA/EzC;QAkFgB,wCAAwC,EAAA;MAlFxD;QAsFgB,aAAa;QACb,kBAAkB;QAClB,UAAU;QACV,QAAQ;QACR,UAAU;QACV,YAAY;QACZ,WAAW;QACX,kBAAkB,EAAA;IA7FlC;MAmGgB,yCAAyC;MACzC,0CAA0C,EAAA;IApG1D;MAwGgB,cAAc;MACd,yDAAqX,EAAA;IAzGrY;MA6GgB,cAAc;MACd,gCAAgC,EAAA;IA9GhD;MAoHgB,cAAc;MACd,yDAA6T,EAAA;IArH7U;MA2HgB,WAAW;MACX,YAAY;MACZ,qBAAqB;MACrB,sBAAsB;MACtB,eAAe,EAAA;MA/H/B;QAkIoB,gDAAgD,EAAA;MAlIpE;QAsIoB,yDAA+e,EAAA;MAtIngB;QA0IoB,yDAAmY,EAAA;IA1IvZ;MA+IgB,uBAAuB;MACvB,mBAAmB;MACnB,iBAAiB;MACjB,gBAAgB;MAChB,qBAAqB;MACrB,sBAAsB;MACtB,wBAAwB,EAAA;EArJxC;IA4JQ,qCAAqC;IACrC,eAAe;IACf,WAAW;IACX,iBAAiB;IACjB,cAAc;IACd,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IAnK9E;MAsKY,gDAAgD,EAAA;EAtK5D;IA2KQ,qCAAqC;IACrC,cAAc;IACd,WAAW;IACX,yBAAyB;IACzB,eAAe;IACf,gBAAgB;IAChB,gBAAgB;IAChB,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IApL9E;MAwLY,WAAW;MACX,eAAe,EAAA;IAzL3B;MA6LY,gBAAgB;MAChB,wBAAwB;MACxB,qBAAqB,EAAA;IA/LjC;MAmMY,kBAAkB,EAAA;IAnM9B;MAuMY,kBAAkB,EAAA;IAvM9B;MA2MY,aAAa,EAAA;EA3MzB;IAmNgB,cAAc,EAAA;EAnN9B;IAuNgB,eAAe,EAAA","sourcesContent":[":root .dara-form {\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n}\r\n\r\n.dara-form {\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .dara-form-field-container {\r\n        .dara-form-field {\r\n            position: relative;\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-size: 1rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.dara-form-row {\r\n            display: table-row;\r\n\r\n            >.dara-form-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.dara-form-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.dara-form-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    >.dara-form-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n\r\n        >.dara-form-label {\r\n\r\n            .require {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-size: 1rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n\r\n\r\n}"],"sourceRoot":""}]);
+
+@keyframes fadeOut {
+  from {
+    opacity: 1; }
+  to {
+    opacity: 0; } }
+`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"AAAA;EACI,uBAAe;EACf,uBAAe;EACf,4BAAoB;EACpB,qBAAa;EACb,6BAAqB;EACrB,+BAAuB;EACvB,gCAA2B;EAC3B,kCAA0B,EAAA;;AAG9B;EACI,YAAY;EACZ,wBAAwB,EAAA;EAF5B;;;IAOQ,sBAAsB,EAAA;EAP9B;IAYY,kBAAkB,EAAA;IAZ9B;MAegB,qCAAqC;MACrC,kBAAkB;MAClB,cAAc;MACd,WAAW;MACX,yBAAyB;MACzB,gBAAgB;MAChB,gBAAgB;MAChB,4BAA4B;MAC5B,kBAAkB;MAClB,sEAAsE,EAAA;EAxBtF;IA6BY,0BAA0B;IAC1B,8BAA8B;IAC9B,kBAAkB,EAAA;EA/B9B;IAmCY,YAAY;IACZ,WAAW;IACX,gBAAgB,EAAA;IArC5B;MAwCgB,cAAc,EAAA;MAxC9B;QA2CoB,gBAAgB;QAChB,iBAAiB;QACjB,6BAA6B,EAAA;QA7CjD;UAgDwB,gBAAgB,EAAA;QAhDxC;UAoDwB,gBAAgB,EAAA;MApDxC;QAyDoB,gBAAgB,EAAA;MAzDpC;QA6DoB,gBAAgB,EAAA;IA7DpC;MAkEgB,cAAc;MACd,WAAW,EAAA;MAnE3B;QAsEoB,kBAAkB;QAClB,mBAAmB,EAAA;QAvEvC;UA0EwB,mBAAmB;UACnB,gBAAgB,EAAA;IA3ExC;MAiFgB,cAAc,EAAA;MAjF9B;QAqFoB,UAAU;QACV,6BAA6B;QAC7B,wBAAwB,EAAA;MAvF5C;QA2FoB,mBAAmB;QACnB,mBAAmB,EAAA;QA5FvC;UA+FwB,kBAAkB,EAAA;UA/F1C;YAkG4B,mBAAmB,EAAA;QAlG/C;UAuGwB,mBAAmB,EAAA;QAvG3C;UA2GwB,mBAAmB,EAAA;EA3G3C;IAuHQ,eAAe;IACf,cAAc;IACd,WAAW,EAAA;IAzHnB;MA4HY,kBAAkB,EAAA;MA5H9B;QA+HgB,UAAU;QACV,mBAAmB,EAAA;MAhInC;QAoIgB,mBAAmB;QACnB,oBAAoB,EAAA;EArIpC;IA6IY,cAAc,EAAA;EA7I1B;IAkJQ,WAAW;IACX,wBAAwB,EAAA;IAnJhC;MA6JgB,0BAA0B,EAAA;MA7J1C;QAyJoB,YAAY;QACZ,sBAAsB,EAAA;IA1J1C;MAkKY,aAAa,EAAA;IAlKzB;MAsKY,4BAA4B;MAC5B,6BAA6B,EAAA;MAvKzC;QA0KgB,wCAAwC,EAAA;MA1KxD;QA8KgB,aAAa;QACb,kBAAkB;QAClB,UAAU;QACV,QAAQ;QACR,UAAU;QACV,YAAY;QACZ,WAAW;QACX,kBAAkB,EAAA;IArLlC;MA2LgB,WAAW;MACX,YAAY;MACZ,qBAAqB;MACrB,sBAAsB;MACtB,eAAe,EAAA;MA/L/B;QAkMoB,gDAAgD,EAAA;MAlMpE;QAsMoB,yDAA+e,EAAA;MAtMngB;QA0MoB,yDAAmY,EAAA;IA1MvZ;MA+MgB,uBAAuB;MACvB,mBAAmB;MACnB,iBAAiB;MACjB,gBAAgB;MAChB,qBAAqB;MACrB,sBAAsB;MACtB,wBAAwB,EAAA;EArNxC;;IA+NgB,yCAAyC;IACzC,0CAA0C,EAAA;EAhO1D;;IAoOgB,cAAc;IACd,yDAAqX,EAAA;EArOrY;;IAyOgB,cAAc;IACd,gCAAgC,EAAA;EA1OhD;;IAgPgB,cAAc;IACd,yDAA6T,EAAA;EAjP7U;IAuPQ,qCAAqC;IACrC,eAAe;IACf,WAAW;IACX,iBAAiB;IACjB,cAAc;IACd,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IA9P9E;MAiQY,gDAAgD,EAAA;EAjQ5D;IAsQQ,qCAAqC;IACrC,cAAc;IACd,WAAW;IACX,yBAAyB;IACzB,gBAAgB;IAChB,gBAAgB;IAChB,4BAA4B;IAC5B,kBAAkB;IAClB,sEAAsE,EAAA;IA9Q9E;MAkRY,WAAW;MACX,eAAe,EAAA;IAnR3B;MAuRY,gBAAgB;MAChB,wBAAwB;MACxB,qBAAqB,EAAA;IAzRjC;MA6RY,kBAAkB,EAAA;IA7R9B;MAiSY,kBAAkB,EAAA;IAjS9B;MAqSY,aAAa,EAAA;EArSzB;IA6SgB,cAAc,EAAA;EA7S9B;IAiTgB,eAAe,EAAA;;AAK3B;EACI;IACI,UAAU,EAAA;EAId;IACI,UAAU,EAAA,EAAA","sourcesContent":[":root .dara-form {\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n}\r\n\r\n.dara-form {\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .df-field-container {\r\n        .df-field {\r\n            position: relative;\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n\r\n        .df-hidden {\r\n            max-height: 0vh !important;\r\n            transition: all 0.25s ease-out;\r\n            visibility: hidden;\r\n        }\r\n\r\n        .sub-field-group {\r\n            padding: 0px;\r\n            margin: 0px;\r\n            list-style: none;\r\n\r\n            &.vertical {\r\n                display: block;\r\n\r\n                .sub-row {\r\n                    padding-top: 5px;\r\n                    max-height: 100vh;\r\n                    transition: all 0.25s ease-in;\r\n\r\n                    +.sub-row {\r\n                        padding-top: 5px;\r\n                    }\r\n\r\n                    +.df-hidden {\r\n                        padding-top: 0px;\r\n                    }\r\n                }\r\n\r\n                .sub-row:first-child {\r\n                    padding-top: 0px;\r\n                }\r\n\r\n                .df-hidden:first-child:has(~ .sub-row) {\r\n                    padding-top: 0px;\r\n                }\r\n            }\r\n\r\n            &.horizontal-row {\r\n                display: table;\r\n                width: 100%;\r\n\r\n                .sub-row {\r\n                    display: table-row;\r\n                    letter-spacing: 5px;\r\n\r\n                    >* {\r\n                        display: table-cell;\r\n                        padding-top: 5px;\r\n                    }\r\n                }\r\n            }\r\n\r\n            &.horizontal {\r\n                display: table;\r\n\r\n\r\n                .df-hidden {\r\n                    width: 0px;\r\n                    padding-right: 0px !important;\r\n                    display: none !important;\r\n                }\r\n\r\n                .sub-row {\r\n                    display: table-cell;\r\n                    padding-right: 15px;\r\n\r\n                    .field-group {\r\n                        position: relative;\r\n\r\n                        .help-icon {\r\n                            margin-right: -16px;\r\n                        }\r\n                    }\r\n\r\n                    .sub-label {\r\n                        padding-right: 10px;\r\n                    }\r\n\r\n                    >span {\r\n                        display: table-cell;\r\n                    }\r\n                }\r\n            }\r\n\r\n\r\n        }\r\n\r\n\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.df-row {\r\n            display: table-row;\r\n\r\n            >.df-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.df-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.df-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    >.df-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n\r\n        >.df-label {\r\n\r\n            .require {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n    >.df-row,\r\n    .sub-row {\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n    }\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n    @keyframes fadeOut {\r\n        from {\r\n            opacity: 1;\r\n\r\n        }\r\n\r\n        to {\r\n            opacity: 0;\r\n        }\r\n    }\r\n}"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

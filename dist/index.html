@@ -19,7 +19,7 @@
   </div>
 
   <div style="padding: 20px;">
-    <div id="formArea"></div>
+    <form id="formArea"></form>
   </div>
 </body>
 
@@ -33,9 +33,10 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    //mode: 'horizontal',
-    mode: 'vertical',
+    mode: 'horizontal',
+    //mode: 'vertical',
     //width: '600px',
+    //autoFocus: false,
     labelWidth: '150px',
     message: {
       empty: '{name} 필수 입력사항입니다.',
@@ -54,6 +55,11 @@
     }
     , fields: [
       {
+        name: 'hiddenMode'
+        , renderType: 'hidden'
+        , defaultValue: 'asdf'
+      }
+      , {
         name: 'uid'
         , label: '아이디'
         , required: true
@@ -62,12 +68,7 @@
           , maxLength: 100
         }
         , validator: (param => {
-          console.log(param)
-          /*
-          return {
-            message: 'asdfasdf'
-          }
-          */
+
         })
       }
       , {
@@ -78,6 +79,92 @@
           minLength: 2,
           maxLength: 100
         }
+        , onChange: (arg) => {
+          console.log(arg);
+        }
+      }
+
+
+      , {
+        label: '주소'
+        , viewMode: 'vertical'  // 'vertical , horizontal'
+        , children: [
+          {
+            name: 'newAddress'
+            , label: '신규주소여부'
+            , hideLabel: true
+            , required: true
+            , renderType: 'checkbox'
+            , values: [
+              { label: 'option1', selected: true }
+            ]
+            , onChange: (arg) => {
+              console.log(arg);
+            }
+          }
+          , {
+            name: 'address'
+            , label: '주소'
+            , hideLabel: true
+            , required: true
+            , rule: {
+              minLength: 2,
+              maxLength: 100
+            }
+            , conditional: {
+              show: true,
+              custom: function () {
+                return true;
+              }
+            }
+          }
+          , {
+            name: 'address2'
+            , label: '주소1'
+            , hideLabel: true
+            , required: true
+            , rule: {
+              minLength: 2,
+              maxLength: 100
+            }
+            , conditional: {
+              show: false,
+              field: 'newAddress',
+              eq: true,
+              //custom?: OptionCallback
+            }
+          }
+          , {
+            name: 'hiddenMode1'
+            , renderType: 'text'
+            , label: '주소 하위1'
+            , childLabelWidth: '10%'
+            , viewMode: 'horizontal'  // 'vertical , horizontal, horizontal-row'
+            , hideLabel: true
+            , children: [
+              {
+                name: 'address22222'
+                , label: '주소1'
+                , labelWidth: '150px'
+                , renderType: 'text'
+              }
+              , {
+                name: 'address222333322'
+                , label: '주소2'
+                , renderType: 'text'
+              }
+            ]
+
+          }
+          , {
+            label: '버튼'
+            , hideLabel: true
+            , renderType: 'button'
+            , onClick: (arg) => {
+              console.log(arg);
+            }
+          }
+        ]
       }
       , {
         name: 'uemail'
@@ -110,6 +197,10 @@
         name: 'upw'
         , label: '비밀번호'
         , renderType: 'password'
+        , regexpType: 'number-char'
+        , rule: {
+          minLength: 8
+        }
         , different: {
           field: 'uid',
           message: '아이디와 달라야 합니다.'
@@ -171,7 +262,7 @@
         ]
       }
       , {
-        name: 'textarea"></textarea>aaaa<textarea "aaa" class="form-field textarea" '
+        name: 'textarea'
         , label: '텍스트 area'
         , renderType: 'textarea'
       }

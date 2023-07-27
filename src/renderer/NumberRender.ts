@@ -2,17 +2,14 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { numberValidator } from "src/rule/numberValidator";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { inputEvent, numberInputEvent } from "src/event/renderEvents";
+import { numberInputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class NumberRender extends Render {
     private element: HTMLInputElement;
-    private field;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, rowElement);
-        this.field = field;
-        this.rowElement = rowElement;
+        super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
         this.initEvent();
     }
@@ -22,10 +19,13 @@ export default class NumberRender extends Render {
     }
 
     static template(field: FormField): string {
+        const desc = field.description ? `<div>${field.description}</div>` : '';
+
         return `
-        <div class="dara-form-field">
-            <input type="number" name="${field.name}" class="form-field number help-icon" /></i>
+        <div class="df-field">
+            <input type="text" name="${field.name}" class="form-field number help-icon" /></i>
         </div> 
+        ${desc}
         <div class="help-message"></div>
        `;
     }

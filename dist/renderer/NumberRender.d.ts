@@ -1,10 +1,10 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-export default class NumberRender implements Render {
+import DaraForm from "src/DaraForm";
+export default class NumberRender extends Render {
     private element;
-    private rowElement;
     private field;
-    constructor(field: FormField, rowElement: HTMLElement);
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
     static template(field: FormField): string;
     getValue(): string;

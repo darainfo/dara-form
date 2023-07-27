@@ -7,6 +7,8 @@
     --invalid-border-color: #ffb6b4;
     --invalid-background-color: #FDD;
     --background-button-hover: #ebebeb;
+    --tooltip-background: #3e3e3e;
+    --tooltip-color: #fff;
 }
 
 .dara-form {
@@ -19,8 +21,51 @@
         box-sizing: border-box;
     }
 
-    .dara-form-field-container {
-        .dara-form-field {
+
+    .df-label,
+    .sub-label {
+        position: relative;
+
+        .df-tooltip {
+            visibility: visible;
+            color: #fff;
+            background: #000;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            text-align: center;
+            line-height: 16px;
+            margin: 0 5px;
+            font-size: 12px;
+            cursor: help;
+            position: relative;
+            display: inline-block;
+
+            .tooltip {
+                display: none;
+                text-align: initial;
+                background: var(--tooltip-background);
+                border-radius: 5px;
+                color: var(--tooltip-color);
+                padding: 10px 5px;
+                position: absolute;
+                z-index: 2;
+                left: -10px;
+                min-width: max-content;
+                text-shadow: none;
+                cursor: default;
+            }
+
+            &:hover .tooltip {
+                display: block;
+            }
+        }
+
+
+    }
+
+    .df-field-container {
+        .df-field {
             position: relative;
 
             .file-wrapper {
@@ -74,6 +119,21 @@
                 }
             }
 
+            &.horizontal-row {
+                display: table;
+                width: 100%;
+
+                .sub-row {
+                    display: table-row;
+                    letter-spacing: 5px;
+
+                    >* {
+                        display: table-cell;
+                        padding-top: 5px;
+                    }
+                }
+            }
+
             &.horizontal {
                 display: table;
 
@@ -104,11 +164,7 @@
                     }
                 }
             }
-
-
         }
-
-
     }
 
     &.horizontal {
@@ -116,15 +172,15 @@
         display: table;
         width: 100%;
 
-        >.dara-form-row {
+        >.df-row {
             display: table-row;
 
-            >.dara-form-label {
+            >.df-label {
                 width: 10%;
                 display: table-cell;
             }
 
-            >.dara-form-field-container {
+            >.df-field-container {
                 display: table-cell;
                 padding-bottom: 10px;
             }
@@ -133,18 +189,18 @@
     }
 
     &.vertical {
-        >.dara-form-row>* {
+        >.df-row>* {
             display: block;
         }
     }
 
-    >.dara-form-row {
+    >.df-row {
         width: 100%;
         margin: 0px 0px 10px 0px;
 
-        >.dara-form-label {
+        >.df-label {
 
-            .require {
+            .required {
                 &::after {
                     content: "*";
                     vertical-align: middle;
@@ -211,7 +267,7 @@
         }
     }
 
-    >.dara-form-row,
+    >.df-row,
     .sub-row {
 
         &.invalid {

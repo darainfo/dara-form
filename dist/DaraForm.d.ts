@@ -1,11 +1,12 @@
 import { FormOptions } from '@t/FormOptions';
 import { FormField } from '@t/FormField';
+import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
 export default class DaraForm {
     private readonly options;
     private isHorizontal;
     private formElement;
-    private allFieldInfo;
+    private fieldInfoMap;
     private addRowFields;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;
@@ -25,12 +26,19 @@ export default class DaraForm {
      */
     groupTemplate(field: FormField): string;
     /**
-     * field tempalte 구하기
+    * field tempalte 구하기
+    *
+    * @param {FormField} field
+    * @returns {string}
+    */
+    getFieldTempate(field: FormField): string;
+    checkHiddenField(field: FormField): boolean;
+    /**
+     * add row file map
      *
      * @param {FormField} field
-     * @returns {string}
      */
-    getFieldTempate(field: FormField): string;
+    addRowFieldInfo(field: FormField): void;
     /**
      * 폼 데이터 reset
      */
@@ -65,6 +73,8 @@ export default class DaraForm {
      * @param values
      */
     setValue: (values: any) => void;
+    setFieldValue: (fieldName: string, values: any) => void;
+    setFieldItems: (fieldName: string, values: any) => void;
     /**
      * field 추가
      *
@@ -91,4 +101,10 @@ export default class DaraForm {
     validForm: () => any[];
     isValidField: (fieldName: string) => boolean;
     getOptions: () => FormOptions;
+    conditionCheck(): void;
+    static validator: {
+        string: (value: string, field: FormField) => boolean | ValidResult;
+        number: (value: string, field: FormField) => boolean | ValidResult;
+        regexp: (value: string, field: FormField) => ValidResult;
+    };
 }

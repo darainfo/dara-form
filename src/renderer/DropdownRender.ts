@@ -8,13 +8,10 @@ import DaraForm from "src/DaraForm";
 
 export default class DropdownRender extends Render {
     private element: HTMLSelectElement;
-    private field;
     private defaultCheckValue;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, rowElement);
-        this.field = field;
-        this.rowElement = rowElement;
+        super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
         this.defaultCheckValue = this.field.values[0].value;
@@ -33,13 +30,16 @@ export default class DropdownRender extends Render {
     }
 
     static template(field: FormField): string {
-        let template = ` <div class="dara-form-field"><select name="${field.name}" class="form-field dropdown">`;
+        const desc = field.description ? `<div>${field.description}</div>` : '';
+
+        let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
 
         field.values.forEach(val => {
             template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
         })
 
         template += `</select> <i class="help-icon"></i></div>
+                    ${desc}
                     <div class="help-message"></div>
         `;
         return template;
@@ -47,7 +47,7 @@ export default class DropdownRender extends Render {
 
     public setValueItems(items: any): void {
 
-        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        const containerEle = this.rowElement.querySelector('.df-field-container');
         if (containerEle) {
             this.field.values = items;
             containerEle.innerHTML = DropdownRender.template(this.field);

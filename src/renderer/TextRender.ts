@@ -7,12 +7,9 @@ import DaraForm from "src/DaraForm";
 
 export default class TextRender extends Render {
   private element: HTMLInputElement;
-  private field;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.initEvent();
   }
@@ -22,10 +19,12 @@ export default class TextRender extends Render {
   }
 
   static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
-    <div class="dara-form-field">
+    <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
-     </div> 
+     </div>
+     ${desc}
      <div class="help-message"></div>
      `;
   }

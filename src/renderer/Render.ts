@@ -6,10 +6,14 @@ export default abstract class Render {
 
     protected daraForm;
     protected rowElement;
+    protected field;
 
-    constructor(form: DaraForm, rowElement: HTMLElement) {
+    constructor(form: DaraForm, field: FormField, rowElement: HTMLElement) {
         this.daraForm = form;
+        this.field = field;
         this.rowElement = rowElement;
+
+        if (field.tooltip) rowElement.querySelector('.df-tooltip')?.setAttribute('tooltip', field.tooltip);
     }
 
 
@@ -50,6 +54,10 @@ export default abstract class Render {
         if (!this.rowElement.classList.contains('df-hidden')) {
             this.rowElement.classList.add('df-hidden');
         };
+    }
+
+    public commonRuleCheck() {
+        //this.field.diff
     }
 
 }

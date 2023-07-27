@@ -3,12 +3,9 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class HiddenRender extends Render {
-  private field;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.field.$value = field.defaultValue;
   }
 

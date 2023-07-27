@@ -1,28 +1,27 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { inputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class ButtonRender extends Render {
 
-  private field;
-
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.initEvent();
   }
 
   initEvent() {
-    // inputEvent(this.field, this.element, this);
+    this.rowElement.querySelector(`#${this.field.$key}`)?.addEventListener("click", (evt) => {
+      if (this.field.onClick) {
+        this.field.onClick.call(null, this.field);
+      }
+    });
   }
 
   static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
+
     return `
-      <button type="button" class="df-btn">${field.label}</button>
+      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
      `;
   }
 

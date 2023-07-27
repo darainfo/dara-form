@@ -19,7 +19,7 @@
   </div>
 
   <div style="padding: 20px;">
-    <div id="formArea"></div>
+    <form id="formArea"></form>
   </div>
 </body>
 
@@ -33,7 +33,7 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    mode: 'horizontal',
+    mode: 'vertical',
     //mode: 'vertical',
     //width: '600px',
     //autoFocus: false,
@@ -62,6 +62,8 @@
       , {
         name: 'uid'
         , label: '아이디'
+        , tooltip: '아이디를 넣어주세요.'
+        , description: '설명설명설명'
         , required: true
         , rule: {
           minLength: 3
@@ -136,20 +138,22 @@
           }
           , {
             name: 'hiddenMode1'
-            , renderType: 'hidden'
+            , renderType: 'text'
             , label: '주소 하위1'
-            //, viewMode: 'vertical'  // 'vertical , horizontal'
+            , childLabelWidth: '10%'
+            , viewMode: 'horizontal'  // 'vertical , horizontal, horizontal-row'
             , hideLabel: true
             , children: [
               {
                 name: 'address22222'
                 , label: '주소1'
-                , renderType: 'hidden'
+                , labelWidth: '150px'
+                , renderType: 'text'
               }
               , {
                 name: 'address222333322'
-                , label: '주소1'
-                , renderType: 'hidden'
+                , label: '주소2'
+                , renderType: 'text'
               }
             ]
 

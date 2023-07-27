@@ -1,13 +1,15 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-export default class CheckboxRender implements Render {
-    private rowElement;
+import DaraForm from "src/DaraForm";
+export default class CheckboxRender extends Render {
     private field;
     private defaultCheckValue;
-    constructor(field: FormField, rowElement: HTMLElement);
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
+    getSelector(): string;
     static template(field: FormField): string;
-    getValue(): any[];
+    setValueItems(items: any): void;
+    getValue(): boolean | any[];
     setValue(value: any): void;
     reset(): void;
     getElement(): any;

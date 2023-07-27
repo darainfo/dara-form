@@ -3,12 +3,9 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class GroupRender extends Render {
-    private field;
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, rowElement);
-        this.field = field;
-        this.rowElement = rowElement;
+        super(daraForm, field, rowElement);
     }
 
     public initEvent() { }

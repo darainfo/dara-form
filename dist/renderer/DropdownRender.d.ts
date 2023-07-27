@@ -1,13 +1,14 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-export default class DropdownRender implements Render {
+import DaraForm from "src/DaraForm";
+export default class DropdownRender extends Render {
     private element;
-    private rowElement;
     private field;
     private defaultCheckValue;
-    constructor(field: FormField, rowElement: HTMLElement);
+    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
     static template(field: FormField): string;
+    setValueItems(items: any): void;
     getValue(): string;
     setValue(value: any): void;
     reset(): void;

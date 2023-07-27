@@ -8,17 +8,14 @@ import DaraForm from "src/DaraForm";
 
 export default class FileRender extends Render {
   private element: HTMLInputElement;
-  private field;
   private removeIds: any[] = [];
   private uploadFiles: any = {};
   private fileList: any[] = [];
   private fileSeq = 0;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-    super(daraForm, rowElement);
+    super(daraForm, field, rowElement);
 
-    this.field = field;
-    this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.fileList = field.values;
     this.initEvent();
@@ -118,13 +115,17 @@ export default class FileRender extends Render {
   }
 
   static template(field: FormField): string {
+
+    const desc = field.description ? `<div>${field.description}</div>` : '';
+
     return `
-    <div class="dara-form-field">
+    <div class="df-field">
       <span class="file-wrapper">
         <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage.getMessage('fileButton')}</label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
+    ${desc}
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;

@@ -1,4 +1,5 @@
 export declare const RULES: {
+    readonly NAN: "nan";
     readonly MIN: "minimum";
     readonly EXCLUSIVE_MIN: "exclusiveMinimum";
     readonly MAX: "maximum";
@@ -13,7 +14,9 @@ export declare const RULES: {
     readonly REQUIRED: "required";
     readonly VALIDATOR: "validator";
 };
+export declare const FIELD_PREFIX = "dff";
 export declare const RENDER_TEMPLATE: any;
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';
 export type RENDER_TYPE = 'number' | 'text' | 'file' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group' | 'custom';
 export type REGEXP_TYPE = 'email' | 'url' | 'alpha' | 'alpha-num';
+export type PASSWORD_TYPE = 'number' | 'upper' | 'upper-special' | 'upper-special-number';

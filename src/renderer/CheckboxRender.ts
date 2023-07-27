@@ -1,21 +1,17 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import XssUtil from "src/util/utils";
+import utils from "src/util/utils";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { customChangeEventCall } from "src/event/renderEvents";
-import util from "src/util/utils";
 import DaraForm from "src/DaraForm";
 
 export default class CheckboxRender extends Render {
-    private field;
     private defaultCheckValue: any[] = [];
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, rowElement);
-        this.field = field;
-        this.rowElement = rowElement;
+        super(daraForm, field, rowElement);
 
         this.initEvent();
     }
@@ -45,19 +41,22 @@ export default class CheckboxRender extends Render {
         const templates: string[] = [];
         const fieldName = field.name;
 
-        templates.push(` <div class="dara-form-field"><div class="field-group">`);
+        const desc = field.description ? `<div>${field.description}</div>` : '';
+
+        templates.push(` <div class="df-field"><div class="field-group">`);
         field.values.forEach((val) => {
 
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${val.value ? XssUtil.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        <input type="checkbox" name="${fieldName}" value="${val.value ? utils.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
                         ${val.label}
                     </label>
                 </span>
             `);
         })
         templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        ${desc}
         <div class="help-message"></div>
         `);
 
@@ -67,7 +66,7 @@ export default class CheckboxRender extends Render {
 
     public setValueItems(items: any): void {
 
-        const containerEle = this.rowElement.querySelector('.dara-form-field-container');
+        const containerEle = this.rowElement.querySelector('.df-field-container');
         if (containerEle) {
             this.field.values = items;
             containerEle.innerHTML = CheckboxRender.template(this.field);
@@ -126,7 +125,11 @@ export default class CheckboxRender extends Render {
     }
 
     reset() {
-        this.setValue(this.defaultCheckValue);
+        if (this.field.values.length == 1 && this.defaultCheckValue.length == 1) {
+            this.setValue(true);
+        } else {
+            this.setValue(this.defaultCheckValue);
+        }
         resetRowElementStyleClass(this.rowElement);
     }
 
@@ -139,7 +142,7 @@ export default class CheckboxRender extends Render {
 
         let validResult: ValidResult | boolean = true;
 
-        if (this.field.required && util.isArray(value)) {
+        if (this.field.required && utils.isArray(value)) {
 
             if ((value as any[]).length < 1) {
                 validResult = { name: this.field.name, constraint: [] };

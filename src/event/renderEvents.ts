@@ -1,5 +1,6 @@
 import { FormField } from "@t/FormField";
 import Render from "src/renderer/Render";
+import utils from "src/util/utils";
 
 export const inputEvent = (field: FormField, element: Element, renderInfo: Render) => {
     element.addEventListener('input', (e: Event) => {
@@ -8,14 +9,26 @@ export const inputEvent = (field: FormField, element: Element, renderInfo: Rende
     })
 }
 
-export const numberInputEvent = (field: FormField, element: Element, renderInfo: Render) => {
-    element.addEventListener('input', (e: any) => {
+export const numberInputEvent = (field: FormField, element: HTMLInputElement, renderInfo: Render) => {
+    element.addEventListener('keyup', (e: any) => {
+        const val = e.target.value;
 
-        // 숫자 e체크 copy page 체크. 
-
+        if (!utils.isNumber(val)) {
+            element.value = val.replace(/[^0-9\.\-\+]/g, "");
+            e.preventDefault();
+        }
         customChangeEventCall(field, e, renderInfo);
         renderInfo.valid();
     })
+
+    /*
+    element.addEventListener('input', (e: any) => {
+        customChangeEventCall(field, e, renderInfo);
+        renderInfo.valid();
+    })
+    */
+
+
 }
 
 export const dropdownChangeEvent = (field: FormField, element: Element, renderInfo: Render) => {
