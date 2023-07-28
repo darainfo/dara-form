@@ -39,23 +39,23 @@ export const numberValidator = (value: string, field: FormField): ValidResult | 
         let minRule = false, minExclusive = false, maxRule = false, maxExclusive = false;
 
         if (isMinimum) {
-            if (rule.exclusiveMinimum && numValue < rule.minimum) {
+            if (rule.exclusiveMinimum && numValue <= rule.minimum) {
                 minExclusive = true;
-            } else if (numValue <= rule.minimum) {
+            } else if (numValue < rule.minimum) {
                 minRule = true;
             }
         }
 
         if (isMaximum) {
-            if (rule.exclusiveMaximum && numValue > rule.maximum) {
+            if (rule.exclusiveMaximum && numValue >= rule.maximum) {
                 maxExclusive = true;
-            } else if (numValue >= rule.maximum) {
+            } else if (numValue > rule.maximum) {
                 maxRule = true;
             }
         }
 
         if ((isMinimum && isMaximum) && (minRule || minExclusive || maxRule || maxExclusive)) {
-            if (minExclusive && maxExclusive) {
+            if ((rule.exclusiveMinimum && rule.exclusiveMaximum) && (minExclusive || maxExclusive)) {
                 result.constraint.push(RULES.BETWEEN_EXCLUSIVE_MINMAX);
             } else if (minExclusive) {
                 result.constraint.push(RULES.BETWEEN_EXCLUSIVE_MIN);
@@ -86,6 +86,8 @@ export const numberValidator = (value: string, field: FormField): ValidResult | 
     if (result.constraint.length > 0) {
         return result;
     }
+
+
 
     return true;
 }
