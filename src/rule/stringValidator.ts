@@ -33,10 +33,10 @@ export const stringValidator = (value: string, field: FormField): ValidResult | 
             , isMaxNumber = util.isNumber(rule.maxLength);
 
         let minRule = false, maxRule = false;
-        if (isMinNumber && valueLength <= rule.minLength) {
+        if (isMinNumber && valueLength < rule.minLength) {
             minRule = true;
         }
-        if (isMaxNumber && valueLength >= rule.maxLength) {
+        if (isMaxNumber && valueLength > rule.maxLength) {
             maxRule = true;
         }
 

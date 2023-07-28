@@ -33,7 +33,8 @@ export default class RangeRender extends Render {
 
         return `
         <div class="df-field">
-        <span class="range-num">${field.defaultValue ? field.defaultValue : '0'}</span><input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
+            <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
+            <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
         ${desc}
         <div class="help-message"></div>

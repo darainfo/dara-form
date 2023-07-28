@@ -49,6 +49,7 @@ export default class TextRender extends Render {
   }
 
   valid(): any {
+
     const validResult = stringValidator(this.getValue(), this.field);
 
     invalidMessage(this.field, this.rowElement, validResult);

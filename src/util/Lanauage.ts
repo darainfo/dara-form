@@ -96,7 +96,7 @@ class Language {
         messageFormats.push(messageFormat);
       }
 
-      if (field.type == "number" || field.renderType == "number") {
+      if (field.type == "number" || field.renderType == "number" || field.renderType == "range") {
         messageFormat = (this.lang.number as any)[constraint];
         messageFormats.push(messageFormat);
       } else {

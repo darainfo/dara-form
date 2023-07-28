@@ -5,4 +5,5 @@ export interface ValidResult {
     constraint: any[]
     regexp?: string
     validator?: any
+    message?: string
 }

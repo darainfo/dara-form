@@ -26,5 +26,25 @@ export const validator = (value: string, field: FormField, result: ValidResult):
         return result;
     }
 
+    if (field.different) {
+        const diffFieldName = field.different.field;
+        const diffField = field.$renderer.getForm().getField(diffFieldName);
+
+        if (field.$renderer.getValue() == diffField.$renderer.getValue()) {
+            result.message = field.different.message;
+            return result;
+        }
+    }
+
+    if (field.identical) {
+        const diffFieldName = field.identical.field;
+        const diffField = field.$renderer.getForm().getField(diffFieldName);
+
+        if (field.$renderer.getValue() != diffField.$renderer.getValue()) {
+            result.message = field.identical.message;
+            return result;
+        }
+    }
+
     return true;
 }

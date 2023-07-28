@@ -2,6 +2,8 @@ import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import DaraForm from "src/DaraForm";
 import utils from "src/util/utils";
+import TextRender from "./TextRender";
+import TextAreaRender from "./TextAreaRender";
 
 export default abstract class Render {
 
@@ -22,6 +24,19 @@ export default abstract class Render {
         if (!utils.isUndefined(this.field.defaultValue)) {
             this.setValue(this.field.defaultValue);
         }
+
+        if (!utils.isUndefined(this.field.placeholder)) {
+            const ele = this.getElement();
+            if (ele instanceof Element) {
+                ele.setAttribute("placeholder", this.field.placeholder);
+            }
+        }
+    }
+
+    public setPlaceholder() {
+
+
+
     }
 
     public getForm(): DaraForm {
@@ -54,6 +69,7 @@ export default abstract class Render {
     }
 
     public show() {
+        console.log(this.field)
         this.rowElement.classList.remove('df-hidden');
     }
 
@@ -63,7 +79,7 @@ export default abstract class Render {
         };
     }
 
-    public commonRuleCheck() {
+    public commonValidator() {
         //this.field.diff
     }
 

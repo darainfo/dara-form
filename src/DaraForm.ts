@@ -268,6 +268,10 @@ export default class DaraForm {
         return null;
     }
 
+    getField(fieldName: string): FormField {
+        return this.fieldInfoMap.getFieldName(fieldName);
+    }
+
     /**
      * field 값 얻기
      * 

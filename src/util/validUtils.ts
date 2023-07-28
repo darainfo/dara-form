@@ -26,7 +26,13 @@ export const invalidMessage = (field: FormField, rowElement: Element, validResul
   }
 
   if (validResult !== false) {
+
+
     const message: string[] = Lanauage.validMessage(field, validResult);
+
+    if (validResult.message) {
+      message.push(validResult.message);
+    }
 
     const helpMessageElement = rowElement.querySelector(".help-message");
     if (helpMessageElement && message.length > 0) {

@@ -33,7 +33,7 @@
 <script>
   var formInfo = {
     message: 'This value is not valid',
-    mode: 'vertical',
+    mode: 'horizontal',
     //mode: 'vertical',
     //width: '600px',
     //autoFocus: false,
@@ -64,6 +64,7 @@
         , label: '아이디'
         , tooltip: '아이디를 넣어주세요.'
         , description: '설명설명설명'
+        , placeholder: "아이디를 넣어주세요."
         , required: true
         , rule: {
           minLength: 3
@@ -180,6 +181,13 @@
         , isValid: function (fieldInfo) {
 
         }
+
+        , conditional: {
+          show: false,
+          field: 'newAddress',
+          eq: true,
+          //custom?: OptionCallback
+        }
       }
       , {
         name: 'age'
@@ -207,10 +215,6 @@
         , different: {
           field: 'uid',
           message: '아이디와 달라야 합니다.'
-        }
-        , identical: {
-          field: 'confirmUpw',
-          message: '비밀번호가 같아야합니다.'
         }
       }
       , {
@@ -267,6 +271,7 @@
       , {
         name: 'textarea'
         , label: '텍스트 area'
+        , placeholder: '신규주소 선택하'
         , renderType: 'textarea'
       }
       , {
