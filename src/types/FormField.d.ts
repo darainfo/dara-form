@@ -58,6 +58,7 @@ export interface FormField {
     name: string // 'uid'
     , type: FORM_FIELD_TYPE
     , renderType?: RENDER_TYPE | string
+    , customOptions : any
     , label: string // '아이디'
     , hideLabel: boolean    // label 보이기 여부
     , labelWidth: string        // label 넓이

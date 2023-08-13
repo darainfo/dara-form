@@ -86,7 +86,20 @@
           console.log(arg);
         }
       }
-
+      , {
+        name: 'birth'
+        , label: '생년월일'
+        , required: true
+        , renderType: 'date'
+        , customOptions :{
+          isEmbed: false
+          ,mode:'datetime'
+          ,initialDate: new Date()
+        }
+        , onChange: (arg) => {
+          console.log(arg);
+        }
+      }
 
       , {
         label: '주소'
