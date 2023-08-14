@@ -10,7 +10,7 @@ import { regexpValidator } from './rule/regexpValidator';
 import FieldInfoMap from 'src/FieldInfoMap';
 import GroupRender from './renderer/GroupRender';
 
-let defaultOptions = {
+const defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
     , width: '100%'
     , labelWidth: '20%'
@@ -295,6 +295,10 @@ export default class DaraForm {
      */
     getValue = (isValid: boolean): any => {
         return this.fieldInfoMap.getAllFieldValue(isValid);
+    }
+
+    getFormDataValue = (isValid: boolean): any => {
+        return this.fieldInfoMap.getFormDataValue(isValid);
     }
 
     /**

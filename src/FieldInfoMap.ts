@@ -3,6 +3,9 @@ import { FormField } from "./types/FormField";
 import { ValidResult } from "./types/ValidResult";
 import util from "./util/utils";
 import { getRenderer } from "./util/renderFactory";
+import { reject } from "lodash";
+import { resolve } from "path";
+import Lanauage from "./util/Lanauage";
 
 interface NumberFieldMap {
     [key: string]: FormField;
@@ -118,22 +121,55 @@ export default class FieldInfoMap {
      * @returns {*}
      */
     public getAllFieldValue(isValid: boolean) {
-        let reval = {} as any;
-        Object.keys(this.allFieldInfo).forEach((fieldSeq) => {
-            const filedInfo = this.allFieldInfo[fieldSeq];
-            const renderInfo = filedInfo.$renderer;
-            if (isValid) {
-                let fieldValid = renderInfo.valid();
+        return new Promise((resolve, reject) => {
+            let reval = {} as any;
 
-                if (fieldValid !== true) {
-                    fieldValid = fieldValid as ValidResult;
-                    throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
+            for (const fieldKey in this.allFieldInfo) {
+                const filedInfo = this.allFieldInfo[fieldKey];
+                const renderInfo = filedInfo.$renderer;
+                if (isValid) {
+                    let fieldValid = renderInfo.valid();
+
+                    if (fieldValid !== true) {
+                        fieldValid = fieldValid as ValidResult;
+                        fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
+                        reject(fieldValid);
+                        return;
+                    }
                 }
+
+                reval[filedInfo.name] = renderInfo.getValue();
             }
 
-            reval[filedInfo.name] = renderInfo.getValue();
-        })
-        return reval;
+            resolve(reval);
+        });
+    }
+
+    public getFormDataValue(isValid: boolean): Promise<any> {
+
+        return new Promise((resolve, reject) => {
+            let reval = new FormData();
+
+            for (const fieldKey in this.allFieldInfo) {
+                const filedInfo = this.allFieldInfo[fieldKey];
+                const renderInfo = filedInfo.$renderer;
+                if (isValid) {
+                    let fieldValid = renderInfo.valid();
+
+                    if (fieldValid !== true) {
+                        fieldValid = fieldValid as ValidResult;
+                        fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
+                        reject(fieldValid);
+                        return;
+                    }
+                }
+
+                reval.set(filedInfo.name, renderInfo.getValue());
+            }
+
+            resolve(reval);
+        });
+
     }
 
 

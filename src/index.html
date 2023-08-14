@@ -87,14 +87,14 @@
         }
       }
       , {
-        name: 'birth'
-        , label: '생년월일'
+        name: 'birth2'
+        , label: '생년월일2'
         , required: true
         , renderType: 'date'
-        , customOptions :{
+        , customOptions: {
           isEmbed: false
-          ,mode:'datetime'
-          ,initialDate: new Date()
+          , mode: 'datetime'
+          , initialDate: new Date()
         }
         , onChange: (arg) => {
           console.log(arg);
@@ -280,6 +280,20 @@
           , { label: 'option2', value: '2' }
           , { label: 'option3', value: '3' }
         ]
+      }
+      , {
+        name: 'birth'
+        , label: '생년월일'
+        , required: true
+        , renderType: 'date'
+        , customOptions: {
+          isEmbed: false
+          , mode: 'datetime'
+          , initialDate: new Date()
+        }
+        , onChange: (arg) => {
+          console.log(arg);
+        }
       }
       , {
         name: 'textarea'

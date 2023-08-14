@@ -36,7 +36,7 @@ module.exports = merge(common, {
     // inline: true,
     //mode: 'development',
     host: '0.0.0.0',
-    port: 8888,
+    port: 8889,
   },
   plugins: [
     //new BundleAnalyzerPlugin()

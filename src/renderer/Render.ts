@@ -69,7 +69,6 @@ export default abstract class Render {
     }
 
     public show() {
-        console.log(this.field)
         this.rowElement.classList.remove('df-hidden');
     }
 

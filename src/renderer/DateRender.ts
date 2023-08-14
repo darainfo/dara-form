@@ -19,9 +19,7 @@ export default class DateRender extends Render {
   }
 
   initEvent() {
-    this.field.customOptions
-    
-    new DaraDateTimePicker(this.element, this.field.customOptions,{} as any);
+    new DaraDateTimePicker(this.element, this.field.customOptions, {} as any);
   }
 
   static template(field: FormField): string {
