@@ -1,4 +1,5 @@
-:root .dara-form {
+.dara-form {
+
     --border-color: #dfe1e5;
     --color-danger: #d9534f;
     --background-danger: #d9534f;
@@ -9,9 +10,7 @@
     --background-button-hover: #ebebeb;
     --tooltip-background: #3e3e3e;
     --tooltip-color: #fff;
-}
 
-.dara-form {
     padding: 0px;
     color: var(--font-color);
 
@@ -24,6 +23,7 @@
     .df-label,
     .sub-label {
         position: relative;
+        font-weight: 700;
 
         .df-tooltip {
             visibility: visible;

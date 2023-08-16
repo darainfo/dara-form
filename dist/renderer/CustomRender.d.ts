@@ -2,7 +2,6 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import DaraForm from "src/DaraForm";
 export default class CustomRender extends Render {
-    private field;
     private customFunction;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;

@@ -5,11 +5,12 @@ import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
 import { DaraDateTimePicker } from "dara-datetimepicker";
 
-import 'dara-datetimepicker/dist/datetimepicker.style.css'
-import utils from "src/util/utils";
+import 'dara-datetimepicker/dist/dara.datetimepicker.min.css'
+
 
 export default class DateRender extends Render {
   private element: HTMLInputElement;
+  private dateObj: any;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
@@ -19,7 +20,21 @@ export default class DateRender extends Render {
   }
 
   initEvent() {
-    new DaraDateTimePicker(this.element, this.field.customOptions, {} as any);
+
+    let dateOnChangeEvent: any;
+    if (typeof this.field.customOptions.onChange !== 'undefined') {
+      dateOnChangeEvent = typeof this.field.customOptions.onChange;
+    }
+
+    this.field.customOptions.onChange = (dt: any, e: Event) => {
+      if (dateOnChangeEvent) {
+        dateOnChangeEvent.call(null, dt, e);
+      }
+
+      this.changeEventCall(this.field, e, this);
+    }
+
+    this.dateObj = new DaraDateTimePicker(this.element, this.field.customOptions, {} as any);
   }
 
   static template(field: FormField): string {

@@ -121,21 +121,30 @@ export default class FieldInfoMap {
      * @returns {*}
      */
     public getAllFieldValue(isValid: boolean) {
+        if (isValid !== true) {
+            let reval = {} as any;
+
+            for (const fieldKey in this.allFieldInfo) {
+                const filedInfo = this.allFieldInfo[fieldKey];
+                reval[filedInfo.name] = filedInfo.$renderer.getValue();
+            }
+            return reval;
+        }
+
         return new Promise((resolve, reject) => {
             let reval = {} as any;
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
                 const renderInfo = filedInfo.$renderer;
-                if (isValid) {
-                    let fieldValid = renderInfo.valid();
 
-                    if (fieldValid !== true) {
-                        fieldValid = fieldValid as ValidResult;
-                        fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
-                        reject(fieldValid);
-                        return;
-                    }
+                let fieldValid = renderInfo.valid();
+
+                if (fieldValid !== true) {
+                    fieldValid = fieldValid as ValidResult;
+                    fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
+                    reject(new Error(fieldValid.message, { cause: fieldValid }));
+                    return;
                 }
 
                 reval[filedInfo.name] = renderInfo.getValue();
@@ -145,7 +154,17 @@ export default class FieldInfoMap {
         });
     }
 
-    public getFormDataValue(isValid: boolean): Promise<any> {
+    public getFormDataValue(isValid: boolean) {
+
+        if (isValid !== true) {
+            let reval = new FormData();
+
+            for (const fieldKey in this.allFieldInfo) {
+                const filedInfo = this.allFieldInfo[fieldKey];
+                reval.set(filedInfo.name, filedInfo.$renderer.getValue());
+            }
+            return reval;
+        }
 
         return new Promise((resolve, reject) => {
             let reval = new FormData();
@@ -153,15 +172,13 @@ export default class FieldInfoMap {
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
                 const renderInfo = filedInfo.$renderer;
-                if (isValid) {
-                    let fieldValid = renderInfo.valid();
+                let fieldValid = renderInfo.valid();
 
-                    if (fieldValid !== true) {
-                        fieldValid = fieldValid as ValidResult;
-                        fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
-                        reject(fieldValid);
-                        return;
-                    }
+                if (fieldValid !== true) {
+                    fieldValid = fieldValid as ValidResult;
+                    fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
+                    reject(new Error(fieldValid.message, { cause: fieldValid }));
+                    return;
                 }
 
                 reval.set(filedInfo.name, renderInfo.getValue());

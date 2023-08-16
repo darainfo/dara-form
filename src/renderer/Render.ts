@@ -2,8 +2,6 @@ import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import DaraForm from "src/DaraForm";
 import utils from "src/util/utils";
-import TextRender from "./TextRender";
-import TextAreaRender from "./TextAreaRender";
 
 export default abstract class Render {
 
@@ -33,12 +31,6 @@ export default abstract class Render {
         }
     }
 
-    public setPlaceholder() {
-
-
-
-    }
-
     public getForm(): DaraForm {
         return this.daraForm;
     }
@@ -52,7 +44,7 @@ export default abstract class Render {
 
     public setValueItems(value: any): void { };
 
-    public changeEventCall(field: FormField, e: Event, rederInfo: Render) {
+    public changeEventCall(field: FormField, e: Event | null, rederInfo: Render) {
         if (field.onChange) {
             field.onChange.call(null, {
                 field: field,

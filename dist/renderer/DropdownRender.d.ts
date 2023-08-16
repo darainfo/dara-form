@@ -3,7 +3,6 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 export default class DropdownRender extends Render {
     private element;
-    private field;
     private defaultCheckValue;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;

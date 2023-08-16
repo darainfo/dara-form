@@ -18,6 +18,7 @@ export default class DaraForm {
      */
     addRow(field: FormField): void;
     rowTemplate(field: FormField): string;
+    getLabelTemplate(field: FormField): string;
     /**
      * 그룹 템플릿
      *
@@ -55,6 +56,7 @@ export default class DaraForm {
      * @returns {*}
      */
     getFieldElement(fieldName: string): any;
+    getField(fieldName: string): FormField;
     /**
      * field 값 얻기
      *
@@ -68,6 +70,7 @@ export default class DaraForm {
      * @returns
      */
     getValue: (isValid: boolean) => any;
+    getFormDataValue: (isValid: boolean) => any;
     /**
      * 폼 필드 value 셋팅
      * @param values

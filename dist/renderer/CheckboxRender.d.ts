@@ -2,7 +2,6 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import DaraForm from "src/DaraForm";
 export default class CheckboxRender extends Render {
-    private field;
     private defaultCheckValue;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;

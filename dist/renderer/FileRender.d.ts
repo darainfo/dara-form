@@ -3,7 +3,6 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 export default class FileRender extends Render {
     private element;
-    private field;
     private removeIds;
     private uploadFiles;
     private fileList;

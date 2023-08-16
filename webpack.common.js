@@ -13,6 +13,7 @@ module.exports = {
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'dara.form.js',
+    library: 'DaraForm',
     libraryTarget: 'umd',
   },
 
@@ -38,7 +39,7 @@ module.exports = {
         use: ['babel-loader', 'ts-loader'],
       },
       {
-        test: /\.js|\.jsx$$/u,
+        test: /\.js$|\.jsx$/u,
         exclude: /node_modules/u,
         include: path.resolve(__dirname, 'src'),
         use: ['babel-loader'],
@@ -54,9 +55,6 @@ module.exports = {
     new HtmlWebpackPlugin({
       inject: true,
       template: 'src/index.html'
-    }),
-    new MiniCssExtractPlugin({
-      filename: 'dist/[name].css'
     })
   ],
 };

@@ -1,10 +1,15 @@
 const esbuild = require('esbuild');
 
+const { sassPlugin } = require('esbuild-sass-plugin');
+
 const baseConfig = {
   entryPoints: ['src/index.js'],
   outdir: "dist",
   bundle: true,
   sourcemap: true,
+  plugins: [
+    sassPlugin(),
+  ]
 }
 
 Promise.all([

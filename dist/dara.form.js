@@ -3,10 +3,10 @@
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
 		define([], factory);
-	else {
-		var a = factory();
-		for(var i in a) (typeof exports === 'object' ? exports : root)[i] = a[i];
-	}
+	else if(typeof exports === 'object')
+		exports["DaraForm"] = factory();
+	else
+		root["DaraForm"] = factory();
 })(self, () => {
 return /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
@@ -30,7 +30,7 @@ const stringValidator_1 = __webpack_require__(/*! ./rule/stringValidator */ "./s
 const numberValidator_1 = __webpack_require__(/*! ./rule/numberValidator */ "./src/rule/numberValidator.ts");
 const regexpValidator_1 = __webpack_require__(/*! ./rule/regexpValidator */ "./src/rule/regexpValidator.ts");
 const FieldInfoMap_1 = tslib_1.__importDefault(__webpack_require__(/*! src/FieldInfoMap */ "./src/FieldInfoMap.ts"));
-let defaultOptions = {
+const defaultOptions = {
   mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
   ,
 
@@ -85,6 +85,9 @@ class DaraForm {
      */
     this.getValue = isValid => {
       return this.fieldInfoMap.getAllFieldValue(isValid);
+    };
+    this.getFormDataValue = isValid => {
+      return this.fieldInfoMap.getFormDataValue(isValid);
     };
     /**
      * 폼 필드 value 셋팅
@@ -157,7 +160,6 @@ class DaraForm {
       for (const fieldKey in fieldMap) {
         const filedInfo = fieldMap[fieldKey];
         const renderInfo = filedInfo.$renderer;
-        console.log(fieldKey, filedInfo, renderInfo);
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
           if (firstFlag) {
@@ -190,7 +192,7 @@ class DaraForm {
     this.isHorizontal = this.options.mode === 'horizontal';
     const formElement = document.querySelector(selector);
     if (formElement) {
-      formElement.className = `df df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
+      formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? 'horizontal' : 'vertical'}`;
       formElement.setAttribute('style', `width:${this.options.width};`);
       this.formElement = formElement;
       this.createForm(this.options.fields);
@@ -234,6 +236,7 @@ class DaraForm {
   rowTemplate(field) {
     let fieldHtml = '';
     if (field.children) {
+      this.addRowFieldInfo(field);
       fieldHtml = this.groupTemplate(field);
     } else {
       fieldHtml = this.getFieldTempate(field);
@@ -243,12 +246,17 @@ class DaraForm {
     }
     return `
             <div class="df-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
-                <span>${field.label}<span class="${field.required ? 'require' : ''}"></span></span>
+                <span>${this.getLabelTemplate(field)}</span>
             </div>
             <div class="df-field-container">
                 ${fieldHtml}
             </div>
         `;
+  }
+  getLabelTemplate(field) {
+    const requiredTemplate = field.required ? `<span class="required"></span>` : '';
+    const tooltipTemplate = utils_1.default.isBlank(field.tooltip) ? '' : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+    return `${field.label} ${tooltipTemplate} ${requiredTemplate}`;
   }
   /**
    * 그룹 템플릿
@@ -287,7 +295,7 @@ class DaraForm {
         childLabelWidth = childField.labelWidth ? `width:${childField.labelWidth};` : '';
       }
       childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${childField.hideLabel ? '' : `<span class="sub-label" style="${childLabelWidth}">${childField.label}</span>`}
+                ${childField.hideLabel ? '' : `<span class="sub-label" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
                 <span class="df-field-container">${childTempate}</span>
             </li>`);
     }
@@ -339,11 +347,13 @@ class DaraForm {
     }
     return null;
   }
+  getField(fieldName) {
+    return this.fieldInfoMap.getFieldName(fieldName);
+  }
   conditionCheck() {
     this.fieldInfoMap.conditionCheck();
   }
 }
-exports["default"] = DaraForm;
 /*
 destroy = () => {
     return this.options;
@@ -364,6 +374,7 @@ DaraForm.validator = {
     return (0, regexpValidator_1.regexpValidator)(value, field, result);
   }
 };
+exports["default"] = DaraForm;
 
 /***/ }),
 
@@ -382,6 +393,7 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
 const renderFactory_1 = __webpack_require__(/*! ./util/renderFactory */ "./src/util/renderFactory.ts");
+const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/Lanauage */ "./src/util/Lanauage.ts"));
 class FieldInfoMap {
   constructor(selector) {
     this.fieldIdx = 0;
@@ -465,20 +477,60 @@ class FieldInfoMap {
    * @returns {*}
    */
   getAllFieldValue(isValid) {
-    let reval = {};
-    Object.keys(this.allFieldInfo).forEach(fieldSeq => {
-      const filedInfo = this.allFieldInfo[fieldSeq];
-      const renderInfo = filedInfo.$renderer;
-      if (isValid) {
+    if (isValid !== true) {
+      let reval = {};
+      for (const fieldKey in this.allFieldInfo) {
+        const filedInfo = this.allFieldInfo[fieldKey];
+        reval[filedInfo.name] = filedInfo.$renderer.getValue();
+      }
+      return reval;
+    }
+    return new Promise((resolve, reject) => {
+      let reval = {};
+      for (const fieldKey in this.allFieldInfo) {
+        const filedInfo = this.allFieldInfo[fieldKey];
+        const renderInfo = filedInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
           fieldValid = fieldValid;
-          throw new Error(`field name "${fieldValid.name}" "${fieldValid.constraint}" not valid`);
+          fieldValid.message = Lanauage_1.default.validMessage(filedInfo, fieldValid)[0];
+          reject(new Error(fieldValid.message, {
+            cause: fieldValid
+          }));
+          return;
         }
+        reval[filedInfo.name] = renderInfo.getValue();
       }
-      reval[filedInfo.name] = renderInfo.getValue();
+      resolve(reval);
     });
-    return reval;
+  }
+  getFormDataValue(isValid) {
+    if (isValid !== true) {
+      let reval = new FormData();
+      for (const fieldKey in this.allFieldInfo) {
+        const filedInfo = this.allFieldInfo[fieldKey];
+        reval.set(filedInfo.name, filedInfo.$renderer.getValue());
+      }
+      return reval;
+    }
+    return new Promise((resolve, reject) => {
+      let reval = new FormData();
+      for (const fieldKey in this.allFieldInfo) {
+        const filedInfo = this.allFieldInfo[fieldKey];
+        const renderInfo = filedInfo.$renderer;
+        let fieldValid = renderInfo.valid();
+        if (fieldValid !== true) {
+          fieldValid = fieldValid;
+          fieldValid.message = Lanauage_1.default.validMessage(filedInfo, fieldValid)[0];
+          reject(new Error(fieldValid.message, {
+            cause: fieldValid
+          }));
+          return;
+        }
+        reval.set(filedInfo.name, renderInfo.getValue());
+      }
+      resolve(reval);
+    });
   }
   /**
    * 컬럼 로우 보이고 안보이기 체크.
@@ -545,6 +597,8 @@ const CustomRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./rendere
 const GroupRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/GroupRender */ "./src/renderer/GroupRender.ts"));
 const HiddenRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/HiddenRender */ "./src/renderer/HiddenRender.ts"));
 const ButtonRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/ButtonRender */ "./src/renderer/ButtonRender.ts"));
+const RangeRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/RangeRender */ "./src/renderer/RangeRender.ts"));
+const DateRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/DateRender */ "./src/renderer/DateRender.ts"));
 exports.RULES = {
   NAN: 'nan',
   MIN: 'minimum',
@@ -574,7 +628,9 @@ exports.RENDER_TEMPLATE = {
   'custom': CustomRender_1.default,
   'group': GroupRender_1.default,
   'hidden': HiddenRender_1.default,
-  'button': ButtonRender_1.default
+  'button': ButtonRender_1.default,
+  'range': RangeRender_1.default,
+  'date': DateRender_1.default
 };
 
 /***/ }),
@@ -663,17 +719,21 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 class ButtonRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.initEvent();
   }
   initEvent() {
-    // inputEvent(this.field, this.element, this);
+    var _a;
+    (_a = this.rowElement.querySelector(`#${this.field.$key}`)) === null || _a === void 0 ? void 0 : _a.addEventListener("click", evt => {
+      if (this.field.onClick) {
+        this.field.onClick.call(null, this.field);
+      }
+    });
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
-      <button type="button" class="df-btn">${field.label}</button>
+      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
      `;
   }
   getValue() {
@@ -709,14 +769,12 @@ const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils *
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
-const utils_2 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class CheckboxRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
+    super(daraForm, field, rowElement);
     this.defaultCheckValue = [];
-    this.field = field;
-    this.rowElement = rowElement;
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
@@ -739,6 +797,7 @@ class CheckboxRender extends Render_1.default {
   static template(field) {
     const templates = [];
     const fieldName = field.name;
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     templates.push(` <div class="df-field"><div class="field-group">`);
     field.values.forEach(val => {
       templates.push(`
@@ -751,6 +810,7 @@ class CheckboxRender extends Render_1.default {
             `);
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        ${desc}
         <div class="help-message"></div>
         `);
     return templates.join('');
@@ -804,7 +864,11 @@ class CheckboxRender extends Render_1.default {
     });
   }
   reset() {
-    this.setValue(this.defaultCheckValue);
+    if (this.field.values.length == 1 && this.defaultCheckValue.length == 1) {
+      this.setValue(true);
+    } else {
+      this.setValue(this.defaultCheckValue);
+    }
     (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
@@ -813,7 +877,7 @@ class CheckboxRender extends Render_1.default {
   valid() {
     const value = this.getValue();
     let validResult = true;
-    if (this.field.required && utils_2.default.isArray(value)) {
+    if (this.field.required && utils_1.default.isArray(value)) {
       if (value.length < 1) {
         validResult = {
           name: this.field.name,
@@ -846,11 +910,10 @@ const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 class CustomRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.customFunction = field.renderer;
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     if (this.customFunction.initEvent) {
@@ -858,8 +921,11 @@ class CustomRender extends Render_1.default {
     }
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     if (field.renderer.template) {
-      return ` <div class="df-field">${field.renderer.template()}</div><div class="help-message"></div>`;
+      return ` <div class="df-field">${field.renderer.template()}</div>
+      ${desc}
+        <div class="help-message"></div>`;
     }
     return '';
   }
@@ -896,6 +962,77 @@ exports["default"] = CustomRender;
 
 /***/ }),
 
+/***/ "./src/renderer/DateRender.ts":
+/*!************************************!*\
+  !*** ./src/renderer/DateRender.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ "./src/rule/stringValidator.ts");
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const dara_datetimepicker_1 = __webpack_require__(/*! dara-datetimepicker */ "./node_modules/dara-datetimepicker/dist/index.js");
+__webpack_require__(/*! dara-datetimepicker/dist/dara.datetimepicker.min.css */ "./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css");
+class DateRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, field, rowElement);
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+    this.initEvent();
+    this.setDefaultInfo();
+  }
+  initEvent() {
+    let dateOnChangeEvent;
+    if (typeof this.field.customOptions.onChange !== 'undefined') {
+      dateOnChangeEvent = typeof this.field.customOptions.onChange;
+    }
+    this.field.customOptions.onChange = (dt, e) => {
+      if (dateOnChangeEvent) {
+        dateOnChangeEvent.call(null, dt, e);
+      }
+      this.changeEventCall(this.field, e, this);
+    };
+    this.dateObj = new dara_datetimepicker_1.DaraDateTimePicker(this.element, this.field.customOptions, {});
+  }
+  static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
+    return `
+    <div class="df-field">
+      <input type="text" name="${field.name}" class="form-field text help-icon" />
+     </div>
+     ${desc}
+     <div class="help-message"></div>
+     `;
+  }
+  getValue() {
+    return this.element.value;
+  }
+  setValue(value) {
+    this.field.$value = value;
+    this.element.value = value;
+  }
+  reset() {
+    this.setValue('');
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
+  }
+  getElement() {
+    return this.element;
+  }
+  valid() {
+    const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
+    return validResult;
+  }
+}
+exports["default"] = DateRender;
+
+/***/ }),
+
 /***/ "./src/renderer/DropdownRender.ts":
 /*!****************************************!*\
   !*** ./src/renderer/DropdownRender.ts ***!
@@ -914,9 +1051,7 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class DropdownRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.defaultCheckValue = this.field.values[0].value;
     this.field.values.forEach(val => {
@@ -925,16 +1060,19 @@ class DropdownRender extends Render_1.default {
       }
     });
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     (0, renderEvents_1.dropdownChangeEvent)(this.field, this.element, this);
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
     field.values.forEach(val => {
       template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
     });
     template += `</select> <i class="help-icon"></i></div>
+                    ${desc}
                     <div class="help-message"></div>
         `;
     return template;
@@ -1000,13 +1138,11 @@ const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/Lana
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class FileRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
+    super(daraForm, field, rowElement);
     this.removeIds = [];
     this.uploadFiles = {};
     this.fileList = [];
     this.fileSeq = 0;
-    this.field = field;
-    this.rowElement = rowElement;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.fileList = field.values;
     this.initEvent();
@@ -1086,6 +1222,7 @@ class FileRender extends Render_1.default {
     }
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
     <div class="df-field">
       <span class="file-wrapper">
@@ -1093,6 +1230,7 @@ class FileRender extends Render_1.default {
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
+    ${desc}
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;
@@ -1139,9 +1277,7 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 class GroupRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
   }
   initEvent() {}
   static template(field) {
@@ -1178,9 +1314,7 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 class HiddenRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.field.$value = field.defaultValue;
   }
   initEvent() {}
@@ -1225,20 +1359,21 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class NumberRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     (0, renderEvents_1.numberInputEvent)(this.field, this.element, this);
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
         <div class="df-field">
-            <input type="text" name="${field.name}" class="form-field number help-icon" /></i>
+            <input type="text" name="${field.name}" class="form-field number help-icon" />
         </div> 
+        ${desc}
         <div class="help-message"></div>
        `;
   }
@@ -1284,20 +1419,21 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class PasswordRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
             <div class="df-field">
                 <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
             </div>
+            ${desc}
             <div class="help-message"></div>
         `;
   }
@@ -1344,9 +1480,7 @@ const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils *
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class RadioRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.defaultCheckValue = this.field.values[0].value;
     this.field.values.forEach(val => {
       if (val.selected) {
@@ -1354,6 +1488,7 @@ class RadioRender extends Render_1.default {
       }
     });
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
@@ -1370,6 +1505,7 @@ class RadioRender extends Render_1.default {
   static template(field) {
     const templates = [];
     const fieldName = field.name;
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     templates.push(`<div class="df-field"><div class="field-group">`);
     field.values.forEach(val => {
       templates.push(`<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
@@ -1381,6 +1517,7 @@ class RadioRender extends Render_1.default {
                 `);
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div>
+        ${desc}
         <div class="help-message"></div>
          `);
     return templates.join('');
@@ -1444,21 +1581,104 @@ exports["default"] = RadioRender;
 
 /***/ }),
 
-/***/ "./src/renderer/Render.ts":
-/*!********************************!*\
-  !*** ./src/renderer/Render.ts ***!
-  \********************************/
-/***/ ((__unused_webpack_module, exports) => {
+/***/ "./src/renderer/RangeRender.ts":
+/*!*************************************!*\
+  !*** ./src/renderer/RangeRender.ts ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
 
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const numberValidator_1 = __webpack_require__(/*! src/rule/numberValidator */ "./src/rule/numberValidator.ts");
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+class RangeRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, field, rowElement);
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+    this.rangeNumElement = rowElement.querySelector('.range-num');
+    this.initEvent();
+    this.setDefaultInfo();
+  }
+  initEvent() {
+    this.element.addEventListener('input', e => {
+      this.rangeNumElement.innerHTML = e.target.value;
+      this.element.setAttribute('title', e.target.value);
+      (0, renderEvents_1.customChangeEventCall)(this.field, e, this);
+      this.valid();
+    });
+  }
+  static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
+    return `
+        <div class="df-field">
+            <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
+            <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
+        </div> 
+        ${desc}
+        <div class="help-message"></div>
+       `;
+  }
+  getValue() {
+    return this.element.value;
+  }
+  setValue(value) {
+    this.field.$value = value;
+    this.element.value = value;
+  }
+  reset() {
+    this.setValue('');
+    (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
+  }
+  getElement() {
+    return this.element;
+  }
+  valid() {
+    const validResult = (0, numberValidator_1.numberValidator)(this.getValue(), this.field);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
+    return validResult;
+  }
+}
+exports["default"] = RangeRender;
+
+/***/ }),
+
+/***/ "./src/renderer/Render.ts":
+/*!********************************!*\
+  !*** ./src/renderer/Render.ts ***!
+  \********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class Render {
-  constructor(form, rowElement) {
+  constructor(form, field, rowElement) {
+    var _a;
     this.daraForm = form;
+    this.field = field;
     this.rowElement = rowElement;
+    if (field.tooltip) (_a = rowElement.querySelector('.df-tooltip')) === null || _a === void 0 ? void 0 : _a.setAttribute('tooltip', field.tooltip);
+  }
+  setDefaultInfo() {
+    if (!utils_1.default.isUndefined(this.field.defaultValue)) {
+      this.setValue(this.field.defaultValue);
+    }
+    if (!utils_1.default.isUndefined(this.field.placeholder)) {
+      const ele = this.getElement();
+      if (ele instanceof Element) {
+        ele.setAttribute("placeholder", this.field.placeholder);
+      }
+    }
   }
   getForm() {
     return this.daraForm;
@@ -1486,6 +1706,9 @@ class Render {
     }
     ;
   }
+  commonValidator() {
+    //this.field.diff
+  }
 }
 exports["default"] = Render;
 
@@ -1509,20 +1732,21 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class TextAreaRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
             <div class="df-field">
-            <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
+                <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
             </div> 
+            ${desc}
             <div class="help-message"></div>
         `;
   }
@@ -1568,20 +1792,21 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class TextRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    super(daraForm, rowElement);
-    this.field = field;
-    this.rowElement = rowElement;
+    super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultInfo();
   }
   initEvent() {
     (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
+    const desc = field.description ? `<div>${field.description}</div>` : '';
     return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
-     </div> 
+     </div>
+     ${desc}
      <div class="help-message"></div>
      `;
   }
@@ -1664,6 +1889,13 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const validator_1 = __webpack_require__(/*! ./validator */ "./src/rule/validator.ts");
 const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
+/**
+ * 숫자 유효성 체크
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @returns {(ValidResult | boolean)}
+ */
 const numberValidator = (value, field) => {
   const result = {
     name: field.name,
@@ -1690,21 +1922,21 @@ const numberValidator = (value, field) => {
       maxRule = false,
       maxExclusive = false;
     if (isMinimum) {
-      if (rule.exclusiveMinimum && numValue < rule.minimum) {
+      if (rule.exclusiveMinimum && numValue <= rule.minimum) {
         minExclusive = true;
-      } else if (numValue <= rule.minimum) {
+      } else if (numValue < rule.minimum) {
         minRule = true;
       }
     }
     if (isMaximum) {
-      if (rule.exclusiveMaximum && numValue > rule.maximum) {
+      if (rule.exclusiveMaximum && numValue >= rule.maximum) {
         maxExclusive = true;
-      } else if (numValue >= rule.maximum) {
+      } else if (numValue > rule.maximum) {
         maxRule = true;
       }
     }
     if (isMinimum && isMaximum && (minRule || minExclusive || maxRule || maxExclusive)) {
-      if (minExclusive && maxExclusive) {
+      if (rule.exclusiveMinimum && rule.exclusiveMaximum && (minExclusive || maxExclusive)) {
         result.constraint.push(constants_1.RULES.BETWEEN_EXCLUSIVE_MINMAX);
       } else if (minExclusive) {
         result.constraint.push(constants_1.RULES.BETWEEN_EXCLUSIVE_MIN);
@@ -1762,6 +1994,14 @@ const regexp = {
   'upper-char-special': /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[#?!@$%^&*-])/,
   'upper-char-special-number': /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]/
 };
+/**
+ * 정규식 유효성 체크.
+ *
+ * @param {string} value
+ * @param {FormField} field
+ * @param {(ValidResult | undefined)} result
+ * @returns {ValidResult}
+ */
 const regexpValidator = (value, field, result) => {
   if (typeof result === 'undefined') {
     result = {
@@ -1825,10 +2065,10 @@ const stringValidator = (value, field) => {
       isMaxNumber = utils_1.default.isNumber(rule.maxLength);
     let minRule = false,
       maxRule = false;
-    if (isMinNumber && valueLength <= rule.minLength) {
+    if (isMinNumber && valueLength < rule.minLength) {
       minRule = true;
     }
-    if (isMaxNumber && valueLength >= rule.maxLength) {
+    if (isMaxNumber && valueLength > rule.maxLength) {
       maxRule = true;
     }
     if (isMinNumber && isMaxNumber && (minRule || maxRule)) {
@@ -1841,9 +2081,9 @@ const stringValidator = (value, field) => {
         result.constraint.push(constants_1.RULES.MAX_LENGTH);
       }
     }
-  }
-  if (result.constraint.length > 0) {
-    return result;
+    if (result.constraint.length > 0) {
+      return result;
+    }
   }
   return true;
 };
@@ -1882,6 +2122,22 @@ const validator = (value, field, result) => {
   result = (0, regexpValidator_1.regexpValidator)(value, field, result);
   if (result.regexp) {
     return result;
+  }
+  if (field.different) {
+    const diffFieldName = field.different.field;
+    const diffField = field.$renderer.getForm().getField(diffFieldName);
+    if (field.$renderer.getValue() == diffField.$renderer.getValue()) {
+      result.message = field.different.message;
+      return result;
+    }
+  }
+  if (field.identical) {
+    const diffFieldName = field.identical.field;
+    const diffField = field.$renderer.getForm().getField(diffFieldName);
+    if (field.$renderer.getValue() != diffField.$renderer.getValue()) {
+      result.message = field.identical.message;
+      return result;
+    }
   }
   return true;
 };
@@ -1983,7 +2239,7 @@ class Language {
         messageFormat = message(this.lang.required, field);
         messageFormats.push(messageFormat);
       }
-      if (field.type == "number" || field.renderType == "number") {
+      if (field.type == "number" || field.renderType == "number" || field.renderType == "range") {
         messageFormat = this.lang.number[constraint];
         messageFormats.push(messageFormat);
       } else {
@@ -2171,6 +2427,9 @@ const invalidMessage = (field, rowElement, validResult) => {
   }
   if (validResult !== false) {
     const message = Lanauage_1.default.validMessage(field, validResult);
+    if (validResult.message) {
+      message.push(validResult.message);
+    }
     const helpMessageElement = rowElement.querySelector(".help-message");
     if (helpMessageElement && message.length > 0) {
       const msgHtml = [];
@@ -2192,6 +2451,405 @@ const resetRowElementStyleClass = rowElement => {
   rowElement.classList.remove("valid");
 };
 exports.resetRowElementStyleClass = resetRowElementStyleClass;
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/dist/cjs.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css":
+/*!********************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader/dist/cjs.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css ***!
+  \********************************************************************************************************************************************************/
+/***/ ((module, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../css-loader/dist/runtime/sourceMaps.js */ "./node_modules/css-loader/dist/runtime/sourceMaps.js");
+/* harmony import */ var _css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../css-loader/dist/runtime/api.js */ "./node_modules/css-loader/dist/runtime/api.js");
+/* harmony import */ var _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1__);
+// Imports
+
+
+var ___CSS_LOADER_EXPORT___ = _css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_1___default()((_css_loader_dist_runtime_sourceMaps_js__WEBPACK_IMPORTED_MODULE_0___default()));
+// Module
+___CSS_LOADER_EXPORT___.push([module.id, `.dara-datetime-hidden {
+  height: 0;
+  visibility: visible;
+  width: 0;
+  z-index: 1000;
+}
+
+.dara-datetime-wrapper {
+  --dark:#34495e;
+  --light:#fff;
+  --success:#0abf30;
+  --error:#e24d4c;
+  --warning:#e9bd0c;
+  --info:#3498db;
+  --background-color:#fff;
+  --sunday:#f00d0d;
+  --input-border:#9b94948a;
+  --select-background-color:#0abf30;
+  --button-hover-color:#d4d4d48a;
+  --disabled-background-color:#f1f1f18a;
+  display: none;
+  z-index: 1000;
+}
+
+.dara-datetime-wrapper.layer {
+  position: absolute;
+}
+
+.dara-datetime-wrapper.show {
+  animation: fadeIn 0.5s;
+  animation-fill-mode: forwards;
+  display: block;
+}
+
+.dara-datetime-wrapper.hide {
+  animation: fadeOut 0.5s;
+  animation-fill-mode: forwards;
+}
+
+.dara-datetime-wrapper.embed {
+  display: block;
+}
+
+.dara-datetime-wrapper .red {
+  color: var(--sunday);
+}
+
+.dara-datetime-wrapper .ddtp-datetime {
+  background-color: var(--background-color);
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  color: var(--dark);
+  padding: 10px;
+  width: 230px;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=date] .ddtp-body > .ddtp-days, .dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body > .ddtp-days, .dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body > .ddtp-times, .dara-datetime-wrapper .ddtp-datetime[view-mode=time] .ddtp-body > .ddtp-times {
+  display: block;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=time] .ddtp-header {
+  display: none;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=year] .ddtp-body > .ddtp-years {
+  display: flex;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=year] .ddtp-header-month {
+  display: none;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=month] .ddtp-body > .ddtp-months {
+  display: flex;
+}
+
+.dara-datetime-wrapper .ddtp-datetime[view-mode=month] .ddtp-header-month {
+  display: none;
+}
+
+.dara-datetime-wrapper .ddtp-header {
+  height: 25px;
+  line-height: 25px;
+  padding: 2px 5px 10px;
+  vertical-align: middle;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-header-year {
+  cursor: pointer;
+  font-weight: 700;
+  margin: 0 10px 0 0;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-header-month {
+  cursor: pointer;
+  font-weight: 700;
+  margin: 0 10px 0 0;
+  vertical-align: top;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-date-move {
+  float: right;
+  margin-left: auto;
+  vertical-align: top;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn {
+  display: inline-block;
+  font-weight: 700;
+  height: 24px;
+  text-decoration: none;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn:hover {
+  background-color: #d6d6d6;
+}
+
+.dara-datetime-wrapper .ddtp-header .ddtp-date-move:after {
+  clear: both;
+  content: "";
+}
+
+.dara-datetime-wrapper .ddtp-body {
+  font-size: 13px;
+  margin: -2px -10px;
+}
+
+.dara-datetime-wrapper .ddtp-body > * {
+  display: none;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days {
+  border-collapse: separate;
+  border-spacing: 0;
+  letter-spacing: 0;
+  margin: 2px 10px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day-label {
+  font-weight: 700;
+  padding: 2px 5px;
+  text-align: center;
+  width: 35px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day {
+  cursor: pointer;
+  padding: 7px;
+  position: relative;
+  text-align: center;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:before {
+  background-color: var(--select-background-color);
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 30px;
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease-in;
+  width: 30px;
+  z-index: 0;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:active:before, .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:hover:before {
+  opacity: 0.2;
+  transition: opacity 0.2s ease-out;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.today:before {
+  background-color: #d6e7f7;
+  opacity: 0.5;
+  transition: opacity 0.2s ease-out;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.select:before {
+  background-color: var(--select-background-color);
+  opacity: 0.5;
+  transition: opacity 0.2s ease-out;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled {
+  background-color: var(--disabled-background-color);
+  cursor: auto;
+  opacity: 0.5;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled:before {
+  background-color: transparent;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times {
+  margin: 2px 15px;
+  position: relative;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-container {
+  display: inline-block;
+  height: 60px;
+  width: calc(100% - 60px);
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-inner-spin-button, .dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-outer-spin-button {
+  opacity: 1;
+  width: 14px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn {
+  position: absolute;
+  right: 0;
+  top: 5px;
+  width: 55px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button {
+  background-color: var(--background-color);
+  border-color: var(--input-border);
+  border-radius: 4px;
+  border-width: 1px;
+  display: block;
+  margin-bottom: 7px;
+  padding: 3px;
+  width: 100%;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button:hover {
+  background-color: var(--select-background-color);
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn .time-today:hover {
+  background-color: var(--button-hover-color);
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time {
+  display: table-row;
+  width: 160px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > * {
+  display: table-cell;
+  line-height: 20px;
+  margin-top: 5px;
+  vertical-align: middle;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > span {
+  width: 20px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > input[type=number] {
+  border-color: var(--input-border);
+  border-radius: 4px;
+  border-width: 1px;
+  margin-right: 5px;
+  padding-left: 8px;
+  width: 35px;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > input[type=range] {
+  width: calc(100% - 60px);
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month {
+  cursor: pointer;
+  flex: 1 0 30%;
+  line-height: 50px;
+  margin-bottom: 8px;
+  position: relative;
+  text-align: center;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:before {
+  background-color: var(--select-background-color);
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 50px;
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease-in;
+  width: 50px;
+  z-index: 0;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:active:before, .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:hover:before {
+  opacity: 0.2;
+  transition: opacity 0.2s ease-out;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month.disabled {
+  background-color: var(--disabled-background-color);
+  cursor: auto;
+  opacity: 0.5;
+}
+
+.dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month.disabled:before {
+  background-color: transparent;
+}
+
+.dara-datetime-wrapper .ddtp-years {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.dara-datetime-wrapper .ddtp-years > .ddtp-year {
+  cursor: pointer;
+  flex: 1 0 25%;
+  line-height: 50px;
+  margin-bottom: 8px;
+  position: relative;
+  text-align: center;
+}
+
+.dara-datetime-wrapper .ddtp-years > .ddtp-year:before {
+  background-color: var(--select-background-color);
+  border-radius: 50%;
+  content: "";
+  display: block;
+  height: 50px;
+  left: 50%;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s ease-in;
+  width: 50px;
+  z-index: 0;
+}
+
+.dara-datetime-wrapper .ddtp-years > .ddtp-year:active:before, .dara-datetime-wrapper .ddtp-years > .ddtp-year:hover:before {
+  opacity: 0.2;
+  transition: opacity 0.2s ease-out;
+}
+
+.dara-datetime-wrapper .ddtp-years > .ddtp-year.disabled {
+  background-color: var(--disabled-background-color);
+  cursor: auto;
+  opacity: 0.5;
+}
+
+.dara-datetime-wrapper .ddtp-years > .ddtp-year.disabled:before {
+  background-color: transparent;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+`, "",{"version":3,"sources":["webpack://./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css"],"names":[],"mappings":"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","sourcesContent":[".dara-datetime-hidden{height:0;visibility:visible;width:0;z-index:1000}.dara-datetime-wrapper{--dark:#34495e;--light:#fff;--success:#0abf30;--error:#e24d4c;--warning:#e9bd0c;--info:#3498db;--background-color:#fff;--sunday:#f00d0d;--input-border:#9b94948a;--select-background-color:#0abf30;--button-hover-color:#d4d4d48a;--disabled-background-color:#f1f1f18a;display:none;z-index:1000}.dara-datetime-wrapper.layer{position:absolute}.dara-datetime-wrapper.show{animation:fadeIn .5s;animation-fill-mode:forwards;display:block}.dara-datetime-wrapper.hide{animation:fadeOut .5s;animation-fill-mode:forwards}.dara-datetime-wrapper.embed{display:block}.dara-datetime-wrapper .red{color:var(--sunday)}.dara-datetime-wrapper .ddtp-datetime{background-color:var(--background-color);border-radius:4px;box-shadow:0 5px 5px -3px rgba(0,0,0,.2),0 8px 10px 1px rgba(0,0,0,.14),0 3px 14px 2px rgba(0,0,0,.12);color:var(--dark);padding:10px;width:230px}.dara-datetime-wrapper .ddtp-datetime[view-mode=date] .ddtp-body>.ddtp-days,.dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body>.ddtp-days,.dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body>.ddtp-times,.dara-datetime-wrapper .ddtp-datetime[view-mode=time] .ddtp-body>.ddtp-times{display:block}.dara-datetime-wrapper .ddtp-datetime[view-mode=time] .ddtp-header{display:none}.dara-datetime-wrapper .ddtp-datetime[view-mode=year] .ddtp-body>.ddtp-years{display:flex}.dara-datetime-wrapper .ddtp-datetime[view-mode=year] .ddtp-header-month{display:none}.dara-datetime-wrapper .ddtp-datetime[view-mode=month] .ddtp-body>.ddtp-months{display:flex}.dara-datetime-wrapper .ddtp-datetime[view-mode=month] .ddtp-header-month{display:none}.dara-datetime-wrapper .ddtp-header{height:25px;line-height:25px;padding:2px 5px 10px;vertical-align:middle}.dara-datetime-wrapper .ddtp-header .ddtp-header-year{cursor:pointer;font-weight:700;margin:0 10px 0 0}.dara-datetime-wrapper .ddtp-header .ddtp-header-month{cursor:pointer;font-weight:700;margin:0 10px 0 0;vertical-align:top}.dara-datetime-wrapper .ddtp-header .ddtp-date-move{float:right;margin-left:auto;vertical-align:top}.dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn{display:inline-block;font-weight:700;height:24px;text-decoration:none}.dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn:hover{background-color:#d6d6d6}.dara-datetime-wrapper .ddtp-header .ddtp-date-move:after{clear:both;content:\"\"}.dara-datetime-wrapper .ddtp-body{font-size:13px;margin:-2px -10px}.dara-datetime-wrapper .ddtp-body>*{display:none}.dara-datetime-wrapper .ddtp-body .ddtp-days{border-collapse:separate;border-spacing:0;letter-spacing:0;margin:2px 10px}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day-label{font-weight:700;padding:2px 5px;text-align:center;width:35px}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day{cursor:pointer;padding:7px;position:relative;text-align:center}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:before{background-color:var(--select-background-color);border-radius:50%;content:\"\";display:block;height:30px;left:50%;opacity:0;position:absolute;top:50%;transform:translate(-50%,-50%);transition:opacity .2s ease-in;width:30px;z-index:0}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:active:before,.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:hover:before{opacity:.2;transition:opacity .2s ease-out}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.today:before{background-color:#d6e7f7;opacity:.5;transition:opacity .2s ease-out}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.select:before{background-color:var(--select-background-color);opacity:.5;transition:opacity .2s ease-out}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled{background-color:var(--disabled-background-color);cursor:auto;opacity:.5}.dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled:before{background-color:transparent}.dara-datetime-wrapper .ddtp-body .ddtp-times{margin:2px 15px;position:relative}.dara-datetime-wrapper .ddtp-body .ddtp-times>.time-container{display:inline-block;height:60px;width:calc(100% - 60px)}.dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-inner-spin-button,.dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-outer-spin-button{opacity:1;width:14px}.dara-datetime-wrapper .ddtp-body .ddtp-times>.time-btn{position:absolute;right:0;top:5px;width:55px}.dara-datetime-wrapper .ddtp-body .ddtp-times>.time-btn>button{background-color:var(--background-color);border-color:var(--input-border);border-radius:4px;border-width:1px;display:block;margin-bottom:7px;padding:3px;width:100%}.dara-datetime-wrapper .ddtp-body .ddtp-times>.time-btn>button:hover{background-color:var(--select-background-color)}.dara-datetime-wrapper .ddtp-body .ddtp-times>.time-btn .time-today:hover{background-color:var(--button-hover-color)}.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time{display:table-row;width:160px}.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time>*{display:table-cell;line-height:20px;margin-top:5px;vertical-align:middle}.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time>span{width:20px}.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time>input[type=number]{border-color:var(--input-border);border-radius:4px;border-width:1px;margin-right:5px;padding-left:8px;width:35px}.dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time>input[type=range]{width:calc(100% - 60px)}.dara-datetime-wrapper .ddtp-body .ddtp-months{flex-direction:row;flex-wrap:wrap;justify-content:space-between}.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month{cursor:pointer;flex:1 0 30%;line-height:50px;margin-bottom:8px;position:relative;text-align:center}.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month:before{background-color:var(--select-background-color);border-radius:50%;content:\"\";display:block;height:50px;left:50%;opacity:0;position:absolute;top:50%;transform:translate(-50%,-50%);transition:opacity .2s ease-in;width:50px;z-index:0}.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month:active:before,.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month:hover:before{opacity:.2;transition:opacity .2s ease-out}.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month.disabled{background-color:var(--disabled-background-color);cursor:auto;opacity:.5}.dara-datetime-wrapper .ddtp-body .ddtp-months>.ddtp-month.disabled:before{background-color:transparent}.dara-datetime-wrapper .ddtp-years{flex-direction:row;flex-wrap:wrap;justify-content:space-between}.dara-datetime-wrapper .ddtp-years>.ddtp-year{cursor:pointer;flex:1 0 25%;line-height:50px;margin-bottom:8px;position:relative;text-align:center}.dara-datetime-wrapper .ddtp-years>.ddtp-year:before{background-color:var(--select-background-color);border-radius:50%;content:\"\";display:block;height:50px;left:50%;opacity:0;position:absolute;top:50%;transform:translate(-50%,-50%);transition:opacity .2s ease-in;width:50px;z-index:0}.dara-datetime-wrapper .ddtp-years>.ddtp-year:active:before,.dara-datetime-wrapper .ddtp-years>.ddtp-year:hover:before{opacity:.2;transition:opacity .2s ease-out}.dara-datetime-wrapper .ddtp-years>.ddtp-year.disabled{background-color:var(--disabled-background-color);cursor:auto;opacity:.5}.dara-datetime-wrapper .ddtp-years>.ddtp-year.disabled:before{background-color:transparent}@keyframes fadeIn{0%{opacity:0}to{opacity:1}}@keyframes fadeOut{0%{opacity:1}to{opacity:0}}\n/*# sourceMappingURL=dara.datetimepicker.min.css.map*/"],"sourceRoot":""}]);
+// Exports
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
+
 
 /***/ }),
 
@@ -2224,7 +2882,7 @@ var ___CSS_LOADER_URL_REPLACEMENT_1___ = _node_modules_css_loader_dist_runtime_g
 var ___CSS_LOADER_URL_REPLACEMENT_2___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_2___);
 var ___CSS_LOADER_URL_REPLACEMENT_3___ = _node_modules_css_loader_dist_runtime_getUrl_js__WEBPACK_IMPORTED_MODULE_2___default()(___CSS_LOADER_URL_IMPORT_3___);
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
+___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   --border-color: #dfe1e5;
   --color-danger: #d9534f;
   --background-danger: #d9534f;
@@ -2232,195 +2890,299 @@ ___CSS_LOADER_EXPORT___.push([module.id, `:root .dara-form {
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
   --invalid-background-color: #FDD;
-  --background-button-hover: #ebebeb; }
-
-.dara-form {
+  --background-button-hover: #ebebeb;
+  --tooltip-background: #3e3e3e;
+  --tooltip-color: #fff;
   padding: 0px;
-  color: var(--font-color); }
-  .dara-form *,
-  .dara-form ::after,
-  .dara-form ::before {
-    box-sizing: border-box; }
-  .dara-form .df-field-container .df-field {
-    position: relative; }
-    .dara-form .df-field-container .df-field .file-wrapper {
-      border: 1px solid var(--border-color);
-      text-align: center;
-      display: block;
-      width: 100%;
-      padding: 0.375rem 0.75rem;
-      font-weight: 400;
-      line-height: 1.5;
-      background-clip: padding-box;
-      border-radius: 4px;
-      transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
-  .dara-form .df-field-container .df-hidden {
-    max-height: 0vh !important;
-    transition: all 0.25s ease-out;
-    visibility: hidden; }
-  .dara-form .df-field-container .sub-field-group {
-    padding: 0px;
-    margin: 0px;
-    list-style: none; }
-    .dara-form .df-field-container .sub-field-group.vertical {
-      display: block; }
-      .dara-form .df-field-container .sub-field-group.vertical .sub-row {
-        padding-top: 5px;
-        max-height: 100vh;
-        transition: all 0.25s ease-in; }
-        .dara-form .df-field-container .sub-field-group.vertical .sub-row + .sub-row {
-          padding-top: 5px; }
-        .dara-form .df-field-container .sub-field-group.vertical .sub-row + .df-hidden {
-          padding-top: 0px; }
-      .dara-form .df-field-container .sub-field-group.vertical .sub-row:first-child {
-        padding-top: 0px; }
-      .dara-form .df-field-container .sub-field-group.vertical .df-hidden:first-child:has(~ .sub-row) {
-        padding-top: 0px; }
-    .dara-form .df-field-container .sub-field-group.horizontal-row {
-      display: table;
-      width: 100%; }
-      .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
-        display: table-row;
-        letter-spacing: 5px; }
-        .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
-          display: table-cell;
-          padding-top: 5px; }
-    .dara-form .df-field-container .sub-field-group.horizontal {
-      display: table; }
-      .dara-form .df-field-container .sub-field-group.horizontal .df-hidden {
-        width: 0px;
-        padding-right: 0px !important;
-        display: none !important; }
-      .dara-form .df-field-container .sub-field-group.horizontal .sub-row {
-        display: table-cell;
-        padding-right: 15px; }
-        .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group {
-          position: relative; }
-          .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
-            margin-right: -16px; }
-        .dara-form .df-field-container .sub-field-group.horizontal .sub-row .sub-label {
-          padding-right: 10px; }
-        .dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
-          display: table-cell; }
-  .dara-form.horizontal {
-    margin: 0px 0px;
-    display: table;
-    width: 100%; }
-    .dara-form.horizontal > .df-row {
-      display: table-row; }
-      .dara-form.horizontal > .df-row > .df-label {
-        width: 10%;
-        display: table-cell; }
-      .dara-form.horizontal > .df-row > .df-field-container {
-        display: table-cell;
-        padding-bottom: 10px; }
-  .dara-form.vertical > .df-row > * {
-    display: block; }
-  .dara-form > .df-row {
-    width: 100%;
-    margin: 0px 0px 10px 0px; }
-    .dara-form > .df-row > .df-label .require {
-      color: var(--color-danger); }
-      .dara-form > .df-row > .df-label .require::after {
-        content: "*";
-        vertical-align: middle; }
-    .dara-form > .df-row .help-message {
-      display: none; }
-    .dara-form > .df-row .help-icon {
-      background-repeat: no-repeat;
-      background-position-y: center; }
-      .dara-form > .df-row .help-icon.form-field {
-        background-position-x: calc(100% - 15px); }
-      .dara-form > .df-row .help-icon.dara-icon {
-        display: none;
-        position: absolute;
-        z-index: 1;
-        top: 0px;
-        right: 0px;
-        height: 100%;
-        width: 20px;
-        margin-right: 15px; }
-    .dara-form > .df-row .dara-file-list .file-icon {
-      width: 20px;
-      height: 20px;
-      display: inline-block;
-      vertical-align: middle;
-      cursor: pointer; }
-      .dara-form > .df-row .dara-file-list .file-icon:hover {
-        background-color: var(--background-button-hover); }
-      .dara-form > .df-row .dara-file-list .file-icon.download {
-        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___}); }
-      .dara-form > .df-row .dara-file-list .file-icon.remove {
-        background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___}); }
-    .dara-form > .df-row .dara-file-list .file-name {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      word-wrap: normal;
-      overflow: hidden;
-      display: inline-block;
-      vertical-align: middle;
-      width: calc(100% - 55px); }
-  .dara-form > .df-row.invalid .form-field,
-  .dara-form .sub-row.invalid .form-field {
-    border-color: var(--invalid-border-color);
-    outline-color: var(--invalid-border-color); }
-  .dara-form > .df-row.invalid .help-icon,
-  .dara-form .sub-row.invalid .help-icon {
-    display: block;
-    background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___}); }
-  .dara-form > .df-row.invalid .help-message,
-  .dara-form .sub-row.invalid .help-message {
-    display: block;
-    color: var(--invalid-font-color); }
-  .dara-form > .df-row.valid .help-icon,
-  .dara-form .sub-row.valid .help-icon {
-    display: block;
-    background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___}); }
-  .dara-form .file-label {
-    border: 1px solid var(--border-color);
-    display: inline;
-    width: 100%;
-    padding: 3px 15px;
-    line-height: 1;
-    background-clip: padding-box;
-    border-radius: 4px;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
-    .dara-form .file-label:hover {
-      background-color: var(--background-button-hover); }
-  .dara-form .form-field {
-    border: 1px solid var(--border-color);
-    display: block;
-    width: 100%;
-    padding: 0.375rem 0.75rem;
-    font-weight: 400;
-    line-height: 1.5;
-    background-clip: padding-box;
-    border-radius: 4px;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
-    .dara-form .form-field[type=radio], .dara-form .form-field[type="checkbox"] {
-      width: auto;
-      display: inline; }
-    .dara-form .form-field.dropdown {
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none; }
-    .dara-form .form-field.textarea {
-      padding-right: 0px; }
-    .dara-form .form-field[type="number"] {
-      padding-right: 3px; }
-    .dara-form .form-field.file {
-      display: none; }
-  .dara-form .field-group .field.vertical {
-    display: block; }
-  .dara-form .field-group .field.horizontal {
-    display: inline; }
-
+  color: var(--font-color);
+}
+.dara-form *,
+.dara-form ::after,
+.dara-form ::before {
+  box-sizing: border-box;
+}
+.dara-form .df-label,
+.dara-form .sub-label {
+  position: relative;
+  font-weight: 700;
+}
+.dara-form .df-label .df-tooltip,
+.dara-form .sub-label .df-tooltip {
+  visibility: visible;
+  color: #fff;
+  background: #000;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  text-align: center;
+  line-height: 16px;
+  margin: 0 5px;
+  font-size: 12px;
+  cursor: help;
+  position: relative;
+  display: inline-block;
+}
+.dara-form .df-label .df-tooltip .tooltip,
+.dara-form .sub-label .df-tooltip .tooltip {
+  display: none;
+  text-align: initial;
+  background: var(--tooltip-background);
+  border-radius: 5px;
+  color: var(--tooltip-color);
+  padding: 10px 5px;
+  position: absolute;
+  z-index: 2;
+  left: -10px;
+  min-width: max-content;
+  text-shadow: none;
+  cursor: default;
+}
+.dara-form .df-label .df-tooltip:hover .tooltip,
+.dara-form .sub-label .df-tooltip:hover .tooltip {
+  display: block;
+}
+.dara-form .df-field-container .df-field {
+  position: relative;
+}
+.dara-form .df-field-container .df-field .range-num {
+  clear: both;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.dara-form .df-field-container .df-field .file-wrapper {
+  border: 1px solid var(--border-color);
+  text-align: center;
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  background-clip: padding-box;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.dara-form .df-field-container .sub-field-group {
+  padding: 0px;
+  margin: 0px;
+  list-style: none;
+}
+.dara-form .df-field-container .sub-field-group.vertical {
+  display: block;
+}
+.dara-form .df-field-container .sub-field-group.vertical .sub-row {
+  padding-top: 5px;
+  max-height: 100vh;
+  transition: all 0.25s ease-in;
+}
+.dara-form .df-field-container .sub-field-group.vertical .sub-row + .sub-row {
+  padding-top: 5px;
+}
+.dara-form .df-field-container .sub-field-group.vertical .sub-row + .df-hidden {
+  padding-top: 0px;
+}
+.dara-form .df-field-container .sub-field-group.vertical .sub-row:first-child {
+  padding-top: 0px;
+}
+.dara-form .df-field-container .sub-field-group.vertical .df-hidden:first-child:has(~ .sub-row) {
+  padding-top: 0px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal-row {
+  display: table;
+  width: 100%;
+}
+.dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
+  display: table-row;
+  letter-spacing: 5px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
+  display: table-cell;
+  padding-top: 5px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal {
+  display: table;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .df-hidden {
+  width: 0px;
+  padding-right: 0px !important;
+  display: none !important;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .sub-row {
+  display: table-cell;
+  padding-right: 15px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group {
+  position: relative;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
+  margin-right: -16px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .sub-row .sub-label {
+  padding-right: 10px;
+}
+.dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
+  display: table-cell;
+}
+.dara-form.horizontal {
+  margin: 0px 0px;
+  display: table;
+  width: 100%;
+}
+.dara-form.horizontal > .df-row {
+  display: table-row;
+}
+.dara-form.horizontal > .df-row > .df-label {
+  width: 10%;
+  display: table-cell;
+}
+.dara-form.horizontal > .df-row > .df-field-container {
+  display: table-cell;
+  padding-bottom: 10px;
+}
+.dara-form.vertical > .df-row > * {
+  display: block;
+}
+.dara-form .df-hidden {
+  max-height: 0vh !important;
+  transition: all 0.25s ease-out;
+  visibility: collapse;
+}
+.dara-form > .df-row {
+  width: 100%;
+  margin: 0px 0px 10px 0px;
+  max-height: 100vh;
+}
+.dara-form > .df-row > .df-label .required {
+  color: var(--color-danger);
+}
+.dara-form > .df-row > .df-label .required::after {
+  content: "*";
+  vertical-align: middle;
+}
+.dara-form > .df-row .help-message {
+  display: none;
+}
+.dara-form > .df-row .help-icon {
+  background-repeat: no-repeat;
+  background-position-y: center;
+}
+.dara-form > .df-row .help-icon.form-field {
+  background-position-x: calc(100% - 15px);
+}
+.dara-form > .df-row .help-icon.dara-icon {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 20px;
+  margin-right: 15px;
+}
+.dara-form > .df-row .dara-file-list .file-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.dara-form > .df-row .dara-file-list .file-icon:hover {
+  background-color: var(--background-button-hover);
+}
+.dara-form > .df-row .dara-file-list .file-icon.download {
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___});
+}
+.dara-form > .df-row .dara-file-list .file-icon.remove {
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___});
+}
+.dara-form > .df-row .dara-file-list .file-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(100% - 55px);
+}
+.dara-form > .df-row.invalid .form-field,
+.dara-form .sub-row.invalid .form-field {
+  border-color: var(--invalid-border-color);
+  outline-color: var(--invalid-border-color);
+}
+.dara-form > .df-row.invalid .help-icon,
+.dara-form .sub-row.invalid .help-icon {
+  display: block;
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___});
+}
+.dara-form > .df-row.invalid .help-message,
+.dara-form .sub-row.invalid .help-message {
+  display: block;
+  color: var(--invalid-font-color);
+}
+.dara-form > .df-row.valid .help-icon,
+.dara-form .sub-row.valid .help-icon {
+  display: block;
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___});
+}
+.dara-form .file-label {
+  border: 1px solid var(--border-color);
+  display: inline;
+  width: 100%;
+  padding: 3px 15px;
+  line-height: 1;
+  background-clip: padding-box;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.dara-form .file-label:hover {
+  background-color: var(--background-button-hover);
+}
+.dara-form .form-field {
+  border: 1px solid var(--border-color);
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  background-clip: padding-box;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.dara-form .form-field[type=radio], .dara-form .form-field[type=checkbox] {
+  width: auto;
+  display: inline;
+}
+.dara-form .form-field.dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+.dara-form .form-field.textarea {
+  padding-right: 0px;
+}
+.dara-form .form-field[type=number] {
+  padding-right: 3px;
+}
+.dara-form .form-field.file {
+  display: none;
+}
+.dara-form .form-field.range {
+  padding: 0px;
+}
+.dara-form .field-group .field.vertical {
+  display: block;
+}
+.dara-form .field-group .field.horizontal {
+  display: inline;
+}
 @keyframes fadeOut {
   from {
-    opacity: 1; }
+    opacity: 1;
+  }
   to {
-    opacity: 0; } }
-`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[":root .dara-form {\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n}\r\n\r\n.dara-form {\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .df-field-container {\r\n        .df-field {\r\n            position: relative;\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n\r\n        .df-hidden {\r\n            max-height: 0vh !important;\r\n            transition: all 0.25s ease-out;\r\n            visibility: hidden;\r\n        }\r\n\r\n        .sub-field-group {\r\n            padding: 0px;\r\n            margin: 0px;\r\n            list-style: none;\r\n\r\n            &.vertical {\r\n                display: block;\r\n\r\n                .sub-row {\r\n                    padding-top: 5px;\r\n                    max-height: 100vh;\r\n                    transition: all 0.25s ease-in;\r\n\r\n                    +.sub-row {\r\n                        padding-top: 5px;\r\n                    }\r\n\r\n                    +.df-hidden {\r\n                        padding-top: 0px;\r\n                    }\r\n                }\r\n\r\n                .sub-row:first-child {\r\n                    padding-top: 0px;\r\n                }\r\n\r\n                .df-hidden:first-child:has(~ .sub-row) {\r\n                    padding-top: 0px;\r\n                }\r\n            }\r\n\r\n            &.horizontal-row {\r\n                display: table;\r\n                width: 100%;\r\n\r\n                .sub-row {\r\n                    display: table-row;\r\n                    letter-spacing: 5px;\r\n\r\n                    >* {\r\n                        display: table-cell;\r\n                        padding-top: 5px;\r\n                    }\r\n                }\r\n            }\r\n\r\n            &.horizontal {\r\n                display: table;\r\n\r\n\r\n                .df-hidden {\r\n                    width: 0px;\r\n                    padding-right: 0px !important;\r\n                    display: none !important;\r\n                }\r\n\r\n                .sub-row {\r\n                    display: table-cell;\r\n                    padding-right: 15px;\r\n\r\n                    .field-group {\r\n                        position: relative;\r\n\r\n                        .help-icon {\r\n                            margin-right: -16px;\r\n                        }\r\n                    }\r\n\r\n                    .sub-label {\r\n                        padding-right: 10px;\r\n                    }\r\n\r\n                    >span {\r\n                        display: table-cell;\r\n                    }\r\n                }\r\n            }\r\n\r\n\r\n        }\r\n\r\n\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.df-row {\r\n            display: table-row;\r\n\r\n            >.df-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.df-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.df-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    >.df-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n\r\n        >.df-label {\r\n\r\n            .require {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n    >.df-row,\r\n    .sub-row {\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n    }\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n    @keyframes fadeOut {\r\n        from {\r\n            opacity: 1;\r\n\r\n        }\r\n\r\n        to {\r\n            opacity: 0;\r\n        }\r\n    }\r\n}"],"sourceRoot":""}]);
+    opacity: 0;
+  }
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[".dara-form {\r\n\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n    --tooltip-background: #3e3e3e;\r\n    --tooltip-color: #fff;\r\n\r\n    padding: 0px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .df-label,\r\n    .sub-label {\r\n        position: relative;\r\n        font-weight: 700;\r\n\r\n        .df-tooltip {\r\n            visibility: visible;\r\n            color: #fff;\r\n            background: #000;\r\n            width: 16px;\r\n            height: 16px;\r\n            border-radius: 8px;\r\n            text-align: center;\r\n            line-height: 16px;\r\n            margin: 0 5px;\r\n            font-size: 12px;\r\n            cursor: help;\r\n            position: relative;\r\n            display: inline-block;\r\n\r\n            .tooltip {\r\n                display: none;\r\n                text-align: initial;\r\n                background: var(--tooltip-background);\r\n                border-radius: 5px;\r\n                color: var(--tooltip-color);\r\n                padding: 10px 5px;\r\n                position: absolute;\r\n                z-index: 2;\r\n                left: -10px;\r\n                min-width: max-content;\r\n                text-shadow: none;\r\n                cursor: default;\r\n            }\r\n\r\n            &:hover .tooltip {\r\n                display: block;\r\n            }\r\n        }\r\n    }\r\n\r\n    .df-field-container {\r\n        .df-field {\r\n            position: relative;\r\n\r\n            .range-num {\r\n                clear: both;\r\n                display: block;\r\n                width: 100%;\r\n                text-align: left;\r\n            }\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n\r\n        .sub-field-group {\r\n            padding: 0px;\r\n            margin: 0px;\r\n            list-style: none;\r\n\r\n            &.vertical {\r\n                display: block;\r\n\r\n                .sub-row {\r\n                    padding-top: 5px;\r\n                    max-height: 100vh;\r\n                    transition: all 0.25s ease-in;\r\n\r\n                    +.sub-row {\r\n                        padding-top: 5px;\r\n                    }\r\n\r\n                    +.df-hidden {\r\n                        padding-top: 0px;\r\n                    }\r\n                }\r\n\r\n                .sub-row:first-child {\r\n                    padding-top: 0px;\r\n                }\r\n\r\n                .df-hidden:first-child:has(~ .sub-row) {\r\n                    padding-top: 0px;\r\n                }\r\n            }\r\n\r\n            &.horizontal-row {\r\n                display: table;\r\n                width: 100%;\r\n\r\n                .sub-row {\r\n                    display: table-row;\r\n                    letter-spacing: 5px;\r\n\r\n                    >* {\r\n                        display: table-cell;\r\n                        padding-top: 5px;\r\n                    }\r\n                }\r\n            }\r\n\r\n            &.horizontal {\r\n                display: table;\r\n\r\n                .df-hidden {\r\n                    width: 0px;\r\n                    padding-right: 0px !important;\r\n                    display: none !important;\r\n                }\r\n\r\n                .sub-row {\r\n                    display: table-cell;\r\n                    padding-right: 15px;\r\n\r\n                    .field-group {\r\n                        position: relative;\r\n\r\n                        .help-icon {\r\n                            margin-right: -16px;\r\n                        }\r\n                    }\r\n\r\n                    .sub-label {\r\n                        padding-right: 10px;\r\n                    }\r\n\r\n                    >span {\r\n                        display: table-cell;\r\n                    }\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    &.horizontal {\r\n        margin: 0px 0px;\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.df-row {\r\n            display: table-row;\r\n\r\n            >.df-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.df-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.df-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    .df-hidden {\r\n        max-height: 0vh !important;\r\n        transition: all 0.25s ease-out;\r\n        visibility: collapse;\r\n    }\r\n\r\n    >.df-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n        max-height: 100vh;\r\n\r\n        >.df-label {\r\n\r\n            .required {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n    >.df-row,\r\n    .sub-row {\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n    }\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n        &.range {\r\n            padding: 0px;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n\r\n    @keyframes fadeOut {\r\n        from {\r\n            opacity: 1;\r\n\r\n        }\r\n\r\n        to {\r\n            opacity: 0;\r\n        }\r\n    }\r\n}"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -2578,6 +3340,1210 @@ module.exports = function (item) {
   }
   return [content].join("\n");
 };
+
+/***/ }),
+
+/***/ "./node_modules/dara-datetimepicker/dist/index.js":
+/*!********************************************************!*\
+  !*** ./node_modules/dara-datetimepicker/dist/index.js ***!
+  \********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DaraDateTimePicker: () => (/* binding */ DaraDateTimePicker)
+/* harmony export */ });
+// src/Lanauage.ts
+var localeMessage = {
+  year: "Year",
+  month: "Month",
+  day: "Day",
+  am: "AM",
+  pm: "PM",
+  today: "Today",
+  ok: "Ok",
+  months: {
+    full: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    abbr: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  },
+  weeks: {
+    full: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    abbr: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  }
+};
+var Language = class {
+  constructor() {
+    this.lang = localeMessage;
+  }
+  setDefaultMessage(lang) {
+    localeMessage = Object.assign(localeMessage, lang);
+  }
+  /**
+   * 다국어 메시지 등록
+   *
+   * @public
+   * @param {?Message} [lang] 둥록할 메시지
+   */
+  set(lang) {
+    this.lang = Object.assign({}, localeMessage, lang);
+  }
+  /**
+   * 메시지 얻기
+   *
+   * @public
+   * @param {string} messageKey 메시지 키
+   * @returns {*}
+   */
+  getMessage(messageKey) {
+    return this.lang[messageKey];
+  }
+  getMonthsMessage(idx, mode = "abbr") {
+    return this.lang.months[mode][idx] || "";
+  }
+  getWeeksMessage(idx, mode = "abbr") {
+    return this.lang.weeks[mode][idx] || "";
+  }
+  getMonthsIdx(val, mode = "abbr") {
+    return mode == "full" ? this.lang.months.full.indexOf(val) : this.lang.months.abbr.indexOf(val);
+  }
+  getWeeksIdx(val, mode = "abbr") {
+    return mode == "full" ? this.lang.weeks.full.indexOf(val) : this.lang.weeks.abbr.indexOf(val);
+  }
+};
+var Lanauage_default = new Language();
+
+// src/constants.ts
+var EXPRESSIONS_FORMAT = [
+  "YY",
+  "YYYY",
+  "MMMM",
+  "MMM",
+  "MM",
+  "M",
+  "dddd",
+  "ddd",
+  "dd",
+  "d",
+  "DD",
+  "D",
+  "S",
+  "HH",
+  "H",
+  "hh",
+  "h",
+  "mm",
+  "m",
+  "ss",
+  "s",
+  "SSS",
+  "zzzz",
+  "zzz",
+  "zz",
+  "z",
+  "a",
+  "A"
+];
+var MAX_CHAR_LENGTH = 0;
+var DEFAULT_DATE_FORMAT = "YYYY-MM-DD";
+var DateViewMode = /* @__PURE__ */ ((DateViewMode2) => {
+  DateViewMode2["year"] = "year";
+  DateViewMode2["month"] = "month";
+  DateViewMode2["date"] = "date";
+  DateViewMode2["datetime"] = "datetime";
+  DateViewMode2["time"] = "time";
+  return DateViewMode2;
+})(DateViewMode || {});
+EXPRESSIONS_FORMAT.forEach((item) => {
+  MAX_CHAR_LENGTH = Math.max(item.length, MAX_CHAR_LENGTH);
+});
+
+// src/util/utils.ts
+var xssFilter = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var utils_default = {
+  replace(str) {
+    let returnText = str;
+    if (returnText) {
+      Object.keys(xssFilter).forEach((key) => {
+        returnText = returnText.replaceAll(key, xssFilter[key]);
+      });
+    }
+    return returnText;
+  },
+  unReplace(inputText) {
+    let returnText = inputText;
+    if (returnText) {
+      Object.keys(xssFilter).forEach((key) => {
+        returnText = returnText.replaceAll(xssFilter[key], key);
+      });
+    }
+    return returnText;
+  },
+  unFieldName(fieldName) {
+    if (fieldName) {
+      return this.unReplace(fieldName).replaceAll('"', '\\"');
+    }
+    return "";
+  },
+  isBlank(value) {
+    if (value === null)
+      return true;
+    if (value === "")
+      return true;
+    if (typeof value === "undefined")
+      return true;
+    if (typeof value === "string" && (value === "" || value.replace(/\s/g, "") === ""))
+      return true;
+    return false;
+  },
+  isUndefined(value) {
+    return typeof value === "undefined";
+  },
+  isFunction(value) {
+    return typeof value === "function";
+  },
+  isString(value) {
+    return typeof value === "string";
+  },
+  isNumber(value) {
+    if (this.isBlank(value)) {
+      return false;
+    }
+    return !isNaN(value);
+  },
+  isArray(value) {
+    return Array.isArray(value);
+  },
+  getHashCode(str) {
+    let hash = 0;
+    if (str.length == 0)
+      return hash;
+    for (let i = 0; i < str.length; i++) {
+      let tmpChar = str.charCodeAt(i);
+      hash = (hash << 5) - hash + tmpChar;
+      hash = hash & hash;
+    }
+    return hash;
+  },
+  pad(str, length) {
+    str = String(str);
+    while (str.length < length) {
+      str = "0" + str;
+    }
+    return str;
+  }
+};
+
+// src/format/index.ts
+var format_default = (date, format) => {
+  format = format || "YYYY-MM-DD";
+  const len = format.length;
+  let result = [];
+  for (let i = 0; i < len; ) {
+    let minLen = Math.min(MAX_CHAR_LENGTH, len - i);
+    let j = minLen;
+    for (; j > 0; j--) {
+      const v = format.substring(i, i + j);
+      if (EXPRESSIONS_FORMAT.includes(v)) {
+        try {
+          result.push(expressionsFunction[v](date));
+        } catch (e) {
+          console.log(EXPRESSIONS_FORMAT.includes(v), v, e);
+        }
+        break;
+      }
+    }
+    if (j < 1) {
+      result.push(format.substring(i, i + 1));
+      i += 1;
+    } else {
+      i += j;
+    }
+  }
+  return result.join("");
+};
+var expressionsFunction = {
+  YY: (date) => {
+    return String(date.getFullYear()).slice(-2);
+  },
+  YYYY: (date) => {
+    return String(date.getFullYear());
+  },
+  M: (date) => {
+    return String(date.getMonth() + 1);
+  },
+  MM: (date) => {
+    return utils_default.pad(date.getMonth() + 1, 2);
+  },
+  MMM: (date) => {
+    return Lanauage_default.getMonthsMessage(date.getMonth());
+  },
+  MMMM: (date) => {
+    return Lanauage_default.getMonthsMessage(date.getMonth(), "full");
+  },
+  D: (date) => {
+    return String(date.getDate());
+  },
+  DD: (date) => {
+    return utils_default.pad(date.getDate(), 2);
+  },
+  d: (date) => {
+    return String(date.getDate());
+  },
+  dd: (date) => {
+    return utils_default.pad(date.getDate(), 2);
+  },
+  ddd: (date) => {
+    return Lanauage_default.getWeeksMessage(date.getDay());
+  },
+  dddd: (date) => {
+    return Lanauage_default.getWeeksMessage(date.getDay(), "full");
+  },
+  H: (date) => {
+    return String(date.getHours());
+  },
+  HH: (date) => {
+    return utils_default.pad(date.getHours(), 2);
+  },
+  h: (date) => {
+    return getH(date);
+  },
+  hh: (date) => {
+    return utils_default.pad(getH(date), 2);
+  },
+  a: (date) => {
+    return String(date.getFullYear()).slice(-2);
+  },
+  A: (date) => {
+    return getMeridiem(date, true, true);
+  },
+  m: (date) => {
+    return String(date.getMinutes());
+  },
+  mm: (date) => {
+    return utils_default.pad(date.getMinutes(), 2);
+  },
+  s: (date) => {
+    return String(date.getSeconds());
+  },
+  ss: (date) => {
+    return utils_default.pad(date.getSeconds(), 2);
+  },
+  SSS: (date) => {
+    return utils_default.pad(date.getMilliseconds(), 3);
+  }
+};
+function getH(date) {
+  let hour = date.getHours();
+  if (hour > 12) {
+    hour -= 12;
+  } else if (hour < 1) {
+    hour = 12;
+  }
+  return hour;
+}
+function getMeridiem(date, isUpper, isShort) {
+  const hour = date.getHours();
+  let m = hour < 12 ? "am" : "pm";
+  m = Lanauage_default.getMessage(m);
+  m = isUpper ? m.toUpperCase() : m;
+  return m;
+}
+
+// src/util/parser.ts
+var parser_default = (dateStr, format) => {
+  if (dateStr.length > 1e3) {
+    return null;
+  }
+  format = format || DEFAULT_DATE_FORMAT;
+  const dateInfo = {
+    year: (/* @__PURE__ */ new Date()).getFullYear(),
+    month: 0,
+    day: 1,
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+    isPm: false,
+    isH: false,
+    charIdx: 0
+  };
+  const len = format.length;
+  let startIdx = 0;
+  for (let i = 0; i < len; ) {
+    let minLen = Math.min(MAX_CHAR_LENGTH, len - i);
+    let j = minLen;
+    for (; j > 0; j--) {
+      const v = format.substring(i, i + j);
+      if (EXPRESSIONS_FORMAT.includes(v)) {
+        const expInfo = expressionsFunction2[v];
+        const val = matchFind(dateStr.substring(startIdx), expInfo[0]);
+        expInfo[1](dateInfo, val);
+        startIdx += val.length;
+        break;
+      }
+    }
+    if (j < 1) {
+      i += 1;
+      startIdx += 1;
+    } else {
+      i += j;
+    }
+  }
+  if (dateInfo.hour != null && !dateInfo.isH) {
+    if (dateInfo.isPm && +dateInfo.hour !== 12) {
+      dateInfo.hour = +dateInfo.hour + 12;
+    } else if (!dateInfo.isPm && +dateInfo.hour === 12) {
+      dateInfo.hour = 0;
+    }
+  }
+  let date;
+  date = new Date(
+    dateInfo.year,
+    dateInfo.month,
+    dateInfo.day,
+    dateInfo.hour,
+    dateInfo.minute,
+    dateInfo.second,
+    dateInfo.millisecond
+  );
+  return date;
+};
+var matchFind = (val, regexp) => {
+  const match = regexp.exec(val);
+  return match == null ? "" : match[0];
+};
+var digitsCheck = {
+  twoOptional: /\d\d?/,
+  two: /\d\d/,
+  three: /\d{3}/,
+  four: /\d{4}/
+};
+var word = /[^\s]+/;
+var expressionsFunction2 = {
+  YY: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.year = +(("" + (/* @__PURE__ */ new Date()).getFullYear()).substring(0, 2) + val);
+    return dateInfo;
+  }],
+  YYYY: [digitsCheck["four"], (dateInfo, val) => {
+    dateInfo.year = +val;
+    return dateInfo;
+  }],
+  M: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.month = +val - 1;
+    return dateInfo;
+  }],
+  MM: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.month = +val - 1;
+    return dateInfo;
+  }],
+  MMM: [word, (dateInfo, val) => {
+    dateInfo.month = Lanauage_default.getMonthsIdx(val, "abbr");
+    return dateInfo;
+  }],
+  MMMM: [word, (dateInfo, val) => {
+    dateInfo.month = Lanauage_default.getMonthsIdx(val, "full");
+    return dateInfo;
+  }],
+  D: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.day = +val;
+    return dateInfo;
+  }],
+  DD: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.day = +val;
+    return dateInfo;
+  }],
+  d: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.day = +val;
+    return dateInfo;
+  }],
+  dd: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.day = +val;
+    return dateInfo;
+  }],
+  ddd: [word, (dateInfo, val) => {
+    return dateInfo;
+  }],
+  dddd: [word, (dateInfo, val) => {
+    return dateInfo;
+  }],
+  H: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.hour = +val;
+    dateInfo.isH = true;
+    return dateInfo;
+  }],
+  HH: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.hour = +val;
+    dateInfo.isH = true;
+    return dateInfo;
+  }],
+  h: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.hour = +val;
+    return dateInfo;
+  }],
+  hh: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.hour = +val;
+    return dateInfo;
+  }],
+  a: [word, (dateInfo, val) => {
+    if (Lanauage_default.getMessage("am") != val.toLowerCase()) {
+      dateInfo.isPm = true;
+    }
+    return dateInfo;
+  }],
+  A: [word, (dateInfo, val) => {
+    if (Lanauage_default.getMessage("am") != val.toLowerCase()) {
+      dateInfo.isPm = true;
+    }
+    return dateInfo;
+  }],
+  m: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.minute = +val;
+    return dateInfo;
+  }],
+  mm: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.minute = +val;
+    return dateInfo;
+  }],
+  s: [digitsCheck["twoOptional"], (dateInfo, val) => {
+    dateInfo.second = +val;
+    return dateInfo;
+  }],
+  ss: [digitsCheck["two"], (dateInfo, val) => {
+    dateInfo.second = +val;
+    return dateInfo;
+  }],
+  SSS: [digitsCheck["three"], (dateInfo, val) => {
+    dateInfo.millisecond = +val;
+    return dateInfo;
+  }]
+};
+
+// src/DaraDate.ts
+var DaraDate = class _DaraDate {
+  constructor(dt) {
+    this.date = dt;
+  }
+  setYear(num) {
+    this.date.setFullYear(num);
+    return this;
+  }
+  addYear(num) {
+    this.date.setFullYear(this.date.getFullYear() + num);
+    return this;
+  }
+  addMonth(num) {
+    this.date.setMonth(this.date.getMonth() + num);
+    return this;
+  }
+  setMonth(num) {
+    this.date.setMonth(num);
+    return this;
+  }
+  setDate(num) {
+    this.date.setDate(num);
+    return this;
+  }
+  addDate(num) {
+    this.date.setDate(this.date.getDate() + num);
+    return this;
+  }
+  addWeek(num) {
+    this.date.setDate(this.date.getDate() + num * 7);
+    return this;
+  }
+  addHours(num) {
+    this.date.setHours(this.date.getHours() + num);
+    return this;
+  }
+  setHour(num) {
+    this.date.setHours(num);
+    return this;
+  }
+  addMinutes(num) {
+    this.date.setMinutes(this.date.getMinutes() + num);
+    return this;
+  }
+  setMinutes(num) {
+    this.date.setMinutes(num);
+    return this;
+  }
+  addSeconds(num) {
+    this.date.setSeconds(this.date.getSeconds() + num);
+    return this;
+  }
+  addMilliseconds(num) {
+    this.date.setMilliseconds(this.date.getMilliseconds() + num);
+    return this;
+  }
+  compare(date) {
+    if (this.date.valueOf() < date.valueOf()) {
+      return -1;
+    } else if (this.date.valueOf() > date.valueOf()) {
+      return 1;
+    }
+    return 0;
+  }
+  getYear() {
+    return this.date.getFullYear();
+  }
+  getMonth() {
+    return this.date.getMonth() + 1;
+  }
+  getDate() {
+    return this.date.getDate();
+  }
+  getDay() {
+    return this.date.getDay();
+  }
+  getTime() {
+    return this.date.getTime();
+  }
+  format(format) {
+    return format_default(this.date, format);
+  }
+  clone() {
+    return new _DaraDate(new Date(this.date.valueOf()));
+  }
+};
+
+// src/DateTimePicker.ts
+var DEFAULT_OPTIONS = {
+  isEmbed: false,
+  initialDate: "",
+  autoClose: true,
+  mode: "date" /* date */,
+  headerOrder: "month,year",
+  format: "YYYY-MM-DD",
+  zIndex: 1e3,
+  minDate: "",
+  maxDate: ""
+};
+function hiddenElement() {
+  if (document.getElementById("hiddenDaraDatetimeElement") == null) {
+    document.querySelector("body")?.insertAdjacentHTML("beforeend", `<div id="hiddenDaraDatetimeElement" class="dara-datetime-hidden"></div>`);
+  }
+  return document.getElementById("hiddenDaraDatetimeElement");
+}
+var daraDatetimeIdx = 0;
+var DateTimePicker = class {
+  constructor(selector, options, message) {
+    this.isInput = false;
+    this.isVisible = false;
+    this.minYear = -1;
+    this.maxYear = -1;
+    this.minMonth = -1;
+    this.maxMonth = -1;
+    /**
+     * 바탕 클릭시 캘린더 숨김 처리. 
+     * 
+     * @param e 
+     */
+    this._documentClickEvent = (e) => {
+      if (this.isVisible && (e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement))) {
+        this.hide();
+      }
+    };
+    this.options = Object.assign({}, DEFAULT_OPTIONS, options);
+    daraDatetimeIdx += 1;
+    let selectorElement;
+    if (typeof selector === "string") {
+      selectorElement = document.querySelector(selector);
+    } else {
+      selectorElement = selector;
+    }
+    if (!selectorElement) {
+      throw new Error(`${selector} datetimepicker element not found`);
+    }
+    this._viewMode = Object.keys(DateViewMode).includes(this.options.mode) ? this.options.mode : "date" /* date */;
+    this.initMode = this._viewMode;
+    Lanauage_default.set(message);
+    this.dateFormat = this.options.format || DEFAULT_DATE_FORMAT;
+    let viewDate;
+    if (typeof this.options.initialDate) {
+      if (typeof this.options.initialDate === "string") {
+        viewDate = new DaraDate(parser_default(this.options.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
+      } else {
+        viewDate = new DaraDate(this.options.initialDate);
+      }
+    } else {
+      viewDate = new DaraDate(/* @__PURE__ */ new Date());
+    }
+    this.initialDate = viewDate.format(this.dateFormat);
+    this.currentDate = viewDate;
+    this.targetElement = selectorElement;
+    this.minDate = this._minDate();
+    this.maxDate = this._maxDate();
+    if (this.options.isEmbed) {
+      this.datetimeElement = selectorElement;
+      this.datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} embed`;
+    } else {
+      this.isInput = true;
+      this.targetElement.setAttribute("value", this.initialDate);
+      const datetimeElement = document.createElement("div");
+      datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} layer`;
+      datetimeElement.setAttribute("style", `z-index:${this.options.zIndex};`);
+      hiddenElement()?.appendChild(datetimeElement);
+      this.datetimeElement = datetimeElement;
+      this.initTargetEvent();
+    }
+    this.createDatetimeTemplate();
+    if (this.isTimeMode()) {
+      this.hourInputEle = this.datetimeElement.querySelector(".ddtp-hour");
+      this.minuteInputEle = this.datetimeElement.querySelector(".ddtp-minute");
+    } else {
+      this.hourInputEle = {};
+      this.minuteInputEle = {};
+    }
+    this.changeViewMode(this._viewMode);
+    this.initHeaderEvent();
+    this.initDateEvent();
+    this.initTimeEvent();
+  }
+  static {
+    this.format = format_default;
+  }
+  static {
+    this.parser = parser_default;
+  }
+  _minDate() {
+    let minDate = this.options.minDate;
+    if (minDate != "") {
+      if (typeof minDate === "string") {
+        const dt = parser_default(minDate, this.dateFormat);
+        if (!dt) {
+          return -1;
+        }
+        minDate = dt;
+      }
+      this.minYear = minDate.getFullYear();
+      this.minMonth = +(this.minYear + utils_default.pad(minDate.getMonth(), 2));
+      return new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), 0, 0).getTime();
+    }
+    return -1;
+  }
+  _maxDate() {
+    let maxDate = this.options.maxDate;
+    if (maxDate != "") {
+      if (typeof maxDate === "string") {
+        const dt = parser_default(maxDate, this.dateFormat);
+        if (!dt) {
+          return -1;
+        }
+        maxDate = dt;
+      }
+      this.maxYear = maxDate.getFullYear();
+      this.maxMonth = +(this.maxYear + utils_default.pad(maxDate.getMonth(), 2));
+      return new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate(), 23, 59).getTime();
+    }
+    return -1;
+  }
+  set viewMode(mode) {
+    if (this._viewMode === mode) {
+      return;
+    }
+    this._viewMode = mode;
+    this.changeViewMode(mode);
+  }
+  get viewMode() {
+    return this._viewMode;
+  }
+  /**
+   * 모드  change
+   * @param mode 
+   */
+  changeViewMode(mode) {
+    this.datetimeElement.querySelector(".ddtp-datetime")?.setAttribute("view-mode", mode);
+    if (mode === "year") {
+      this.yearDraw();
+    } else if (mode === "month") {
+      this.monthDraw();
+    } else {
+      this.dayDraw();
+    }
+  }
+  initHeaderEvent() {
+    this.datetimeElement.querySelector(".ddtp-move-btn.prev")?.addEventListener("click", (e) => {
+      this.moveDate("prev");
+    });
+    this.datetimeElement.querySelector(".ddtp-move-btn.next")?.addEventListener("click", (e) => {
+      this.moveDate("next");
+    });
+    this.datetimeElement.querySelector(".ddtp-header-year")?.addEventListener("click", (e) => {
+      this.viewMode = "year" /* year */;
+    });
+    this.datetimeElement.querySelector(".ddtp-header-month")?.addEventListener("click", (e) => {
+      this.viewMode = "month" /* month */;
+    });
+  }
+  /**
+   * 날짜 달력 이벤트처리.
+   */
+  initDateEvent() {
+    this.datetimeElement.querySelector(".ddtp-day-body")?.addEventListener("click", (e) => {
+      const targetEle = e.target;
+      if (targetEle.classList.contains("ddtp-day") || targetEle.closest(".ddtp-day")) {
+        const selectDate = targetEle.getAttribute("data-day") || "1";
+        const mmDD = selectDate.split(",");
+        this.currentDate.setMonth(+mmDD[0] - 1);
+        this.currentDate.setDate(+mmDD[1]);
+        if (this.isDayDisabled(this.currentDate)) {
+          return;
+        }
+        this.datetimeElement.querySelector(".select")?.classList.remove("select");
+        targetEle.classList.add("select");
+        if (this.isTimeMode()) {
+          this.currentDate.setHour(+this.hourInputEle.value);
+          this.currentDate.setMinutes(+this.minuteInputEle.value);
+        }
+        this.dateChangeEvent(e);
+      }
+    });
+  }
+  isTimeMode() {
+    return this._viewMode === "time" /* time */ || this._viewMode === "datetime" /* datetime */;
+  }
+  /**
+   * 시간 분 설정 이벤트 처리.
+   *
+   * @public
+   */
+  initTimeEvent() {
+    if (!this.isTimeMode())
+      return;
+    let hh = this.currentDate.format("HH");
+    const hourInputEle = this.datetimeElement.querySelector(".ddtp-hour");
+    const hourRangeEle = this.datetimeElement.querySelector(".ddtp-hour-range");
+    hourInputEle.value = hh;
+    hourRangeEle.value = hh;
+    hourInputEle.addEventListener("input", (e) => {
+      const targetElement = e.target;
+      const addVal = utils_default.pad(targetElement.value, 2);
+      hourInputEle.value = addVal;
+      hourRangeEle.value = addVal;
+    });
+    hourRangeEle.addEventListener("input", (e) => {
+      const targetElement = e.target;
+      hourInputEle.value = utils_default.pad(targetElement.value, 2);
+    });
+    let mm = this.currentDate.format("mm");
+    const minuteInputEle = this.datetimeElement.querySelector(".ddtp-minute");
+    const minuteRangeEle = this.datetimeElement.querySelector(".ddtp-minute-range");
+    minuteInputEle.value = mm;
+    minuteRangeEle.value = mm;
+    minuteInputEle.addEventListener("input", (e) => {
+      const targetElement = e.target;
+      const addVal = utils_default.pad(targetElement.value, 2);
+      minuteInputEle.value = addVal;
+      minuteRangeEle.value = addVal;
+    });
+    minuteRangeEle.addEventListener("input", (e) => {
+      const targetElement = e.target;
+      minuteInputEle.value = utils_default.pad(targetElement.value, 2);
+    });
+    this.datetimeElement.querySelector(".time-select")?.addEventListener("click", (e) => {
+      this.currentDate.setHour(+hourInputEle.value);
+      this.currentDate.setMinutes(+minuteInputEle.value);
+      this.dateChangeEvent(e);
+    });
+    this.datetimeElement.querySelector(".time-today")?.addEventListener("click", (e) => {
+      const initDate = new DaraDate(parser_default(this.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
+      this.currentDate.setYear(initDate.getYear());
+      this.currentDate.setMonth(initDate.getMonth() - 1);
+      this.currentDate.setDate(initDate.getDate());
+      this.changeViewMode(this.initMode);
+    });
+  }
+  /**
+   * 날짜 이동
+   * @param moveMode // 앞뒤 이동 prev, next
+   * @returns 
+   */
+  moveDate(moveMode) {
+    if (this._viewMode === "date" /* date */ || this._viewMode === "datetime" /* datetime */) {
+      this.currentDate.addMonth("prev" === moveMode ? -1 : 1);
+      this.dayDraw();
+      return;
+    }
+    if (this._viewMode === "month" /* month */) {
+      this.currentDate.addYear("prev" === moveMode ? -1 : 1);
+      this.monthDraw();
+      return;
+    }
+    if (this._viewMode === "year" /* year */) {
+      this.currentDate.addYear("prev" === moveMode ? -16 : 16);
+      this.yearDraw();
+    }
+  }
+  /**
+   * get date value
+   * 
+   * @returns 
+   */
+  getDateValue() {
+    return this.currentDate.format(this.dateFormat);
+  }
+  /**
+   * 옵션 셋팅
+   * @static
+   * @param {DateTimePickerOptions} options
+   */
+  static setOptions(options) {
+    DEFAULT_OPTIONS = Object.assign({}, DEFAULT_OPTIONS, options);
+  }
+  /**
+   * 달력 보이기 처리. 
+   * 
+   * @returns 
+   */
+  show() {
+    if (this.isVisible) {
+      return;
+    }
+    this.isVisible = true;
+    const docSize = getDocSize();
+    this.datetimeElement.classList.remove("hide");
+    this.datetimeElement.classList.add("show");
+    const rect = this.targetElement.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    const offsetTop = rect.top + scrollTop;
+    let top = offsetTop + this.targetElement.offsetHeight + 2;
+    const left = rect.left + scrollLeft;
+    if (top + this.datetimeElement.offsetHeight > docSize.clientHeight) {
+      const newTop = offsetTop - (this.datetimeElement.offsetHeight + 2);
+      top = newTop > 0 ? newTop : top;
+    }
+    this.datetimeElement.setAttribute("style", `top:${top}px;left:${left}px;z-index:${this.options.zIndex}`);
+    document.addEventListener("click", this._documentClickEvent);
+  }
+  /**
+   * 달력 숨기기
+   */
+  hide() {
+    this.isVisible = false;
+    this.datetimeElement.classList.remove("show");
+    this.datetimeElement.classList.add("hide");
+    document.removeEventListener("click", this._documentClickEvent);
+  }
+  /**
+   * 타켓 이벤트 처리.
+   */
+  initTargetEvent() {
+    if (this.targetElement) {
+      this.targetElement.addEventListener("click", (e) => {
+        this.show();
+      });
+    }
+  }
+  dateChangeEvent(e) {
+    const formatValue = this.currentDate.format(this.dateFormat);
+    if (this.options.onChange) {
+      if (this.options.onChange(formatValue, e) === false) {
+        return;
+      }
+      ;
+    }
+    if (this.isInput) {
+      this.targetElement.setAttribute("value", formatValue);
+    }
+    if (!this.options.isEmbed && this.options.autoClose) {
+      this.hide();
+    }
+  }
+  /**
+   *  datepicker template  그리기
+   */
+  createDatetimeTemplate() {
+    const headerOrder = this.options.headerOrder.split(",");
+    let datetimeTemplate = `<div class="ddtp-datetime" view-mode="${this._viewMode}">
+			<div class="ddtp-header">
+                <span class="${headerOrder[0] === "year" ? "ddtp-header-year" : "ddtp-header-month"}"></span>
+                <span class="${headerOrder[0] === "year" ? "ddtp-header-month" : "ddtp-header-year"}"></span>
+
+                <span class="ddtp-date-move">  
+                    <a href="javascript:;" class="ddtp-move-btn prev">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </a>
+                    <a href="javascript:;" class="ddtp-move-btn next">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000"><path d="M0 0h24v24H0z" fill="none"/><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                    </a> 
+                </span>
+			</div>
+            <div class="ddtp-body">
+                <table class="ddtp-days">
+                    <thead class="ddtp-day-header">
+                        <tr>		
+                            <td class="ddtp-day-label sun red">${Lanauage_default.getWeeksMessage(0)}</td>		
+                            <td class="ddtp-day-label">${Lanauage_default.getWeeksMessage(1)}</td>		
+                            <td class="ddtp-day-label">${Lanauage_default.getWeeksMessage(2)}</td>		
+                            <td class="ddtp-day-label">${Lanauage_default.getWeeksMessage(3)}</td>		
+                            <td class="ddtp-day-label">${Lanauage_default.getWeeksMessage(4)}</td>		
+                            <td class="ddtp-day-label">${Lanauage_default.getWeeksMessage(5)}</td>		
+                            <td class="ddtp-day-label sat">${Lanauage_default.getWeeksMessage(6)}</td>		
+                        </tr>
+                    </thead>
+                    <tbody class="ddtp-day-body">
+                    </tbody>
+                    
+                    <tfoot class="ddtp-day-footer">
+                        <td colspan="7"><div class="footer-tooltip"></div></td>
+                    </tfoot>
+                </table>
+
+                <div class="ddtp-times">
+                        <div class="time-container">
+                            <div class="ddtp-time">
+                                <span>H: </span><input type="number" class="ddtp-hour" min="0" max="23">
+                                <input type="range" min="0" max="23" class="ddtp-hour-range">
+                            </div>
+                            <div class="ddtp-time">
+                                <span>M: </span><input type="number" class="ddtp-minute" min="0" max="59">
+                                <input type="range" min="0" max="59" class="ddtp-minute-range">
+                            </div>
+                        </div>
+                        <div class="time-btn">
+                            <button type="button" class="time-select">${Lanauage_default.getMessage("ok")}</button>
+                            <button type="button" class="time-today">${Lanauage_default.getMessage("today")}</button>
+                        </div>
+                </div>
+
+                <div class="ddtp-months">
+                </div>
+
+                <div class="ddtp-years">
+                </div>
+            </div>
+        </div>`;
+    this.datetimeElement.innerHTML = datetimeTemplate;
+  }
+  /**
+   * 년 달력 그리기
+   */
+  yearDraw() {
+    const currentYear = this.currentDate.format("YYYY");
+    const startYear = +currentYear - 8;
+    this.datetimeElement.querySelector(".ddtp-header-year").textContent = `${startYear} ~ ${startYear + 15}`;
+    const calHTML = [];
+    for (let i = 0; i < 16; i++) {
+      const year = startYear + i;
+      const disabled = this.isYearDisabled(year);
+      calHTML.push(`<div class="ddtp-year ${disabled ? "disabled" : ""}" data-year="${year}">${year}</div>`);
+    }
+    this.datetimeElement.querySelector(".ddtp-years").innerHTML = calHTML.join("");
+    this.datetimeElement.querySelectorAll(".ddtp-year")?.forEach((yearEle) => {
+      yearEle.addEventListener("click", (e) => {
+        const targetEle = e.target;
+        if (targetEle) {
+          const year = targetEle.getAttribute("data-year");
+          if (year) {
+            const numYear = +year;
+            if (this.initMode == "year" /* year */) {
+              if (this.isYearDisabled(numYear)) {
+                return;
+              }
+              this.currentDate.setYear(numYear);
+              this.dateChangeEvent(e);
+              return;
+            }
+            this.currentDate.setYear(numYear);
+            this.viewMode = "month" /* month */;
+          }
+        }
+      });
+    });
+  }
+  /**
+   * 월 달력 그리기
+   */
+  monthDraw() {
+    const year = this.currentDate.format("YYYY");
+    this.datetimeElement.querySelector(".ddtp-header-year").textContent = year;
+    const monthElements = this.datetimeElement.querySelectorAll(".ddtp-months > .ddtp-month");
+    if (monthElements.length > 0) {
+      if (this.isYearDisabled(+year)) {
+        monthElements.forEach((monthEle) => {
+          if (!monthEle.classList.contains("disabled")) {
+            monthEle.classList.add("disabled");
+          }
+        });
+        return;
+      }
+      monthElements.forEach((monthEle, idx) => {
+        if (this.isMonthDisabled(+year, idx)) {
+          if (!monthEle.classList.contains("disabled")) {
+            monthEle.classList.add("disabled");
+          }
+        } else {
+          monthEle.classList.remove("disabled");
+        }
+      });
+      return;
+    }
+    this.datetimeElement.querySelector(".ddtp-header-month").textContent = this.currentDate.format("MMMM");
+    const calHTML = [];
+    for (let i = 0; i < 12; i++) {
+      const disabled = this.isMonthDisabled(+year, i);
+      calHTML.push(`<div class="ddtp-month ${disabled ? "disabled" : ""}" data-month="${i}">${Lanauage_default.getMonthsMessage(i, "abbr")}</div>`);
+    }
+    this.datetimeElement.querySelector(".ddtp-months").innerHTML = calHTML.join("");
+    this.datetimeElement.querySelectorAll(".ddtp-month")?.forEach((monthEle) => {
+      monthEle.addEventListener("click", (e) => {
+        const targetEle = e.target;
+        if (targetEle) {
+          const month = targetEle.getAttribute("data-month");
+          if (month) {
+            if (this.initMode == "month" /* month */) {
+              if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
+                return;
+              }
+              this.currentDate.setMonth(+month);
+              this.dateChangeEvent(e);
+              return;
+            }
+            this.currentDate.setMonth(+month);
+            this.viewMode = this.initMode;
+            this.dayDraw();
+          }
+        }
+      });
+    });
+  }
+  /**
+   * 날짜 그리기
+   */
+  dayDraw() {
+    const dateFormat = this.dateFormat;
+    let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), "YYYY-MM-DD") || /* @__PURE__ */ new Date());
+    this.datetimeElement.querySelector(".ddtp-header-year").textContent = monthFirstDate.format("YYYY");
+    this.datetimeElement.querySelector(".ddtp-header-month").textContent = monthFirstDate.format("MMMM");
+    let day = monthFirstDate.getDay();
+    if (day != 0) {
+      monthFirstDate.addDate(-day);
+    }
+    const calHTML = [];
+    for (let i = 0; i < 42; i++) {
+      let dateItem;
+      if (i == 0) {
+        dateItem = monthFirstDate;
+      } else {
+        dateItem = monthFirstDate.clone().addDate(i);
+      }
+      const tooltipDt = dateItem.format(dateFormat);
+      if (i % 7 == 0) {
+        calHTML.push((i == 0 ? "" : "</tr>") + "<tr>");
+      }
+      let disabled = this.isDayDisabled(dateItem);
+      calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.initialDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
+      calHTML.push(`${dateItem.format("d")}`);
+      calHTML.push("</td>");
+    }
+    calHTML.push("</tr>");
+    this.datetimeElement.querySelector(".ddtp-day-body").innerHTML = calHTML.join("");
+  }
+  isDayDisabled(dateItem) {
+    if (this.minDate != -1 && this.minDate > dateItem.getTime() || this.maxDate != -1 && this.maxDate < dateItem.getTime()) {
+      return true;
+    }
+    return false;
+  }
+  isYearDisabled(year) {
+    if (this.minYear != -1 && this.minYear > year || this.maxYear != -1 && this.maxYear < year) {
+      return true;
+    }
+    return false;
+  }
+  isMonthDisabled(year, month) {
+    if (this.isYearDisabled(year)) {
+      return true;
+    }
+    let yearMonth = +(year + utils_default.pad(month, 2));
+    if (this.minMonth != -1 && this.minMonth > yearMonth || this.maxMonth != -1 && this.maxMonth < yearMonth) {
+      return true;
+    }
+    return false;
+  }
+  static setMessage(message) {
+    Lanauage_default.setDefaultMessage(message);
+  }
+};
+function getDocSize() {
+  return {
+    clientHeight: Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight || 0
+    ),
+    clientWidth: Math.max(
+      document.documentElement.clientWidth,
+      window.innerWidth || 0
+    )
+  };
+}
+
+// src/index.ts
+var DaraDateTimePicker = DateTimePicker;
+
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ "./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css":
+/*!***************************************************************************!*\
+  !*** ./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css ***!
+  \***************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! !../../style-loader/dist/runtime/injectStylesIntoStyleTag.js */ "./node_modules/style-loader/dist/runtime/injectStylesIntoStyleTag.js");
+/* harmony import */ var _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleDomAPI.js */ "./node_modules/style-loader/dist/runtime/styleDomAPI.js");
+/* harmony import */ var _style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertBySelector.js */ "./node_modules/style-loader/dist/runtime/insertBySelector.js");
+/* harmony import */ var _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! !../../style-loader/dist/runtime/setAttributesWithoutAttributes.js */ "./node_modules/style-loader/dist/runtime/setAttributesWithoutAttributes.js");
+/* harmony import */ var _style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! !../../style-loader/dist/runtime/insertStyleElement.js */ "./node_modules/style-loader/dist/runtime/insertStyleElement.js");
+/* harmony import */ var _style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! !../../style-loader/dist/runtime/styleTagTransform.js */ "./node_modules/style-loader/dist/runtime/styleTagTransform.js");
+/* harmony import */ var _style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _css_loader_dist_cjs_js_sass_loader_dist_cjs_js_dara_datetimepicker_min_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! !!../../css-loader/dist/cjs.js!../../sass-loader/dist/cjs.js!./dara.datetimepicker.min.css */ "./node_modules/css-loader/dist/cjs.js!./node_modules/sass-loader/dist/cjs.js!./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css");
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+var options = {};
+
+options.styleTagTransform = (_style_loader_dist_runtime_styleTagTransform_js__WEBPACK_IMPORTED_MODULE_5___default());
+options.setAttributes = (_style_loader_dist_runtime_setAttributesWithoutAttributes_js__WEBPACK_IMPORTED_MODULE_3___default());
+
+      options.insert = _style_loader_dist_runtime_insertBySelector_js__WEBPACK_IMPORTED_MODULE_2___default().bind(null, "head");
+    
+options.domAPI = (_style_loader_dist_runtime_styleDomAPI_js__WEBPACK_IMPORTED_MODULE_1___default());
+options.insertStyleElement = (_style_loader_dist_runtime_insertStyleElement_js__WEBPACK_IMPORTED_MODULE_4___default());
+
+var update = _style_loader_dist_runtime_injectStylesIntoStyleTag_js__WEBPACK_IMPORTED_MODULE_0___default()(_css_loader_dist_cjs_js_sass_loader_dist_cjs_js_dara_datetimepicker_min_css__WEBPACK_IMPORTED_MODULE_6__["default"], options);
+
+
+
+
+       /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_css_loader_dist_cjs_js_sass_loader_dist_cjs_js_dara_datetimepicker_min_css__WEBPACK_IMPORTED_MODULE_6__["default"] && _css_loader_dist_cjs_js_sass_loader_dist_cjs_js_dara_datetimepicker_min_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals ? _css_loader_dist_cjs_js_sass_loader_dist_cjs_js_dara_datetimepicker_min_css__WEBPACK_IMPORTED_MODULE_6__["default"].locals : undefined);
+
 
 /***/ }),
 

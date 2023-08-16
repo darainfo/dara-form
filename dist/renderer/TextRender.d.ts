@@ -3,7 +3,6 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 export default class TextRender extends Render {
     private element;
-    private field;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
     static template(field: FormField): string;
