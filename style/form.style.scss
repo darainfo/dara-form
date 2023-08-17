@@ -12,6 +12,7 @@
     --tooltip-color: #fff;
 
     padding: 0px;
+    margin-top: 10px;
     color: var(--font-color);
 
     *,
@@ -20,10 +21,57 @@
         box-sizing: border-box;
     }
 
+    .txt {
+        &-left {
+            text-align: left;
+        }
+
+        &-center {
+            text-align: center;
+        }
+
+        &-right {
+            text-align: right;
+        }
+    }
+
+    &.horizontal {
+        display: table;
+        width: 100%;
+
+        >.df-row {
+            display: table-row;
+
+            >.df-label {
+                width: 10%;
+                display: table-cell;
+            }
+
+            >.df-field-container {
+                display: table-cell;
+                padding-bottom: 10px;
+            }
+
+        }
+    }
+
+    &.vertical {
+        >.df-row>* {
+            display: block;
+        }
+    }
+
+    .df-hidden {
+        max-height: 0vh !important;
+        transition: all 0.25s ease-out;
+        visibility: collapse;
+    }
+
     .df-label,
     .sub-label {
         position: relative;
         font-weight: 700;
+        padding-right: 15px;
 
         .df-tooltip {
             visibility: visible;
@@ -163,39 +211,6 @@
                 }
             }
         }
-    }
-
-    &.horizontal {
-        margin: 0px 0px;
-        display: table;
-        width: 100%;
-
-        >.df-row {
-            display: table-row;
-
-            >.df-label {
-                width: 10%;
-                display: table-cell;
-            }
-
-            >.df-field-container {
-                display: table-cell;
-                padding-bottom: 10px;
-            }
-
-        }
-    }
-
-    &.vertical {
-        >.df-row>* {
-            display: block;
-        }
-    }
-
-    .df-hidden {
-        max-height: 0vh !important;
-        transition: all 0.25s ease-out;
-        visibility: collapse;
     }
 
     >.df-row {
@@ -365,17 +380,6 @@
             &.horizontal {
                 display: inline;
             }
-        }
-    }
-
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-
-        }
-
-        to {
-            opacity: 0;
         }
     }
 }

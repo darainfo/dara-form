@@ -31,7 +31,6 @@ export default class FieldInfoMap {
         this.fieldPrefix = `${FIELD_PREFIX}-${util.getHashCode(selector)}`;
     }
 
-
     /**
      * add Field 정보
      *
@@ -62,7 +61,6 @@ export default class FieldInfoMap {
         return this.allFieldInfo[this.keyNameMap[fieldName]];
     }
 
-
     /**
      * 필드 키로 정보 구하기 
      *
@@ -73,7 +71,6 @@ export default class FieldInfoMap {
     public get(fieldKey: string): FormField {
         return this.allFieldInfo[fieldKey];
     }
-
 
     /**
      * 필드명 있는지 여부 체크. 
@@ -90,7 +87,6 @@ export default class FieldInfoMap {
         return false;
     }
 
-
     /**
      * 모든 필드 정보 
      *
@@ -100,7 +96,6 @@ export default class FieldInfoMap {
     public getAllFieldInfo(): NumberFieldMap {
         return this.allFieldInfo;
     }
-
 
     /**
      * 필드 정보 맵에서 지우기
@@ -112,7 +107,6 @@ export default class FieldInfoMap {
         delete this.allFieldInfo[this.keyNameMap[fieldName]];
     }
 
-
     /**
      * 모든 필드값 구하기
      *
@@ -120,19 +114,16 @@ export default class FieldInfoMap {
      * @param {boolean} isValid
      * @returns {*}
      */
-    public getAllFieldValue(isValid: boolean) {
+    public getAllFieldValue(formValue: any, isValid: boolean) {
         if (isValid !== true) {
-            let reval = {} as any;
-
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
-                reval[filedInfo.name] = filedInfo.$renderer.getValue();
+                formValue[filedInfo.name] = filedInfo.$renderer.getValue();
             }
-            return reval;
+            return formValue;
         }
 
         return new Promise((resolve, reject) => {
-            let reval = {} as any;
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
@@ -141,33 +132,42 @@ export default class FieldInfoMap {
                 let fieldValid = renderInfo.valid();
 
                 if (fieldValid !== true) {
+                    renderInfo.focus();
                     fieldValid = fieldValid as ValidResult;
                     fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
                     reject(new Error(fieldValid.message, { cause: fieldValid }));
                     return;
                 }
-
-                reval[filedInfo.name] = renderInfo.getValue();
+                formValue[filedInfo.name] = renderInfo.getValue();
             }
 
-            resolve(reval);
+            resolve(formValue);
         });
     }
 
-    public getFormDataValue(isValid: boolean) {
+    public getFormDataValue(formValue: any, isValid: boolean) {
 
         if (isValid !== true) {
             let reval = new FormData();
+
+            for (const formKey in formValue) {
+                reval.set(formKey, formValue[formKey]);
+            }
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
                 reval.set(filedInfo.name, filedInfo.$renderer.getValue());
             }
+
             return reval;
         }
 
         return new Promise((resolve, reject) => {
             let reval = new FormData();
+
+            for (const formKey in formValue) {
+                reval.set(formKey, formValue[formKey]);
+            }
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
@@ -175,6 +175,7 @@ export default class FieldInfoMap {
                 let fieldValid = renderInfo.valid();
 
                 if (fieldValid !== true) {
+                    renderInfo.focus();
                     fieldValid = fieldValid as ValidResult;
                     fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
                     reject(new Error(fieldValid.message, { cause: fieldValid }));
@@ -186,9 +187,7 @@ export default class FieldInfoMap {
 
             resolve(reval);
         });
-
     }
-
 
     /**
      * 컬럼 로우 보이고 안보이기 체크. 

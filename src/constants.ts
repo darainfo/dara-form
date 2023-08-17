@@ -50,6 +50,14 @@ export const RENDER_TEMPLATE: any = {
     , 'date': DateRender
 };
 
+export const TEXT_ALIGN = {
+    left: 'left'
+    , center: 'center'
+    , right: 'right'
+} as const;
+
+export type TEXT_ALIGN_TYPE = typeof TEXT_ALIGN[keyof typeof TEXT_ALIGN];
+
 export type FORM_FIELD_TYPE = 'number' | 'string' | 'array';
 
 export type RENDER_TYPE = 'number' | 'text' | 'file' | 'textarea' | 'dropdown' | 'radio' | 'checkbox' | 'date' | 'group' | 'custom';

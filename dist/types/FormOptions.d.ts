@@ -1,3 +1,5 @@
+import { TEXT_ALIGN_TYPE } from "src/constants"
+
 /**
  * form options
  *
@@ -8,7 +10,10 @@
 export interface FormOptions {
     mode: string //'horizontal' // horizontal , vertical // 가로 세로 모드
     , width: string //'100%'
-    , labelWidth: string// '20%'
+    , labelStyle: {
+        width: string
+        , align: TEXT_ALIGN_TYPE
+    }
     , autoFocus: boolean//  default true
     , notValidMessage: string//'This value is not valid'
     , message: {

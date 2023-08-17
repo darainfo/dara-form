@@ -2456,9 +2456,9 @@ var init_dist = __esm({
   }
 });
 
-// node_modules/dara-datetimepicker/dist/datetimepicker.style.css
-var init_datetimepicker_style = __esm({
-  "node_modules/dara-datetimepicker/dist/datetimepicker.style.css"() {
+// node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css
+var init_dara_datetimepicker_min = __esm({
+  "node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css"() {
   }
 });
 
@@ -2471,7 +2471,7 @@ var init_DateRender = __esm({
     init_stringValidator();
     init_validUtils();
     init_dist();
-    init_datetimepicker_style();
+    init_dara_datetimepicker_min();
     DateRender = class extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
@@ -2526,7 +2526,7 @@ var init_DateRender = __esm({
 });
 
 // src/constants.ts
-var RULES, FIELD_PREFIX, RENDER_TEMPLATE;
+var RULES, FIELD_PREFIX, RENDER_TEMPLATE, TEXT_ALIGN;
 var init_constants = __esm({
   "src/constants.ts"() {
     "use strict";
@@ -2576,6 +2576,11 @@ var init_constants = __esm({
       "button": ButtonRender,
       "range": RangeRender,
       "date": DateRender
+    };
+    TEXT_ALIGN = {
+      left: "left",
+      center: "center",
+      right: "right"
     };
   }
 });
@@ -2816,6 +2821,7 @@ var init_FieldInfoMap = __esm({
             const renderInfo = filedInfo.$renderer;
             let fieldValid = renderInfo.valid();
             if (fieldValid !== true) {
+              renderInfo.focus();
               fieldValid = fieldValid;
               fieldValid.message = Lanauage_default.validMessage(filedInfo, fieldValid)[0];
               reject(new Error(fieldValid.message, { cause: fieldValid }));
@@ -2842,6 +2848,7 @@ var init_FieldInfoMap = __esm({
             const renderInfo = filedInfo.$renderer;
             let fieldValid = renderInfo.valid();
             if (fieldValid !== true) {
+              renderInfo.focus();
               fieldValid = fieldValid;
               fieldValid.message = Lanauage_default.validMessage(filedInfo, fieldValid)[0];
               reject(new Error(fieldValid.message, { cause: fieldValid }));
@@ -2902,10 +2909,14 @@ var init_DaraForm = __esm({
     init_numberValidator();
     init_regexpValidator();
     init_FieldInfoMap();
+    init_constants();
     defaultOptions = {
       mode: "horizontal",
       width: "100%",
-      labelWidth: "20%",
+      labelStyle: {
+        width: "20%",
+        align: TEXT_ALIGN.left
+      },
       notValidMessage: "This form is not valid.",
       fields: []
     };
@@ -3113,8 +3124,13 @@ var init_DaraForm = __esm({
         if (this.checkHiddenField(field)) {
           return "";
         }
+        let widthStyle = "";
+        if (this.isHorizontal) {
+          widthStyle = `width:${field.labelStyle && field.labelStyle.width ? field.labelStyle.width : this.options.labelStyle.width};`;
+        }
+        let labelAlignStyleClass = this.getTextAlignStyle(field, null);
         return `
-            <div class="df-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ""}">
+            <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
                 <span>${this.getLabelTemplate(field)}</span>
             </div>
             <div class="df-field-container">
@@ -3161,17 +3177,35 @@ var init_DaraForm = __esm({
             childTempate = this.getFieldTempate(childField);
           }
           if (isHorizontal) {
-            childLabelWidth = childField.labelWidth ? `width:${childField.labelWidth};` : "";
+            childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : "";
           }
+          let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
           childTemplae.push(
             `<li class="sub-row" id="${childField.$key}">
-                ${childField.hideLabel ? "" : `<span class="sub-label" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+                ${childField.labelStyle?.hide ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
                 <span class="df-field-container">${childTempate}</span>
             </li>`
           );
         }
         childTemplae.push("</ul>");
         return childTemplae.join("");
+      }
+      /**
+       * text aling style
+       *
+       * @param {FormField} filed
+       * @param {(FormField | null)} parentField
+       * @returns {string} style class 
+       */
+      getTextAlignStyle(filed, parentField) {
+        let labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
+        let labelAlignStyleClass;
+        if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
+          labelAlignStyleClass = TEXT_ALIGN[labelAlign];
+        } else {
+          labelAlignStyleClass = TEXT_ALIGN.left;
+        }
+        return `txt-${labelAlignStyleClass}`;
       }
       /**
       * field tempalte 구하기

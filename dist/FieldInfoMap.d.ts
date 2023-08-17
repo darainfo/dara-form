@@ -61,8 +61,8 @@ export default class FieldInfoMap {
      * @param {boolean} isValid
      * @returns {*}
      */
-    getAllFieldValue(isValid: boolean): any;
-    getFormDataValue(isValid: boolean): Promise<unknown> | FormData;
+    getAllFieldValue(formValue: any, isValid: boolean): any;
+    getFormDataValue(formValue: any, isValid: boolean): Promise<unknown> | FormData;
     /**
      * 컬럼 로우 보이고 안보이기 체크.
      *

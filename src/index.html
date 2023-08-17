@@ -18,7 +18,7 @@
     </div>
   </div>
 
-  <div style="padding: 20px;">
+  <div style="padding: 0px 20px;">
     <form id="formArea"></form>
   </div>
 </body>
@@ -37,7 +37,10 @@
     //mode: 'vertical',
     //width: '600px',
     //autoFocus: false,
-    labelWidth: '150px',
+    labelStyle: {
+      width: '150px',
+      align: 'right'
+    },
     message: {
       empty: '{name} 필수 입력사항입니다.',
       "string": {

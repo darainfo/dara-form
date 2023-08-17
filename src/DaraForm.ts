@@ -8,12 +8,15 @@ import { stringValidator } from './rule/stringValidator';
 import { numberValidator } from './rule/numberValidator';
 import { regexpValidator } from './rule/regexpValidator';
 import FieldInfoMap from 'src/FieldInfoMap';
-import GroupRender from './renderer/GroupRender';
+import { TEXT_ALIGN } from './constants';
 
 const defaultOptions = {
     mode: 'horizontal' // horizontal , vertical // 가로 세로 모드
     , width: '100%'
-    , labelWidth: '20%'
+    , labelStyle: {
+        width: '20%'
+        , align: TEXT_ALIGN.left
+    }
     , notValidMessage: 'This form is not valid.'
     , fields: []
 } as FormOptions;
@@ -24,13 +27,23 @@ interface FieldMap {
     [key: string]: FormField;
 }
 
+/**
+ * DaraForm class
+ *
+  * @class DaraForm
+ * @typedef {DaraForm}
+ */
 export default class DaraForm {
+
     private readonly options;
+
     private isHorizontal;
 
     private formElement;
 
     private fieldInfoMap;
+
+    private formValue: any = {};
 
     private addRowFields: string[] = [];
 
@@ -40,6 +53,7 @@ export default class DaraForm {
         daraFormIdx += 1;
 
         Lanauage.set(message);
+
         this.fieldInfoMap = new FieldInfoMap(selector);
 
         this.isHorizontal = this.options.mode === 'horizontal';
@@ -54,14 +68,13 @@ export default class DaraForm {
         } else {
             throw new Error(`${selector} form selector not found`);
         }
-
     }
 
     public static setMessage(message: Message): void {
         Lanauage.set(message);
     }
 
-    createForm(fields: FormField[]) {
+    public createForm(fields: FormField[]) {
         fields.forEach((field) => {
             this.addRow(field);
         })
@@ -73,7 +86,7 @@ export default class DaraForm {
      * 
      * @param field 
      */
-    addRow(field: FormField) {
+    public addRow(field: FormField) {
 
         if (this.checkHiddenField(field)) {
             return;
@@ -101,7 +114,7 @@ export default class DaraForm {
         })
     }
 
-    rowTemplate(field: FormField) {
+    public rowTemplate(field: FormField) {
         let fieldHtml = '';
 
         if (field.children) {
@@ -115,8 +128,15 @@ export default class DaraForm {
             return '';
         }
 
+        let widthStyle = '';
+        if (this.isHorizontal) {
+            widthStyle = `width:${field.labelStyle && field.labelStyle.width ? field.labelStyle.width : this.options.labelStyle.width};`;
+        }
+
+        let labelAlignStyleClass = this.getTextAlignStyle(field, null);
+
         return `
-            <div class="df-label" style="${this.isHorizontal ? `width:${this.options.labelWidth};` : ''}">
+            <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
                 <span>${this.getLabelTemplate(field)}</span>
             </div>
             <div class="df-field-container">
@@ -125,7 +145,7 @@ export default class DaraForm {
         `;
     }
 
-    getLabelTemplate(field: FormField) {
+    public getLabelTemplate(field: FormField) {
         const requiredTemplate = field.required ? `<span class="required"></span>` : '';
         const tooltipTemplate = utils.isBlank(field.tooltip) ? '' : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
 
@@ -138,7 +158,7 @@ export default class DaraForm {
      * @param {FormField} field
      * @returns {*}
      */
-    groupTemplate(field: FormField) {
+    public groupTemplate(field: FormField) {
         const childTemplae = [];
 
         let viewStyleClass = '';
@@ -171,11 +191,13 @@ export default class DaraForm {
             }
 
             if (isHorizontal) {
-                childLabelWidth = childField.labelWidth ? `width:${childField.labelWidth};` : '';
+                childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : '';
             }
 
+            let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
+
             childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${childField.hideLabel ? '' : `<span class="sub-label" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+                ${childField.labelStyle?.hide ? '' : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
                 <span class="df-field-container">${childTempate}</span>
             </li>`
             );
@@ -187,12 +209,32 @@ export default class DaraForm {
     }
 
     /**
+     * text aling style
+     *
+     * @param {FormField} filed
+     * @param {(FormField | null)} parentField
+     * @returns {string} style class 
+     */
+    private getTextAlignStyle(filed: FormField, parentField: FormField | null) {
+        let labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : (parentField?.labelStyle?.align || this.options.labelStyle.align);
+
+        let labelAlignStyleClass;
+        if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
+            labelAlignStyleClass = TEXT_ALIGN[labelAlign]
+        } else {
+            labelAlignStyleClass = TEXT_ALIGN.left;
+        }
+
+        return `txt-${labelAlignStyleClass}`;
+    }
+
+    /**
     * field tempalte 구하기
     *
     * @param {FormField} field
     * @returns {string}
     */
-    getFieldTempate(field: FormField): string {
+    public getFieldTempate(field: FormField): string {
 
         if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
             throw new Error(`Duplicate field name "${field.name}"`)
@@ -203,7 +245,7 @@ export default class DaraForm {
         return (field.$renderer as any).template(field);
     }
 
-    checkHiddenField(field: FormField) {
+    public checkHiddenField(field: FormField) {
         const isHidden = utils.isHiddenField(field);
 
         if (isHidden) {
@@ -221,7 +263,7 @@ export default class DaraForm {
      *
      * @param {FormField} field
      */
-    addRowFieldInfo(field: FormField) {
+    public addRowFieldInfo(field: FormField) {
         utils.replaceXssField(field);
         this.fieldInfoMap.addField(field);
         this.addRowFields.push(field.$key);
@@ -230,7 +272,7 @@ export default class DaraForm {
     /**
      * 폼 데이터 reset
      */
-    resetForm = () => {
+    public resetForm = () => {
         const fieldMap = this.fieldInfoMap.getAllFieldInfo();
         for (const seq in fieldMap) {
             const filedInfo = fieldMap[seq];
@@ -240,6 +282,7 @@ export default class DaraForm {
                 renderInfo.reset();
             }
         }
+        this.formValue = {};
         this.conditionCheck();
     }
 
@@ -247,8 +290,9 @@ export default class DaraForm {
      * field 값 reset
      * @param fieldName 필드명
      */
-    resetField = (fieldName: string) => {
+    public resetField = (fieldName: string) => {
         this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
+        this.formValue[fieldName] = '';
         this.conditionCheck();
     }
 
@@ -258,7 +302,7 @@ export default class DaraForm {
      * @param {string} fieldName
      * @returns {*}
      */
-    getFieldElement(fieldName: string) {
+    public getFieldElement(fieldName: string) {
         const field = this.fieldInfoMap.getFieldName(fieldName);
 
         if (field?.$renderer) {
@@ -268,7 +312,7 @@ export default class DaraForm {
         return null;
     }
 
-    getField(fieldName: string): FormField {
+    public getField(fieldName: string): FormField {
         return this.fieldInfoMap.getFieldName(fieldName);
     }
 
@@ -278,7 +322,7 @@ export default class DaraForm {
      * @param fieldName  필드명
      * @returns 
      */
-    getFieldValue = (fieldName: string) => {
+    public getFieldValue = (fieldName: string) => {
 
         const field = this.fieldInfoMap.getFieldName(fieldName);
 
@@ -293,39 +337,40 @@ export default class DaraForm {
      * @param isValid 폼 유효성 검사 여부 default:false|undefined true일경우 검사.
      * @returns 
      */
-    getValue = (isValid: boolean): any => {
-        return this.fieldInfoMap.getAllFieldValue(isValid);
+    public getValue = (isValid: boolean): any => {
+        return this.fieldInfoMap.getAllFieldValue(this.formValue, isValid);
     }
 
-    getFormDataValue = (isValid: boolean): any => {
-        return this.fieldInfoMap.getFormDataValue(isValid);
+    public getFormDataValue = (isValid: boolean): any => {
+        return this.fieldInfoMap.getFormDataValue(this.formValue, isValid);
     }
 
     /**
      * 폼 필드 value 셋팅
      * @param values 
      */
-    setValue = (values: any) => {
+    public setValue = (values: any) => {
         Object.keys(values).forEach((fieldName) => {
-            const value = values[fieldName];
-            const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-            console.log(fieldName)
-
-            if (filedInfo) {
-                const renderInfo = filedInfo.$renderer;
-                renderInfo.setValue(value);
-            }
+            this._setFieldValue(fieldName, values[fieldName]);
         })
         this.conditionCheck();
     }
 
-    setFieldValue = (fieldName: string, values: any) => {
-        const value = {} as any;
-        value[fieldName] = values;
-        this.setValue(value);
+    public setFieldValue = (fieldName: string, values: any) => {
+        this._setFieldValue(fieldName, values);
+        this.conditionCheck();
     }
 
-    setFieldItems = (fieldName: string, values: any) => {
+    private _setFieldValue(fieldName: string, value: any) {
+        this.formValue[fieldName] = value;
+        const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+
+        if (filedInfo) {
+            filedInfo.$renderer.setValue(value);
+        }
+    }
+
+    public setFieldItems = (fieldName: string, values: any) => {
 
         const field = this.fieldInfoMap.getFieldName(fieldName);
 
@@ -339,7 +384,7 @@ export default class DaraForm {
      *
      * @param {FormField} field
      */
-    addField = (field: FormField) => {
+    public addField = (field: FormField) => {
         this.options.fields.push(field);
         this.addRow(field);
         this.conditionCheck();
@@ -350,7 +395,7 @@ export default class DaraForm {
      *
      * @param {string} fieldName
      */
-    removeField = (fieldName: string) => {
+    public removeField = (fieldName: string) => {
         const element = this.getFieldElement(fieldName);
 
         if (element != null) {
@@ -365,7 +410,7 @@ export default class DaraForm {
      *
      * @returns {boolean}
      */
-    isValidForm = (): boolean => {
+    public isValidForm = (): boolean => {
         const result = this.validForm();
         return result.length > 0 ? false : true;
     }
@@ -375,7 +420,7 @@ export default class DaraForm {
      *
      * @returns {any[]}
      */
-    validForm = (): any[] => {
+    public validForm = (): any[] => {
         let validResult = [] as any;
         let firstFlag = this.options.autoFocus !== false ? true : false;
 
@@ -398,7 +443,7 @@ export default class DaraForm {
         return validResult;
     }
 
-    isValidField = (fieldName: string): boolean => {
+    public isValidField = (fieldName: string): boolean => {
         const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
 
         if (typeof filedInfo === 'undefined') {
@@ -413,11 +458,11 @@ export default class DaraForm {
         return true;
     }
 
-    getOptions = () => {
+    public getOptions = () => {
         return this.options;
     }
 
-    conditionCheck() {
+    public conditionCheck() {
         this.fieldInfoMap.conditionCheck();
     }
 
@@ -442,4 +487,3 @@ export default class DaraForm {
     }
 
 }
-

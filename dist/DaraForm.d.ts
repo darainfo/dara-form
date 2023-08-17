@@ -2,11 +2,18 @@ import { FormOptions } from '@t/FormOptions';
 import { FormField } from '@t/FormField';
 import { ValidResult } from '@t/ValidResult';
 import { Message } from '@t/Message';
+/**
+ * DaraForm class
+ *
+  * @class DaraForm
+ * @typedef {DaraForm}
+ */
 export default class DaraForm {
     private readonly options;
     private isHorizontal;
     private formElement;
     private fieldInfoMap;
+    private formValue;
     private addRowFields;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;
@@ -26,6 +33,14 @@ export default class DaraForm {
      * @returns {*}
      */
     groupTemplate(field: FormField): string;
+    /**
+     * text aling style
+     *
+     * @param {FormField} filed
+     * @param {(FormField | null)} parentField
+     * @returns {string} style class
+     */
+    private getTextAlignStyle;
     /**
     * field tempalte 구하기
     *
@@ -77,6 +92,7 @@ export default class DaraForm {
      */
     setValue: (values: any) => void;
     setFieldValue: (fieldName: string, values: any) => void;
+    private _setFieldValue;
     setFieldItems: (fieldName: string, values: any) => void;
     /**
      * field 추가

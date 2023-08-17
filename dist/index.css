@@ -1,36 +1,36 @@
-/* node_modules/dara-datetimepicker/dist/datetimepicker.style.css */
+/* node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css */
 .dara-datetime-hidden {
+  height: 0;
   visibility: visible;
-  width: 0px;
-  height: 0px;
+  width: 0;
   z-index: 1000;
 }
 .dara-datetime-wrapper {
-  --dark: #34495E;
-  --light: #ffffff;
-  --success: #0ABF30;
-  --error: #E24D4C;
-  --warning: #E9BD0C;
-  --info: #3498DB;
-  --background-color: #ffffff;
-  --sunday: #f00d0d;
-  --input-border: #9b94948a;
-  --select-background-color: #0ABF30;
-  --button-hover-color: #d4d4d48a;
-  --disabled-background-color: #f1f1f18a;
-  z-index: 1000;
+  --dark:#34495e;
+  --light:#fff;
+  --success:#0abf30;
+  --error:#e24d4c;
+  --warning:#e9bd0c;
+  --info:#3498db;
+  --background-color:#fff;
+  --sunday:#f00d0d;
+  --input-border:#9b94948a;
+  --select-background-color:#0abf30;
+  --button-hover-color:#d4d4d48a;
+  --disabled-background-color:#f1f1f18a;
   display: none;
+  z-index: 1000;
 }
 .dara-datetime-wrapper.layer {
   position: absolute;
 }
 .dara-datetime-wrapper.show {
-  display: block;
-  animation: fadeIn 0.5s;
+  animation: fadeIn .5s;
   animation-fill-mode: forwards;
+  display: block;
 }
 .dara-datetime-wrapper.hide {
-  animation: fadeOut 0.5s;
+  animation: fadeOut .5s;
   animation-fill-mode: forwards;
 }
 .dara-datetime-wrapper.embed {
@@ -40,23 +40,19 @@
   color: var(--sunday);
 }
 .dara-datetime-wrapper .ddtp-datetime {
+  background-color: var(--background-color);
   border-radius: 4px;
+  box-shadow:
+    0 5px 5px -3px rgba(0, 0, 0, .2),
+    0 8px 10px 1px rgba(0, 0, 0, .14),
+    0 3px 14px 2px rgba(0, 0, 0, .12);
+  color: var(--dark);
   padding: 10px;
   width: 230px;
-  background-color: var(--background-color);
-  color: var(--dark);
-  box-shadow:
-    0px 5px 5px -3px rgba(0, 0, 0, 0.2),
-    0px 8px 10px 1px rgba(0, 0, 0, 0.14),
-    0px 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
-.dara-datetime-wrapper .ddtp-datetime[view-mode=date] .ddtp-body > .ddtp-days {
-  display: block;
-}
+.dara-datetime-wrapper .ddtp-datetime[view-mode=date] .ddtp-body > .ddtp-days,
+.dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body > .ddtp-days,
 .dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body > .ddtp-times,
-.dara-datetime-wrapper .ddtp-datetime[view-mode=datetime] .ddtp-body > .ddtp-days {
-  display: block;
-}
 .dara-datetime-wrapper .ddtp-datetime[view-mode=time] .ddtp-body > .ddtp-times {
   display: block;
 }
@@ -76,99 +72,99 @@
   display: none;
 }
 .dara-datetime-wrapper .ddtp-header {
-  padding: 2px 5px 10px;
-  line-height: 25px;
   height: 25px;
+  line-height: 25px;
+  padding: 2px 5px 10px;
   vertical-align: middle;
 }
 .dara-datetime-wrapper .ddtp-header .ddtp-header-year {
-  font-weight: bold;
-  margin: 0px 10px 0px 0px;
   cursor: pointer;
+  font-weight: 700;
+  margin: 0 10px 0 0;
 }
 .dara-datetime-wrapper .ddtp-header .ddtp-header-month {
-  font-weight: bold;
-  margin: 0px 10px 0px 0px;
-  vertical-align: top;
   cursor: pointer;
+  font-weight: 700;
+  margin: 0 10px 0 0;
+  vertical-align: top;
 }
 .dara-datetime-wrapper .ddtp-header .ddtp-date-move {
+  float: right;
   margin-left: auto;
   vertical-align: top;
-  float: right;
 }
 .dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn {
-  text-decoration: none;
-  font-weight: bold;
   display: inline-block;
+  font-weight: 700;
   height: 24px;
+  text-decoration: none;
 }
 .dara-datetime-wrapper .ddtp-header .ddtp-date-move .ddtp-move-btn:hover {
   background-color: #d6d6d6;
 }
-.dara-datetime-wrapper .ddtp-header .ddtp-date-move::after {
-  content: "";
+.dara-datetime-wrapper .ddtp-header .ddtp-date-move:after {
   clear: both;
+  content: "";
 }
 .dara-datetime-wrapper .ddtp-body {
-  margin: -2px -10px;
   font-size: 13px;
+  margin: -2px -10px;
 }
 .dara-datetime-wrapper .ddtp-body > * {
   display: none;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days {
-  letter-spacing: 0px;
   border-collapse: separate;
-  border-spacing: 0px;
+  border-spacing: 0;
+  letter-spacing: 0;
   margin: 2px 10px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day-label {
-  font-weight: bold;
-  width: 35px;
+  font-weight: 700;
   padding: 2px 5px;
   text-align: center;
+  width: 35px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day {
+  cursor: pointer;
+  padding: 7px;
   position: relative;
   text-align: center;
-  padding: 7px;
-  cursor: pointer;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: block;
-  width: 30px;
-  height: 30px;
   background-color: var(--select-background-color);
   border-radius: 50%;
+  content: "";
+  display: block;
+  height: 30px;
+  left: 50%;
   opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity .2s ease-in;
+  width: 30px;
   z-index: 0;
-  transition: opacity 0.2s ease-in;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:active:before,
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day:hover:before {
-  opacity: 0.2;
-  transition: opacity 0.2s ease-out;
+  opacity: .2;
+  transition: opacity .2s ease-out;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.today:before {
   background-color: #d6e7f7;
-  opacity: 0.5;
-  transition: opacity 0.2s ease-out;
+  opacity: .5;
+  transition: opacity .2s ease-out;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.select:before {
   background-color: var(--select-background-color);
-  opacity: 0.5;
-  transition: opacity 0.2s ease-out;
+  opacity: .5;
+  transition: opacity .2s ease-out;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled {
   background-color: var(--disabled-background-color);
-  opacity: 0.5;
   cursor: auto;
+  opacity: .5;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-days .ddtp-day.disabled:before {
   background-color: transparent;
@@ -178,9 +174,9 @@
   position: relative;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times > .time-container {
-  width: calc(100% - 60px);
   display: inline-block;
   height: 60px;
+  width: calc(100% - 60px);
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-inner-spin-button,
 .dara-datetime-wrapper .ddtp-body .ddtp-times input[type=number]::-webkit-outer-spin-button {
@@ -189,19 +185,19 @@
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn {
   position: absolute;
+  right: 0;
   top: 5px;
   width: 55px;
-  right: 0px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button {
-  display: block;
-  width: 100%;
-  margin-bottom: 7px;
-  padding: 3px 3px;
-  border-radius: 4px;
-  border-color: var(--input-border);
-  border-width: 1px;
   background-color: var(--background-color);
+  border-color: var(--input-border);
+  border-radius: 4px;
+  border-width: 1px;
+  display: block;
+  margin-bottom: 7px;
+  padding: 3px;
+  width: 100%;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button:hover {
   background-color: var(--select-background-color);
@@ -214,21 +210,21 @@
   width: 160px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > * {
-  margin-top: 5px;
   display: table-cell;
   line-height: 20px;
+  margin-top: 5px;
   vertical-align: middle;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > span {
   width: 20px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > input[type=number] {
-  width: 35px;
+  border-color: var(--input-border);
+  border-radius: 4px;
+  border-width: 1px;
   margin-right: 5px;
   padding-left: 8px;
-  border-radius: 4px;
-  border-color: var(--input-border);
-  border-width: 1px;
+  width: 35px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time > input[type=range] {
   width: calc(100% - 60px);
@@ -239,37 +235,37 @@
   justify-content: space-between;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month {
-  position: relative;
-  flex: 1 0 30%;
-  margin-bottom: 8px;
-  line-height: 50px;
-  text-align: center;
   cursor: pointer;
+  flex: 1 0 30%;
+  line-height: 50px;
+  margin-bottom: 8px;
+  position: relative;
+  text-align: center;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: block;
-  width: 50px;
-  height: 50px;
   background-color: var(--select-background-color);
   border-radius: 50%;
+  content: "";
+  display: block;
+  height: 50px;
+  left: 50%;
   opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity .2s ease-in;
+  width: 50px;
   z-index: 0;
-  transition: opacity 0.2s ease-in;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:active:before,
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month:hover:before {
-  opacity: 0.2;
-  transition: opacity 0.2s ease-out;
+  opacity: .2;
+  transition: opacity .2s ease-out;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month.disabled {
   background-color: var(--disabled-background-color);
-  opacity: 0.5;
   cursor: auto;
+  opacity: .5;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-months > .ddtp-month.disabled:before {
   background-color: transparent;
@@ -280,43 +276,43 @@
   justify-content: space-between;
 }
 .dara-datetime-wrapper .ddtp-years > .ddtp-year {
-  position: relative;
-  flex: 1 0 25%;
-  margin-bottom: 8px;
-  line-height: 50px;
-  text-align: center;
   cursor: pointer;
+  flex: 1 0 25%;
+  line-height: 50px;
+  margin-bottom: 8px;
+  position: relative;
+  text-align: center;
 }
 .dara-datetime-wrapper .ddtp-years > .ddtp-year:before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: block;
-  width: 50px;
-  height: 50px;
   background-color: var(--select-background-color);
   border-radius: 50%;
+  content: "";
+  display: block;
+  height: 50px;
+  left: 50%;
   opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity .2s ease-in;
+  width: 50px;
   z-index: 0;
-  transition: opacity 0.2s ease-in;
 }
 .dara-datetime-wrapper .ddtp-years > .ddtp-year:active:before,
 .dara-datetime-wrapper .ddtp-years > .ddtp-year:hover:before {
-  opacity: 0.2;
-  transition: opacity 0.2s ease-out;
+  opacity: .2;
+  transition: opacity .2s ease-out;
 }
 .dara-datetime-wrapper .ddtp-years > .ddtp-year.disabled {
   background-color: var(--disabled-background-color);
-  opacity: 0.5;
   cursor: auto;
+  opacity: .5;
 }
 .dara-datetime-wrapper .ddtp-years > .ddtp-year.disabled:before {
   background-color: transparent;
 }
 @keyframes fadeIn {
-  from {
+  0% {
     opacity: 0;
   }
   to {
@@ -324,7 +320,7 @@
   }
 }
 @keyframes fadeOut {
-  from {
+  0% {
     opacity: 1;
   }
   to {
@@ -333,7 +329,7 @@
 }
 
 /* style/form.style.scss */
-:root .dara-form {
+.dara-form {
   --border-color: #dfe1e5;
   --color-danger: #d9534f;
   --background-danger: #d9534f;
@@ -344,9 +340,8 @@
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
-}
-.dara-form {
   padding: 0px;
+  margin-top: 10px;
   color: var(--font-color);
 }
 .dara-form *,
@@ -354,9 +349,43 @@
 .dara-form ::before {
   box-sizing: border-box;
 }
+.dara-form .txt-left {
+  text-align: left;
+}
+.dara-form .txt-center {
+  text-align: center;
+}
+.dara-form .txt-right {
+  text-align: right;
+}
+.dara-form.horizontal {
+  display: table;
+  width: 100%;
+}
+.dara-form.horizontal > .df-row {
+  display: table-row;
+}
+.dara-form.horizontal > .df-row > .df-label {
+  width: 10%;
+  display: table-cell;
+}
+.dara-form.horizontal > .df-row > .df-field-container {
+  display: table-cell;
+  padding-bottom: 10px;
+}
+.dara-form.vertical > .df-row > * {
+  display: block;
+}
+.dara-form .df-hidden {
+  max-height: 0vh !important;
+  transition: all 0.25s ease-out;
+  visibility: collapse;
+}
 .dara-form .df-label,
 .dara-form .sub-label {
   position: relative;
+  font-weight: 700;
+  padding-right: 15px;
 }
 .dara-form .df-label .df-tooltip,
 .dara-form .sub-label .df-tooltip {
@@ -474,30 +503,6 @@
 }
 .dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
   display: table-cell;
-}
-.dara-form.horizontal {
-  margin: 0px 0px;
-  display: table;
-  width: 100%;
-}
-.dara-form.horizontal > .df-row {
-  display: table-row;
-}
-.dara-form.horizontal > .df-row > .df-label {
-  width: 10%;
-  display: table-cell;
-}
-.dara-form.horizontal > .df-row > .df-field-container {
-  display: table-cell;
-  padding-bottom: 10px;
-}
-.dara-form.vertical > .df-row > * {
-  display: block;
-}
-.dara-form .df-hidden {
-  max-height: 0vh !important;
-  transition: all 0.25s ease-out;
-  visibility: collapse;
 }
 .dara-form > .df-row {
   width: 100%;
@@ -627,13 +632,5 @@
 }
 .dara-form .field-group .field.horizontal {
   display: inline;
-}
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
 }
 /*# sourceMappingURL=index.css.map */
