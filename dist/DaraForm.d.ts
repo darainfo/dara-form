@@ -1,11 +1,11 @@
-import { FormOptions } from '@t/FormOptions';
-import { FormField } from '@t/FormField';
-import { ValidResult } from '@t/ValidResult';
-import { Message } from '@t/Message';
+import { FormOptions } from "@t/FormOptions";
+import { FormField } from "@t/FormField";
+import { ValidResult } from "@t/ValidResult";
+import { Message } from "@t/Message";
 /**
  * DaraForm class
  *
-  * @class DaraForm
+ * @class DaraForm
  * @typedef {DaraForm}
  */
 export default class DaraForm {
@@ -42,11 +42,11 @@ export default class DaraForm {
      */
     private getTextAlignStyle;
     /**
-    * field tempalte 구하기
-    *
-    * @param {FormField} field
-    * @returns {string}
-    */
+     * field tempalte 구하기
+     *
+     * @param {FormField} field
+     * @returns {string}
+     */
     getFieldTempate(field: FormField): string;
     checkHiddenField(field: FormField): boolean;
     /**

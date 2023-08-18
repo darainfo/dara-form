@@ -127,8 +127,12 @@ export default class FieldInfoMap {
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
-                const renderInfo = filedInfo.$renderer;
+                
+                if(!this.isValueFieldCheck(filedInfo)){
+                    continue; 
+                }
 
+                const renderInfo = filedInfo.$renderer;
                 let fieldValid = renderInfo.valid();
 
                 if (fieldValid !== true) {
@@ -138,6 +142,7 @@ export default class FieldInfoMap {
                     reject(new Error(fieldValid.message, { cause: fieldValid }));
                     return;
                 }
+
                 formValue[filedInfo.name] = renderInfo.getValue();
             }
 
@@ -171,6 +176,11 @@ export default class FieldInfoMap {
 
             for (const fieldKey in this.allFieldInfo) {
                 const filedInfo = this.allFieldInfo[fieldKey];
+                
+                if(!this.isValueFieldCheck(filedInfo)){
+                    continue; 
+                }
+
                 const renderInfo = filedInfo.$renderer;
                 let fieldValid = renderInfo.valid();
 
@@ -190,6 +200,58 @@ export default class FieldInfoMap {
     }
 
     /**
+     * 
+     * 
+     * @param field 
+     * @returns 
+     */
+    public isValueFieldCheck(field: FormField){
+
+        let parent = field; 
+        
+        while(typeof parent !=='undefined'){ 
+            if(!this.isConditionField(parent)){
+                return false; 
+            }
+
+            parent = parent.$parent; 
+        }
+
+        return true; 
+    }
+
+    /**
+     * field 활성 비활성화 여부.
+     * 
+     * @param field form field
+     * @returns 
+     */
+    public isConditionField(field: FormField){
+
+        if(!this.conditionFields.includes(field.$key)){
+            return true;
+        }
+
+        let condFlag = false;
+
+        if (field.conditional.custom) {
+            condFlag = field.conditional.custom.call(null, field);
+        }else {
+            if (field.conditional.field) {
+                const condField = this.getFieldName(field.conditional.field);
+    
+                if (condField) {
+                    if (field.conditional.eq == condField.$renderer.getValue()) {
+                        condFlag = true;
+                    }
+                }
+            }
+        }
+
+        return condFlag; 
+    }
+
+    /**
      * 컬럼 로우 보이고 안보이기 체크. 
      *
      * @public
@@ -198,35 +260,12 @@ export default class FieldInfoMap {
         this.conditionFields.forEach(fieldKey => {
             const filedInfo = this.allFieldInfo[fieldKey];
 
-            let condFlag = false;
-
-            if (filedInfo.conditional.field) {
-                const condField = this.getFieldName(filedInfo.conditional.field);
-
-                if (condField) {
-                    if (filedInfo.conditional.eq == condField.$renderer.getValue()) {
-                        condFlag = true;
-                    }
-                }
-            }
-
-            if (!condFlag && filedInfo.conditional.custom) {
-                condFlag = filedInfo.conditional.custom.call(null, filedInfo);
-            }
+            let condFlag = this.isConditionField(filedInfo);
 
             if (condFlag) {
-                if (filedInfo.conditional.show) {
-                    filedInfo.$renderer.show();
-                } else {
-                    filedInfo.$renderer.hide();
-                }
+               filedInfo.$renderer.show();
             } else {
-                if (filedInfo.conditional.show) {
-                    filedInfo.$renderer.hide();
-                } else {
-                    filedInfo.$renderer.show();
-
-                }
+               filedInfo.$renderer.hide();
             }
         })
     }

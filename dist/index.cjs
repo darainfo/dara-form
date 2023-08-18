@@ -410,7 +410,9 @@ var stringValidator = (value, field) => {
 var TextAreaRender = class extends Render {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
-    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+    this.element = rowElement.querySelector(
+      `[name="${field.$xssName}"]`
+    );
     this.initEvent();
     this.setDefaultInfo();
   }
@@ -419,9 +421,11 @@ var TextAreaRender = class extends Render {
   }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
+    let rows = field.customOptions?.rows;
+    rows = +rows > 0 ? rows : 3;
     return `
             <div class="df-field">
-                <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
+                <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
             </div> 
             ${desc}
             <div class="help-message"></div>
@@ -2548,19 +2552,20 @@ var FieldInfoMap = class {
    * @param {boolean} isValid
    * @returns {*}
    */
-  getAllFieldValue(isValid) {
+  getAllFieldValue(formValue, isValid) {
     if (isValid !== true) {
-      let reval = {};
       for (const fieldKey in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldKey];
-        reval[filedInfo.name] = filedInfo.$renderer.getValue();
+        formValue[filedInfo.name] = filedInfo.$renderer.getValue();
       }
-      return reval;
+      return formValue;
     }
     return new Promise((resolve, reject) => {
-      let reval = {};
       for (const fieldKey in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldKey];
+        if (!this.isValueFieldCheck(filedInfo)) {
+          continue;
+        }
         const renderInfo = filedInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
@@ -2570,14 +2575,17 @@ var FieldInfoMap = class {
           reject(new Error(fieldValid.message, { cause: fieldValid }));
           return;
         }
-        reval[filedInfo.name] = renderInfo.getValue();
+        formValue[filedInfo.name] = renderInfo.getValue();
       }
-      resolve(reval);
+      resolve(formValue);
     });
   }
-  getFormDataValue(isValid) {
+  getFormDataValue(formValue, isValid) {
     if (isValid !== true) {
       let reval = new FormData();
+      for (const formKey in formValue) {
+        reval.set(formKey, formValue[formKey]);
+      }
       for (const fieldKey in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldKey];
         reval.set(filedInfo.name, filedInfo.$renderer.getValue());
@@ -2586,8 +2594,14 @@ var FieldInfoMap = class {
     }
     return new Promise((resolve, reject) => {
       let reval = new FormData();
+      for (const formKey in formValue) {
+        reval.set(formKey, formValue[formKey]);
+      }
       for (const fieldKey in this.allFieldInfo) {
         const filedInfo = this.allFieldInfo[fieldKey];
+        if (!this.isValueFieldCheck(filedInfo)) {
+          continue;
+        }
         const renderInfo = filedInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
@@ -2603,6 +2617,47 @@ var FieldInfoMap = class {
     });
   }
   /**
+   * 
+   * 
+   * @param field 
+   * @returns 
+   */
+  isValueFieldCheck(field) {
+    let parent = field;
+    while (typeof parent !== "undefined") {
+      if (!this.isConditionField(parent)) {
+        return false;
+      }
+      parent = parent.$parent;
+    }
+    return true;
+  }
+  /**
+   * field 활성 비활성화 여부.
+   * 
+   * @param field form field
+   * @returns 
+   */
+  isConditionField(field) {
+    if (!this.conditionFields.includes(field.$key)) {
+      return true;
+    }
+    let condFlag = false;
+    if (field.conditional.custom) {
+      condFlag = field.conditional.custom.call(null, field);
+    } else {
+      if (field.conditional.field) {
+        const condField = this.getFieldName(field.conditional.field);
+        if (condField) {
+          if (field.conditional.eq == condField.$renderer.getValue()) {
+            condFlag = true;
+          }
+        }
+      }
+    }
+    return condFlag;
+  }
+  /**
    * 컬럼 로우 보이고 안보이기 체크. 
    *
    * @public
@@ -2610,30 +2665,11 @@ var FieldInfoMap = class {
   conditionCheck() {
     this.conditionFields.forEach((fieldKey) => {
       const filedInfo = this.allFieldInfo[fieldKey];
-      let condFlag = false;
-      if (filedInfo.conditional.field) {
-        const condField = this.getFieldName(filedInfo.conditional.field);
-        if (condField) {
-          if (filedInfo.conditional.eq == condField.$renderer.getValue()) {
-            condFlag = true;
-          }
-        }
-      }
-      if (!condFlag && filedInfo.conditional.custom) {
-        condFlag = filedInfo.conditional.custom.call(null, filedInfo);
-      }
+      let condFlag = this.isConditionField(filedInfo);
       if (condFlag) {
-        if (filedInfo.conditional.show) {
-          filedInfo.$renderer.show();
-        } else {
-          filedInfo.$renderer.hide();
-        }
+        filedInfo.$renderer.show();
       } else {
-        if (filedInfo.conditional.show) {
-          filedInfo.$renderer.hide();
-        } else {
-          filedInfo.$renderer.show();
-        }
+        filedInfo.$renderer.hide();
       }
     });
   }
@@ -2642,6 +2678,7 @@ var FieldInfoMap = class {
 // src/DaraForm.ts
 var defaultOptions = {
   mode: "horizontal",
+  // horizontal , vertical // 가로 세로 모드
   width: "100%",
   labelStyle: {
     width: "20%",
@@ -2653,6 +2690,7 @@ var defaultOptions = {
 var daraFormIdx = 0;
 var DaraForm = class {
   constructor(selector, options, message2) {
+    this.formValue = {};
     this.addRowFields = [];
     /**
      * 폼 데이터 reset
@@ -2666,6 +2704,7 @@ var DaraForm = class {
           renderInfo.reset();
         }
       }
+      this.formValue = {};
       this.conditionCheck();
     };
     /**
@@ -2674,13 +2713,14 @@ var DaraForm = class {
      */
     this.resetField = (fieldName) => {
       this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
+      this.formValue[fieldName] = "";
       this.conditionCheck();
     };
     /**
      * field 값 얻기
-     * 
+     *
      * @param fieldName  필드명
-     * @returns 
+     * @returns
      */
     this.getFieldValue = (fieldName) => {
       const field = this.fieldInfoMap.getFieldName(fieldName);
@@ -2692,34 +2732,27 @@ var DaraForm = class {
     /**
      * 폼 필드 값 얻기
      * @param isValid 폼 유효성 검사 여부 default:false|undefined true일경우 검사.
-     * @returns 
+     * @returns
      */
     this.getValue = (isValid) => {
-      return this.fieldInfoMap.getAllFieldValue(isValid);
+      return this.fieldInfoMap.getAllFieldValue(this.formValue, isValid);
     };
     this.getFormDataValue = (isValid) => {
-      return this.fieldInfoMap.getFormDataValue(isValid);
+      return this.fieldInfoMap.getFormDataValue(this.formValue, isValid);
     };
     /**
      * 폼 필드 value 셋팅
-     * @param values 
+     * @param values
      */
     this.setValue = (values) => {
       Object.keys(values).forEach((fieldName) => {
-        const value = values[fieldName];
-        const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-        console.log(fieldName);
-        if (filedInfo) {
-          const renderInfo = filedInfo.$renderer;
-          renderInfo.setValue(value);
-        }
+        this._setFieldValue(fieldName, values[fieldName]);
       });
       this.conditionCheck();
     };
     this.setFieldValue = (fieldName, values) => {
-      const value = {};
-      value[fieldName] = values;
-      this.setValue(value);
+      this._setFieldValue(fieldName, values);
+      this.conditionCheck();
     };
     this.setFieldItems = (fieldName, values) => {
       const field = this.fieldInfoMap.getFieldName(fieldName);
@@ -2750,13 +2783,13 @@ var DaraForm = class {
       }
     };
     /**
-     * 폼 유효성 검증 여부  
+     * 폼 유효성 검증 여부
      *
      * @returns {boolean}
      */
     this.isValidForm = () => {
       const result = this.validForm();
-      return result.length > 0 ? false : true;
+      return result.length > 0;
     };
     /**
      * 유효성 검증 폼 검증여부 리턴
@@ -2765,7 +2798,7 @@ var DaraForm = class {
      */
     this.validForm = () => {
       let validResult = [];
-      let firstFlag = this.options.autoFocus !== false ? true : false;
+      let firstFlag = this.options.autoFocus !== false;
       const fieldMap = this.fieldInfoMap.getAllFieldInfo();
       for (const fieldKey in fieldMap) {
         const filedInfo = fieldMap[fieldKey];
@@ -2788,7 +2821,7 @@ var DaraForm = class {
       }
       const renderInfo = filedInfo.$renderer;
       if (renderInfo) {
-        return renderInfo.valid() === true ? true : false;
+        return renderInfo.valid() === true;
       }
       return true;
     };
@@ -2821,8 +2854,8 @@ var DaraForm = class {
   }
   /**
    * field row 추가.
-   * 
-   * @param field 
+   *
+   * @param field
    */
   addRow(field) {
     if (this.checkHiddenField(field)) {
@@ -2838,8 +2871,14 @@ var DaraForm = class {
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
-      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
-      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
+      const fieldRowElement = this.formElement.querySelector(
+        `#${fileldInfo.$key}`
+      );
+      fileldInfo.$renderer = new fileldInfo.$renderer(
+        fileldInfo,
+        fieldRowElement,
+        this
+      );
       fieldRowElement?.removeAttribute("id");
     });
   }
@@ -2856,12 +2895,12 @@ var DaraForm = class {
     }
     let widthStyle = "";
     if (this.isHorizontal) {
-      widthStyle = `width:${field.labelStyle && field.labelStyle.width ? field.labelStyle.width : this.options.labelStyle.width};`;
+      widthStyle = `width:${field.labelStyle?.width ? field.labelStyle.width : this.options.labelStyle.width};`;
     }
     let labelAlignStyleClass = this.getTextAlignStyle(field, null);
     return `
             <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
-                <span>${this.getLabelTemplate(field)}</span>
+                ${field.labelStyle?.hide ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
             </div>
             <div class="df-field-container">
                 ${fieldHtml}
@@ -2897,6 +2936,7 @@ var DaraForm = class {
     }
     childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
     for (const childField of field.children) {
+      childField.$parent = field;
       let childTempate = "";
       if (childField.children) {
         childTempate = this.groupTemplate(childField);
@@ -2910,12 +2950,12 @@ var DaraForm = class {
         childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : "";
       }
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
-      childTemplae.push(
-        `<li class="sub-row" id="${childField.$key}">
-                ${childField.labelStyle?.hide ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+      childTemplae.push(`<li class="sub-row" id="${childField.$key}">
+                ${childField.labelStyle?.hide ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(
+        childField
+      )}</span>`}
                 <span class="df-field-container">${childTempate}</span>
-            </li>`
-      );
+            </li>`);
     }
     childTemplae.push("</ul>");
     return childTemplae.join("");
@@ -2925,7 +2965,7 @@ var DaraForm = class {
    *
    * @param {FormField} filed
    * @param {(FormField | null)} parentField
-   * @returns {string} style class 
+   * @returns {string} style class
    */
   getTextAlignStyle(filed, parentField) {
     let labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
@@ -2938,11 +2978,11 @@ var DaraForm = class {
     return `txt-${labelAlignStyleClass}`;
   }
   /**
-  * field tempalte 구하기
-  *
-  * @param {FormField} field
-  * @returns {string}
-  */
+   * field tempalte 구하기
+   *
+   * @param {FormField} field
+   * @returns {string}
+   */
   getFieldTempate(field) {
     if (!utils_default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
       throw new Error(`Duplicate field name "${field.name}"`);
@@ -2985,15 +3025,22 @@ var DaraForm = class {
   getField(fieldName) {
     return this.fieldInfoMap.getFieldName(fieldName);
   }
+  _setFieldValue(fieldName, value) {
+    this.formValue[fieldName] = value;
+    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+    if (filedInfo) {
+      filedInfo.$renderer.setValue(value);
+    }
+  }
   conditionCheck() {
     this.fieldInfoMap.conditionCheck();
   }
   static {
     /*
-    destroy = () => {
-        return this.options;
-    }
-    */
+      destroy = () => {
+          return this.options;
+      }
+      */
     this.validator = {
       string: (value, field) => {
         return stringValidator(value, field);

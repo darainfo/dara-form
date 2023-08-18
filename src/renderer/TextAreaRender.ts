@@ -6,56 +6,59 @@ import { inputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class TextAreaRender extends Render {
-    private element: HTMLTextAreaElement;
+  private element: HTMLTextAreaElement;
 
-    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, field, rowElement);
-        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
-        this.initEvent();
-        this.setDefaultInfo();
-    }
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm, field, rowElement);
+    this.element = rowElement.querySelector(
+      `[name="${field.$xssName}"]`
+    ) as HTMLTextAreaElement;
+    this.initEvent();
+    this.setDefaultInfo();
+  }
 
-    initEvent() {
-        inputEvent(this.field, this.element, this);
-    }
+  initEvent() {
+    inputEvent(this.field, this.element, this);
+  }
 
-    static template(field: FormField): string {
-        const desc = field.description ? `<div>${field.description}</div>` : '';
+  static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : "";
 
-        return `
+    let rows = field.customOptions?.rows;
+    rows = +rows > 0 ? rows : 3;
+
+    return `
             <div class="df-field">
-                <textarea name="${field.name}" class="form-field textarea help-icon"></textarea>
+                <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
             </div> 
             ${desc}
             <div class="help-message"></div>
         `;
-    }
+  }
 
-    getValue() {
-        return this.element.value;
-    }
+  getValue() {
+    return this.element.value;
+  }
 
-    setValue(value: any): void {
-        this.field.$value = value;
-        this.element.value = value;
-    }
+  setValue(value: any): void {
+    this.field.$value = value;
+    this.element.value = value;
+  }
 
-    reset() {
-        this.setValue('');
-        resetRowElementStyleClass(this.rowElement);
-    }
+  reset() {
+    this.setValue("");
+    resetRowElementStyleClass(this.rowElement);
+  }
 
-    getElement(): HTMLElement {
-        return this.element;
-    }
+  getElement(): HTMLElement {
+    return this.element;
+  }
 
-    valid(): any {
+  valid(): any {
+    const validResult = stringValidator(this.getValue(), this.field);
 
-        const validResult = stringValidator(this.getValue(), this.field);
+    invalidMessage(this.field, this.rowElement, validResult);
 
-        invalidMessage(this.field, this.rowElement, validResult);
-
-        return validResult;
-    }
-
+    return validResult;
+  }
 }

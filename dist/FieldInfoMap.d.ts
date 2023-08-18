@@ -64,6 +64,20 @@ export default class FieldInfoMap {
     getAllFieldValue(formValue: any, isValid: boolean): any;
     getFormDataValue(formValue: any, isValid: boolean): Promise<unknown> | FormData;
     /**
+     *
+     *
+     * @param field
+     * @returns
+     */
+    isValueFieldCheck(field: FormField): boolean;
+    /**
+     * field 활성 비활성화 여부.
+     *
+     * @param field form field
+     * @returns
+     */
+    isConditionField(field: FormField): boolean;
+    /**
      * 컬럼 로우 보이고 안보이기 체크.
      *
      * @public

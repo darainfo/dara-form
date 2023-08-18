@@ -101,4 +101,5 @@ export interface FormField {
     , $xssName: string                  // xss 변경명
     , $key: string                          // 내부 key
     , $value: string                        // 내부 사용 value
+    , $parent : FormField
 }
