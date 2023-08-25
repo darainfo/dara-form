@@ -177,7 +177,7 @@ class DaraForm {
     };
     this.isValidField = fieldName => {
       const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-      if (typeof filedInfo === "undefined") {
+      if (utils_1.default.isUndefined(filedInfo)) {
         throw new Error(`Field name [${fieldName}] not found`);
       }
       const renderInfo = filedInfo.$renderer;
@@ -258,7 +258,7 @@ class DaraForm {
             <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
                 ${((_b = field.labelStyle) === null || _b === void 0 ? void 0 : _b.hide) ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
             </div>
-            <div class="df-field-container">
+            <div class="df-field-container ${field.required ? "required" : ""}">
                 ${fieldHtml}
             </div>
         `;
@@ -266,7 +266,7 @@ class DaraForm {
   getLabelTemplate(field) {
     const requiredTemplate = field.required ? `<span class="required"></span>` : "";
     const tooltipTemplate = utils_1.default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-    return `${field.label} ${tooltipTemplate} ${requiredTemplate}`;
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
   /**
    * 그룹 템플릿
@@ -307,9 +307,11 @@ class DaraForm {
         childLabelWidth = ((_a = childField.labelStyle) === null || _a === void 0 ? void 0 : _a.width) ? `width:${(_b = childField.labelStyle) === null || _b === void 0 ? void 0 : _b.width};` : "";
       }
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
+      let labelHideFlag = (_c = childField.labelStyle) === null || _c === void 0 ? void 0 : _c.hide;
+      labelHideFlag = labelHideFlag ? labelHideFlag : utils_1.default.isUndefined(childField.label) ? true : false;
       childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${((_c = childField.labelStyle) === null || _c === void 0 ? void 0 : _c.hide) ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container">${childTempate}</span>
+                ${labelHideFlag ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
             </li>`);
     }
     childTemplae.push("</ul>");
@@ -1130,7 +1132,7 @@ class DropdownRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.defaultCheckValue = this.field.values[0].value;
+    this.defaultCheckValue = this.field.values.length > 0 ? this.field.values[0].value : "";
     this.field.values.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
@@ -1143,10 +1145,10 @@ class DropdownRender extends Render_1.default {
     (0, renderEvents_1.dropdownChangeEvent)(this.field, this.element, this);
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
     let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
     field.values.forEach(val => {
-      template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
+      template += `<option value="${val.value}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
     });
     template += `</select> <i class="help-icon"></i></div>
                     ${desc}
@@ -1155,7 +1157,7 @@ class DropdownRender extends Render_1.default {
     return template;
   }
   setValueItems(items) {
-    const containerEle = this.rowElement.querySelector('.df-field-container');
+    const containerEle = this.rowElement.querySelector(".df-field-container");
     if (containerEle) {
       this.field.values = items;
       containerEle.innerHTML = DropdownRender.template(this.field);
@@ -1221,11 +1223,11 @@ class FileRender extends Render_1.default {
     this.fileList = [];
     this.fileSeq = 0;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.fileList = field.values;
+    this.fileList = field.values || [];
     this.initEvent();
   }
   initEvent() {
-    this.element.addEventListener('change', e => {
+    this.element.addEventListener("change", e => {
       var _a;
       const files = (_a = e.target) === null || _a === void 0 ? void 0 : _a.files;
       if (files) {
@@ -1262,7 +1264,7 @@ class FileRender extends Render_1.default {
     }
   }
   setFileList(fileList) {
-    const fileListElement = this.rowElement.querySelector('.dara-file-list');
+    const fileListElement = this.rowElement.querySelector(".dara-file-list");
     if (fileListElement) {
       const fileTemplateHtml = [];
       fileList.forEach(file => {
@@ -1272,12 +1274,12 @@ class FileRender extends Render_1.default {
           <span class="file-name">${file.fileName}</span > 
         </div>`);
       });
-      fileListElement.insertAdjacentHTML('beforeend', fileTemplateHtml.join(''));
+      fileListElement.insertAdjacentHTML("beforeend", fileTemplateHtml.join(""));
       fileList.forEach(item => {
         const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
         if (ele) {
-          ele.addEventListener('click', evt => {
-            const fileItemElement = evt.target.closest('.file-item');
+          ele.addEventListener("click", evt => {
+            const fileItemElement = evt.target.closest(".file-item");
             if (fileItemElement) {
               const attrSeq = fileItemElement.getAttribute("data-seq");
               if (attrSeq) {
@@ -1299,11 +1301,11 @@ class FileRender extends Render_1.default {
     }
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_1.default.getMessage('fileButton')}</label>
+        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_1.default.getMessage("fileButton")}</label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
@@ -1323,7 +1325,7 @@ class FileRender extends Render_1.default {
     this.element.value = value;
   }
   reset() {
-    this.setValue('');
+    this.setValue("");
     (0, validUtils_1.resetRowElementStyleClass)(this.rowElement);
   }
   getElement() {
@@ -2969,7 +2971,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   --font-color: #70757a;
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
-  --invalid-background-color: #FDD;
+  --invalid-background-color: #fdd;
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
@@ -3199,8 +3201,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   border-color: var(--invalid-border-color);
   outline-color: var(--invalid-border-color);
 }
-.dara-form > .df-row.invalid .help-icon,
-.dara-form .sub-row.invalid .help-icon {
+.dara-form > .df-row.invalid .df-field-container.required .help-icon,
+.dara-form .sub-row.invalid .df-field-container.required .help-icon {
   display: block;
   background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___});
 }
@@ -3209,8 +3211,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   display: block;
   color: var(--invalid-font-color);
 }
-.dara-form > .df-row.valid .help-icon,
-.dara-form .sub-row.valid .help-icon {
+.dara-form > .df-row.valid .df-field-container.required .help-icon,
+.dara-form .sub-row.valid .df-field-container.required .help-icon {
   display: block;
   background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___});
 }
@@ -3241,6 +3243,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .form-field[type=radio], .dara-form .form-field[type=checkbox] {
   width: auto;
   display: inline;
+  min-height: 0px;
+  padding: 0px;
+  margin: 0px;
+  vertical-align: middle;
 }
 .dara-form .form-field.dropdown {
   appearance: none;
@@ -3264,7 +3270,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .field-group .field.horizontal {
   display: inline;
-}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[".dara-form {\r\n\r\n    --border-color: #dfe1e5;\r\n    --color-danger: #d9534f;\r\n    --background-danger: #d9534f;\r\n    --font-color: #70757a;\r\n    --invalid-font-color: #ff4136;\r\n    --invalid-border-color: #ffb6b4;\r\n    --invalid-background-color: #FDD;\r\n    --background-button-hover: #ebebeb;\r\n    --tooltip-background: #3e3e3e;\r\n    --tooltip-color: #fff;\r\n\r\n    padding: 0px;\r\n    margin-top: 10px;\r\n    color: var(--font-color);\r\n\r\n    *,\r\n    ::after,\r\n    ::before {\r\n        box-sizing: border-box;\r\n    }\r\n\r\n    .txt {\r\n        &-left {\r\n            text-align: left;\r\n        }\r\n\r\n        &-center {\r\n            text-align: center;\r\n        }\r\n\r\n        &-right {\r\n            text-align: right;\r\n        }\r\n    }\r\n\r\n    &.horizontal {\r\n        display: table;\r\n        width: 100%;\r\n\r\n        >.df-row {\r\n            display: table-row;\r\n\r\n            >.df-label {\r\n                width: 10%;\r\n                display: table-cell;\r\n            }\r\n\r\n            >.df-field-container {\r\n                display: table-cell;\r\n                padding-bottom: 10px;\r\n            }\r\n\r\n        }\r\n    }\r\n\r\n    &.vertical {\r\n        >.df-row>* {\r\n            display: block;\r\n        }\r\n    }\r\n\r\n    .df-hidden {\r\n        max-height: 0vh !important;\r\n        transition: all 0.25s ease-out;\r\n        visibility: collapse;\r\n    }\r\n\r\n    .df-label,\r\n    .sub-label {\r\n        position: relative;\r\n        font-weight: 700;\r\n        padding-right: 15px;\r\n\r\n        .df-tooltip {\r\n            visibility: visible;\r\n            color: #fff;\r\n            background: #000;\r\n            width: 16px;\r\n            height: 16px;\r\n            border-radius: 8px;\r\n            text-align: center;\r\n            line-height: 16px;\r\n            margin: 0 5px;\r\n            font-size: 12px;\r\n            cursor: help;\r\n            position: relative;\r\n            display: inline-block;\r\n\r\n            .tooltip {\r\n                display: none;\r\n                text-align: initial;\r\n                background: var(--tooltip-background);\r\n                border-radius: 5px;\r\n                color: var(--tooltip-color);\r\n                padding: 10px 5px;\r\n                position: absolute;\r\n                z-index: 2;\r\n                left: -10px;\r\n                min-width: max-content;\r\n                text-shadow: none;\r\n                cursor: default;\r\n            }\r\n\r\n            &:hover .tooltip {\r\n                display: block;\r\n            }\r\n        }\r\n    }\r\n\r\n    .df-field-container {\r\n        .df-field {\r\n            position: relative;\r\n\r\n            .range-num {\r\n                clear: both;\r\n                display: block;\r\n                width: 100%;\r\n                text-align: left;\r\n            }\r\n\r\n            .file-wrapper {\r\n                border: 1px solid var(--border-color);\r\n                text-align: center;\r\n                display: block;\r\n                width: 100%;\r\n                padding: 0.375rem 0.75rem;\r\n                font-weight: 400;\r\n                line-height: 1.5;\r\n                background-clip: padding-box;\r\n                border-radius: 4px;\r\n                transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n            }\r\n        }\r\n\r\n        .sub-field-group {\r\n            padding: 0px;\r\n            margin: 0px;\r\n            list-style: none;\r\n\r\n            &.vertical {\r\n                display: block;\r\n\r\n                .sub-row {\r\n                    padding-top: 5px;\r\n                    max-height: 100vh;\r\n                    transition: all 0.25s ease-in;\r\n\r\n                    +.sub-row {\r\n                        padding-top: 5px;\r\n                    }\r\n\r\n                    +.df-hidden {\r\n                        padding-top: 0px;\r\n                    }\r\n                }\r\n\r\n                .sub-row:first-child {\r\n                    padding-top: 0px;\r\n                }\r\n\r\n                .df-hidden:first-child:has(~ .sub-row) {\r\n                    padding-top: 0px;\r\n                }\r\n            }\r\n\r\n            &.horizontal-row {\r\n                display: table;\r\n                width: 100%;\r\n\r\n                .sub-row {\r\n                    display: table-row;\r\n                    letter-spacing: 5px;\r\n\r\n                    >* {\r\n                        display: table-cell;\r\n                        padding-top: 5px;\r\n                    }\r\n                }\r\n            }\r\n\r\n            &.horizontal {\r\n                display: table;\r\n\r\n                .df-hidden {\r\n                    width: 0px;\r\n                    padding-right: 0px !important;\r\n                    display: none !important;\r\n                }\r\n\r\n                .sub-row {\r\n                    display: table-cell;\r\n                    padding-right: 15px;\r\n\r\n                    .field-group {\r\n                        position: relative;\r\n\r\n                        .help-icon {\r\n                            margin-right: -16px;\r\n                        }\r\n                    }\r\n\r\n                    .sub-label {\r\n                        padding-right: 10px;\r\n                    }\r\n\r\n                    >span {\r\n                        display: table-cell;\r\n                    }\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    >.df-row {\r\n        width: 100%;\r\n        margin: 0px 0px 10px 0px;\r\n        max-height: 100vh;\r\n\r\n        >.df-label {\r\n\r\n            .required {\r\n                &::after {\r\n                    content: \"*\";\r\n                    vertical-align: middle;\r\n                }\r\n\r\n                color: var(--color-danger);\r\n            }\r\n        }\r\n\r\n        .help-message {\r\n            display: none;\r\n        }\r\n\r\n        .help-icon {\r\n            background-repeat: no-repeat;\r\n            background-position-y: center;\r\n\r\n            &.form-field {\r\n                background-position-x: calc(100% - 15px);\r\n            }\r\n\r\n            &.dara-icon {\r\n                display: none;\r\n                position: absolute;\r\n                z-index: 1;\r\n                top: 0px;\r\n                right: 0px;\r\n                height: 100%;\r\n                width: 20px;\r\n                margin-right: 15px;\r\n            }\r\n        }\r\n\r\n        .dara-file-list {\r\n            .file-icon {\r\n                width: 20px;\r\n                height: 20px;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                cursor: pointer;\r\n\r\n                &:hover {\r\n                    background-color: var(--background-button-hover);\r\n                }\r\n\r\n                &.download {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n                }\r\n\r\n                &.remove {\r\n                    background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n                }\r\n            }\r\n\r\n            .file-name {\r\n                text-overflow: ellipsis;\r\n                white-space: nowrap;\r\n                word-wrap: normal;\r\n                overflow: hidden;\r\n                display: inline-block;\r\n                vertical-align: middle;\r\n                width: calc(100% - 55px);\r\n            }\r\n        }\r\n    }\r\n\r\n    >.df-row,\r\n    .sub-row {\r\n\r\n        &.invalid {\r\n            .form-field {\r\n                border-color: var(--invalid-border-color);\r\n                outline-color: var(--invalid-border-color);\r\n            }\r\n\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+');\r\n            }\r\n\r\n            .help-message {\r\n                display: block;\r\n                color: var(--invalid-font-color);\r\n            }\r\n        }\r\n\r\n        &.valid {\r\n            .help-icon {\r\n                display: block;\r\n                background-image: url('data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==');\r\n            }\r\n        }\r\n    }\r\n\r\n    .file-label {\r\n        border: 1px solid var(--border-color);\r\n        display: inline;\r\n        width: 100%;\r\n        padding: 3px 15px;\r\n        line-height: 1;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &:hover {\r\n            background-color: var(--background-button-hover);\r\n        }\r\n    }\r\n\r\n    .form-field {\r\n        border: 1px solid var(--border-color);\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;\r\n\r\n        &[type=radio],\r\n        &[type=\"checkbox\"] {\r\n            width: auto;\r\n            display: inline;\r\n        }\r\n\r\n        &.dropdown {\r\n            appearance: none;\r\n            -webkit-appearance: none;\r\n            -moz-appearance: none;\r\n        }\r\n\r\n        &.textarea {\r\n            padding-right: 0px;\r\n        }\r\n\r\n        &[type=\"number\"] {\r\n            padding-right: 3px;\r\n        }\r\n\r\n        &.file {\r\n            display: none;\r\n        }\r\n\r\n        &.range {\r\n            padding: 0px;\r\n        }\r\n\r\n    }\r\n\r\n    .field-group {\r\n        .field {\r\n            &.vertical {\r\n                display: block;\r\n            }\r\n\r\n            &.horizontal {\r\n                display: inline;\r\n            }\r\n        }\r\n    }\r\n}"],"sourceRoot":""}]);
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"AAAA;EACE,uBAAA;EACA,uBAAA;EACA,4BAAA;EACA,qBAAA;EACA,6BAAA;EACA,+BAAA;EACA,gCAAA;EACA,kCAAA;EACA,6BAAA;EACA,qBAAA;EAEA,YAAA;EACA,gBAAA;EACA,wBAAA;AAAF;AAEE;;;EAGE,sBAAA;AAAJ;AAII;EACE,gBAAA;AAFN;AAKI;EACE,kBAAA;AAHN;AAMI;EACE,iBAAA;AAJN;AAQE;EACE,cAAA;EACA,WAAA;AANJ;AAQI;EACE,kBAAA;AANN;AAQM;EACE,UAAA;EACA,mBAAA;AANR;AASM;EACE,mBAAA;EACA,oBAAA;AAPR;AAaI;EACE,cAAA;AAXN;AAeE;EACE,0BAAA;EACA,8BAAA;EACA,oBAAA;AAbJ;AAgBE;;EAEE,kBAAA;EACA,gBAAA;EACA,mBAAA;AAdJ;AAgBI;;EACE,mBAAA;EACA,WAAA;EACA,gBAAA;EACA,WAAA;EACA,YAAA;EACA,kBAAA;EACA,kBAAA;EACA,iBAAA;EACA,aAAA;EACA,eAAA;EACA,YAAA;EACA,kBAAA;EACA,qBAAA;AAbN;AAeM;;EACE,aAAA;EACA,mBAAA;EACA,qCAAA;EACA,kBAAA;EACA,2BAAA;EACA,iBAAA;EACA,kBAAA;EACA,UAAA;EACA,WAAA;EACA,sBAAA;EACA,iBAAA;EACA,eAAA;AAZR;AAeM;;EACE,cAAA;AAZR;AAkBI;EACE,kBAAA;AAhBN;AAkBM;EACE,WAAA;EACA,cAAA;EACA,WAAA;EACA,gBAAA;AAhBR;AAmBM;EACE,qCAAA;EACA,kBAAA;EACA,cAAA;EACA,WAAA;EACA,yBAAA;EACA,gBAAA;EACA,gBAAA;EACA,4BAAA;EACA,kBAAA;EACA,wEAAA;AAjBR;AAqBI;EACE,YAAA;EACA,WAAA;EACA,gBAAA;AAnBN;AAqBM;EACE,cAAA;AAnBR;AAqBQ;EACE,gBAAA;EACA,iBAAA;EACA,6BAAA;AAnBV;AAqBU;EACE,gBAAA;AAnBZ;AAsBU;EACE,gBAAA;AApBZ;AAwBQ;EACE,gBAAA;AAtBV;AAyBQ;EACE,gBAAA;AAvBV;AA2BM;EACE,cAAA;EACA,WAAA;AAzBR;AA2BQ;EACE,kBAAA;EACA,mBAAA;AAzBV;AA2BU;EACE,mBAAA;EACA,gBAAA;AAzBZ;AA8BM;EACE,cAAA;AA5BR;AA8BQ;EACE,UAAA;EACA,6BAAA;EACA,wBAAA;AA5BV;AA+BQ;EACE,mBAAA;EACA,mBAAA;AA7BV;AA+BU;EACE,kBAAA;AA7BZ;AA+BY;EACE,mBAAA;AA7Bd;AAiCU;EACE,mBAAA;AA/BZ;AAkCU;EACE,mBAAA;AAhCZ;AAuCE;EACE,WAAA;EACA,wBAAA;EACA,iBAAA;AArCJ;AAwCM;EAME,0BAAA;AA3CR;AAsCQ;EACE,YAAA;EACA,sBAAA;AApCV;AA2CI;EACE,aAAA;AAzCN;AA4CI;EACE,4BAAA;EACA,6BAAA;AA1CN;AA4CM;EACE,wCAAA;AA1CR;AA6CM;EACE,aAAA;EACA,kBAAA;EACA,UAAA;EACA,QAAA;EACA,UAAA;EACA,YAAA;EACA,WAAA;EACA,kBAAA;AA3CR;AAgDM;EACE,WAAA;EACA,YAAA;EACA,qBAAA;EACA,sBAAA;EACA,eAAA;AA9CR;AAgDQ;EACE,gDAAA;AA9CV;AAiDQ;EACE,yDAAA;AA/CV;AAkDQ;EACE,yDAAA;AAhDV;AAoDM;EACE,uBAAA;EACA,mBAAA;EACA,iBAAA;EACA,gBAAA;EACA,qBAAA;EACA,sBAAA;EACA,wBAAA;AAlDR;AA0DM;;EACE,yCAAA;EACA,0CAAA;AAvDR;AA0DM;;EACE,cAAA;EACA,yDAAA;AAvDR;AA0DM;;EACE,cAAA;EACA,gCAAA;AAvDR;AA4DM;;EACE,cAAA;EACA,yDAAA;AAzDR;AA8DE;EACE,qCAAA;EACA,eAAA;EACA,WAAA;EACA,iBAAA;EACA,cAAA;EACA,4BAAA;EACA,kBAAA;EACA,wEAAA;AA5DJ;AA8DI;EACE,gDAAA;AA5DN;AAgEE;EACE,qCAAA;EACA,cAAA;EACA,WAAA;EACA,yBAAA;EACA,gBAAA;EACA,gBAAA;EACA,4BAAA;EACA,kBAAA;EACA,wEAAA;AA9DJ;AAgEI;EAEE,WAAA;EACA,eAAA;EACA,eAAA;EACA,YAAA;EACA,WAAA;EACA,sBAAA;AA/DN;AAkEI;EACE,gBAAA;EACA,wBAAA;EACA,qBAAA;AAhEN;AAmEI;EACE,kBAAA;AAjEN;AAoEI;EACE,kBAAA;AAlEN;AAqEI;EACE,aAAA;AAnEN;AAsEI;EACE,YAAA;AApEN;AA0EM;EACE,cAAA;AAxER;AA2EM;EACE,eAAA;AAzER","sourcesContent":[".dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  &.horizontal {\r\n    display: table;\r\n    width: 100%;\r\n\r\n    > .df-row {\r\n      display: table-row;\r\n\r\n      > .df-label {\r\n        width: 10%;\r\n        display: table-cell;\r\n      }\r\n\r\n      > .df-field-container {\r\n        display: table-cell;\r\n        padding-bottom: 10px;\r\n      }\r\n    }\r\n  }\r\n\r\n  &.vertical {\r\n    > .df-row > * {\r\n      display: block;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    transition: all 0.25s ease-out;\r\n    visibility: collapse;\r\n  }\r\n\r\n  .df-label,\r\n  .sub-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    padding-right: 15px;\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n\r\n    .sub-field-group {\r\n      padding: 0px;\r\n      margin: 0px;\r\n      list-style: none;\r\n\r\n      &.vertical {\r\n        display: block;\r\n\r\n        .sub-row {\r\n          padding-top: 5px;\r\n          max-height: 100vh;\r\n          transition: all 0.25s ease-in;\r\n\r\n          + .sub-row {\r\n            padding-top: 5px;\r\n          }\r\n\r\n          + .df-hidden {\r\n            padding-top: 0px;\r\n          }\r\n        }\r\n\r\n        .sub-row:first-child {\r\n          padding-top: 0px;\r\n        }\r\n\r\n        .df-hidden:first-child:has(~ .sub-row) {\r\n          padding-top: 0px;\r\n        }\r\n      }\r\n\r\n      &.horizontal-row {\r\n        display: table;\r\n        width: 100%;\r\n\r\n        .sub-row {\r\n          display: table-row;\r\n          letter-spacing: 5px;\r\n\r\n          > * {\r\n            display: table-cell;\r\n            padding-top: 5px;\r\n          }\r\n        }\r\n      }\r\n\r\n      &.horizontal {\r\n        display: table;\r\n\r\n        .df-hidden {\r\n          width: 0px;\r\n          padding-right: 0px !important;\r\n          display: none !important;\r\n        }\r\n\r\n        .sub-row {\r\n          display: table-cell;\r\n          padding-right: 15px;\r\n\r\n          .field-group {\r\n            position: relative;\r\n\r\n            .help-icon {\r\n              margin-right: -16px;\r\n            }\r\n          }\r\n\r\n          .sub-label {\r\n            padding-right: 10px;\r\n          }\r\n\r\n          > span {\r\n            display: table-cell;\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row {\r\n    width: 100%;\r\n    margin: 0px 0px 10px 0px;\r\n    max-height: 100vh;\r\n\r\n    > .df-label {\r\n      .required {\r\n        &::after {\r\n          content: \"*\";\r\n          vertical-align: middle;\r\n        }\r\n\r\n        color: var(--color-danger);\r\n      }\r\n    }\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    .dara-file-list {\r\n      .file-icon {\r\n        width: 20px;\r\n        height: 20px;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        cursor: pointer;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n\r\n        &.download {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n        }\r\n\r\n        &.remove {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n        }\r\n      }\r\n\r\n      .file-name {\r\n        text-overflow: ellipsis;\r\n        white-space: nowrap;\r\n        word-wrap: normal;\r\n        overflow: hidden;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        width: calc(100% - 55px);\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row,\r\n  .sub-row {\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n      }\r\n    }\r\n  }\r\n\r\n  .file-label {\r\n    border: 1px solid var(--border-color);\r\n    display: inline;\r\n    width: 100%;\r\n    padding: 3px 15px;\r\n    line-height: 1;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &:hover {\r\n      background-color: var(--background-button-hover);\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field {\r\n      &.vertical {\r\n        display: block;\r\n      }\r\n\r\n      &.horizontal {\r\n        display: inline;\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

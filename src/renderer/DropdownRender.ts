@@ -7,89 +7,92 @@ import { dropdownChangeEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class DropdownRender extends Render {
-    private element: HTMLSelectElement;
-    private defaultCheckValue;
+  private element: HTMLSelectElement;
+  private defaultCheckValue;
 
-    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, field, rowElement);
-        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm, field, rowElement);
+    this.element = rowElement.querySelector(
+      `[name="${field.$xssName}"]`
+    ) as HTMLSelectElement;
 
-        this.defaultCheckValue = this.field.values[0].value;
+    this.defaultCheckValue =
+      this.field.values.length > 0 ? this.field.values[0].value : "";
 
-        this.field.values.forEach((val) => {
-            if (val.selected) {
-                this.defaultCheckValue = val.value;
-            }
-        });
+    this.field.values.forEach((val) => {
+      if (val.selected) {
+        this.defaultCheckValue = val.value;
+      }
+    });
 
-        this.initEvent();
-        this.setDefaultInfo();
-    }
+    this.initEvent();
+    this.setDefaultInfo();
+  }
 
-    initEvent() {
-        dropdownChangeEvent(this.field, this.element, this);
-    }
+  initEvent() {
+    dropdownChangeEvent(this.field, this.element, this);
+  }
 
-    static template(field: FormField): string {
-        const desc = field.description ? `<div>${field.description}</div>` : '';
+  static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : "";
 
-        let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
 
-        field.values.forEach(val => {
-            template += `<option value="${val.value}" ${val.selected ? 'selected' : ''}>${val.label}</option>`;
-        })
+    field.values.forEach((val) => {
+      template += `<option value="${val.value}" ${
+        val.selected ? "selected" : ""
+      }>${val.label}</option>`;
+    });
 
-        template += `</select> <i class="help-icon"></i></div>
+    template += `</select> <i class="help-icon"></i></div>
                     ${desc}
                     <div class="help-message"></div>
         `;
-        return template;
+    return template;
+  }
+
+  public setValueItems(items: any): void {
+    const containerEle = this.rowElement.querySelector(".df-field-container");
+    if (containerEle) {
+      this.field.values = items;
+      containerEle.innerHTML = DropdownRender.template(this.field);
+
+      this.initEvent();
+    }
+  }
+
+  getValue() {
+    return this.element.value;
+  }
+
+  setValue(value: any): void {
+    this.field.$value = value;
+    this.element.value = value;
+  }
+
+  reset() {
+    this.setValue(this.defaultCheckValue);
+    resetRowElementStyleClass(this.rowElement);
+  }
+
+  getElement(): HTMLElement {
+    return this.element;
+  }
+
+  valid(): any {
+    const value = this.getValue();
+
+    let validResult: ValidResult | boolean = true;
+
+    if (this.field.required) {
+      if (value.length < 1) {
+        validResult = { name: this.field.name, constraint: [] };
+        validResult.constraint.push(RULES.REQUIRED);
+      }
     }
 
-    public setValueItems(items: any): void {
+    invalidMessage(this.field, this.rowElement, validResult);
 
-        const containerEle = this.rowElement.querySelector('.df-field-container');
-        if (containerEle) {
-            this.field.values = items;
-            containerEle.innerHTML = DropdownRender.template(this.field);
-
-            this.initEvent();
-        }
-    }
-
-    getValue() {
-        return this.element.value;
-    }
-
-    setValue(value: any): void {
-        this.field.$value = value;
-        this.element.value = value;
-    }
-
-    reset() {
-        this.setValue(this.defaultCheckValue);
-        resetRowElementStyleClass(this.rowElement);
-    }
-
-    getElement(): HTMLElement {
-        return this.element;
-    }
-
-    valid(): any {
-
-        const value = this.getValue();
-
-        let validResult: ValidResult | boolean = true;
-
-        if (this.field.required) {
-            if (value.length < 1) {
-                validResult = { name: this.field.name, constraint: [] };
-                validResult.constraint.push(RULES.REQUIRED);
-            }
-        }
-
-        invalidMessage(this.field, this.rowElement, validResult);
-
-        return true;
-    }
+    return true;
+  }
 }

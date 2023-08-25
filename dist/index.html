@@ -65,7 +65,7 @@
         tooltip: "아이디를 넣어주세요.",
         description: "설명설명설명",
         placeholder: "아이디를 넣어주세요.",
-        required: true,
+        //required: true,
         rule: {
           minLength: 3,
           maxLength: 100,
@@ -84,6 +84,14 @@
           console.log(arg);
         },
       },
+      ,
+      {
+        name: "dropdown",
+        label: "드랍다운",
+        renderType: "dropdown",
+        required: true,
+        values: [],
+      },
       {
         name: "birth2",
         label: "생년월일2",
@@ -98,7 +106,84 @@
           console.log(arg);
         },
       },
+      {
+        label: "주소",
+        viewMode: "horizontal-row", // 'vertical , horizontal'
+        children: [
+          {
+            name: "newAddress",
+            // label: "신규주소여부",
 
+            required: true,
+            renderType: "checkbox",
+            values: [{ label: "option1", selected: true }],
+            onChange: (arg) => {
+              console.log(arg);
+            },
+          },
+          {
+            name: "address",
+            label: "주소",
+            hideLabel: true,
+            required: true,
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+            conditional: {
+              show: true,
+              custom: function () {
+                return true;
+              },
+            },
+          },
+          {
+            name: "address2",
+            label: "주소1",
+            hideLabel: true,
+            required: true,
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+            conditional: {
+              show: false,
+              field: "newAddress",
+              eq: true,
+              //custom?: OptionCallback
+            },
+          },
+          {
+            name: "hiddenMode1",
+            renderType: "text",
+            label: "주소 하위1",
+            childLabelWidth: "10%",
+            viewMode: "horizontal", // 'vertical , horizontal, horizontal-row'
+            hideLabel: true,
+            children: [
+              {
+                name: "address22222",
+                label: "주소1",
+                labelWidth: "150px",
+                renderType: "text",
+              },
+              {
+                name: "address222333322",
+                label: "주소2",
+                renderType: "text",
+              },
+            ],
+          },
+          {
+            label: "버튼",
+            hideLabel: true,
+            renderType: "button",
+            onClick: (arg) => {
+              console.log(arg);
+            },
+          },
+        ],
+      },
       {
         label: "비밀번호",
         viewMode: "vertical",

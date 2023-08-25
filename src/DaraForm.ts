@@ -59,9 +59,7 @@ export default class DaraForm {
 
     const formElement = document.querySelector(selector);
     if (formElement) {
-      formElement.className = `dara-form df-${daraFormIdx} ${
-        this.isHorizontal ? "horizontal" : "vertical"
-      }`;
+      formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? "horizontal" : "vertical"}`;
       formElement.setAttribute("style", `width:${this.options.width};`);
 
       this.formElement = formElement;
@@ -108,14 +106,8 @@ export default class DaraForm {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
 
-      const fieldRowElement = this.formElement.querySelector(
-        `#${fileldInfo.$key}`
-      );
-      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(
-        fileldInfo,
-        fieldRowElement,
-        this
-      );
+      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldRowElement, this);
       fieldRowElement?.removeAttribute("id");
     });
   }
@@ -136,38 +128,26 @@ export default class DaraForm {
 
     let widthStyle = "";
     if (this.isHorizontal) {
-      widthStyle = `width:${
-        field.labelStyle?.width
-          ? field.labelStyle.width
-          : this.options.labelStyle.width
-      };`;
+      widthStyle = `width:${field.labelStyle?.width ? field.labelStyle.width : this.options.labelStyle.width};`;
     }
 
     let labelAlignStyleClass = this.getTextAlignStyle(field, null);
 
     return `
             <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
-                ${
-                  field.labelStyle?.hide
-                    ? ""
-                    : `<span>${this.getLabelTemplate(field)}</span>`
-                }
+                ${field.labelStyle?.hide ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
             </div>
-            <div class="df-field-container">
+            <div class="df-field-container ${field.required ? "required" : ""}">
                 ${fieldHtml}
             </div>
         `;
   }
 
   public getLabelTemplate(field: FormField) {
-    const requiredTemplate = field.required
-      ? `<span class="required"></span>`
-      : "";
-    const tooltipTemplate = utils.isBlank(field.tooltip)
-      ? ""
-      : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
+    const tooltipTemplate = utils.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
 
-    return `${field.label} ${tooltipTemplate} ${requiredTemplate}`;
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
 
   /**
@@ -186,9 +166,7 @@ export default class DaraForm {
       viewStyleClass = "vertical";
     } else {
       if (field.viewMode === "horizontal-row") {
-        childLabelWidth = field.childLabelWidth
-          ? `width:${field.childLabelWidth};`
-          : "";
+        childLabelWidth = field.childLabelWidth ? `width:${field.childLabelWidth};` : "";
         viewStyleClass = "horizontal-row";
       } else {
         isHorizontal = true;
@@ -212,22 +190,20 @@ export default class DaraForm {
       }
 
       if (isHorizontal) {
-        childLabelWidth = childField.labelStyle?.width
-          ? `width:${childField.labelStyle?.width};`
-          : "";
+        childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : "";
       }
 
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
 
+      let labelHideFlag = childField.labelStyle?.hide;
+      labelHideFlag = labelHideFlag ? labelHideFlag : utils.isUndefined(childField.label) ? true : false;
       childTemplae.push(`<li class="sub-row" id="${childField.$key}">
                 ${
-                  childField.labelStyle?.hide
+                  labelHideFlag
                     ? ""
-                    : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(
-                        childField
-                      )}</span>`
+                    : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`
                 }
-                <span class="df-field-container">${childTempate}</span>
+                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
             </li>`);
     }
     childTemplae.push("</ul>");
@@ -243,9 +219,7 @@ export default class DaraForm {
    * @returns {string} style class
    */
   private getTextAlignStyle(filed: FormField, parentField: FormField | null) {
-    let labelAlign = filed.labelStyle?.align
-      ? filed.labelStyle.align
-      : parentField?.labelStyle?.align || this.options.labelStyle.align;
+    let labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
 
     let labelAlignStyleClass;
     if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
@@ -264,10 +238,7 @@ export default class DaraForm {
    * @returns {string}
    */
   public getFieldTempate(field: FormField): string {
-    if (
-      !utils.isBlank(field.name) &&
-      this.fieldInfoMap.hasFieldName(field.name)
-    ) {
+    if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
       throw new Error(`Duplicate field name "${field.name}"`);
     }
 
@@ -475,7 +446,7 @@ export default class DaraForm {
   public isValidField = (fieldName: string): boolean => {
     const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
 
-    if (typeof filedInfo === "undefined") {
+    if (utils.isUndefined(filedInfo)) {
       throw new Error(`Field name [${fieldName}] not found`);
     }
 

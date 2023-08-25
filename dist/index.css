@@ -336,7 +336,7 @@
   --font-color: #70757a;
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
-  --invalid-background-color: #FDD;
+  --invalid-background-color: #fdd;
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
@@ -566,8 +566,8 @@
   border-color: var(--invalid-border-color);
   outline-color: var(--invalid-border-color);
 }
-.dara-form > .df-row.invalid .help-icon,
-.dara-form .sub-row.invalid .help-icon {
+.dara-form > .df-row.invalid .df-field-container.required .help-icon,
+.dara-form .sub-row.invalid .df-field-container.required .help-icon {
   display: block;
   background-image: url("data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+");
 }
@@ -576,8 +576,8 @@
   display: block;
   color: var(--invalid-font-color);
 }
-.dara-form > .df-row.valid .help-icon,
-.dara-form .sub-row.valid .help-icon {
+.dara-form > .df-row.valid .df-field-container.required .help-icon,
+.dara-form .sub-row.valid .df-field-container.required .help-icon {
   display: block;
   background-image: url("data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==");
 }
@@ -609,6 +609,10 @@
 .dara-form .form-field[type=checkbox] {
   width: auto;
   display: inline;
+  min-height: 0px;
+  padding: 0px;
+  margin: 0px;
+  vertical-align: middle;
 }
 .dara-form .form-field.dropdown {
   appearance: none;

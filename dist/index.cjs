@@ -456,8 +456,10 @@ var TextAreaRender = class extends Render {
 var DropdownRender = class _DropdownRender extends Render {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
-    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.defaultCheckValue = this.field.values[0].value;
+    this.element = rowElement.querySelector(
+      `[name="${field.$xssName}"]`
+    );
+    this.defaultCheckValue = this.field.values.length > 0 ? this.field.values[0].value : "";
     this.field.values.forEach((val) => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
@@ -842,8 +844,10 @@ var FileRender = class extends Render {
     this.uploadFiles = {};
     this.fileList = [];
     this.fileSeq = 0;
-    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.fileList = field.values;
+    this.element = rowElement.querySelector(
+      `[name="${field.$xssName}"]`
+    );
+    this.fileList = field.values || [];
     this.initEvent();
   }
   initEvent() {
@@ -864,7 +868,9 @@ var FileRender = class extends Render {
     let addFlag = false;
     const newFiles = [];
     for (let item of files) {
-      const fileCheckList = this.fileList.filter((fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified);
+      const fileCheckList = this.fileList.filter(
+        (fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified
+      );
       if (fileCheckList.length > 0)
         continue;
       this.fileSeq += 1;
@@ -894,17 +900,26 @@ var FileRender = class extends Render {
           <span class="file-name">${file.fileName}</span > 
         </div>`);
       });
-      fileListElement.insertAdjacentHTML("beforeend", fileTemplateHtml.join(""));
+      fileListElement.insertAdjacentHTML(
+        "beforeend",
+        fileTemplateHtml.join("")
+      );
       fileList.forEach((item) => {
-        const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
+        const ele = fileListElement.querySelector(
+          `[data-seq="${item.$seq}"] .remove`
+        );
         if (ele) {
           ele.addEventListener("click", (evt) => {
-            const fileItemElement = evt.target.closest(".file-item");
+            const fileItemElement = evt.target.closest(
+              ".file-item"
+            );
             if (fileItemElement) {
               const attrSeq = fileItemElement.getAttribute("data-seq");
               if (attrSeq) {
                 const seq = parseInt(attrSeq, 10);
-                const removeIdx = this.fileList.findIndex((v) => v.$seq === seq);
+                const removeIdx = this.fileList.findIndex(
+                  (v) => v.$seq === seq
+                );
                 const removeItem = this.fileList[removeIdx];
                 this.fileList.splice(removeIdx, 1);
                 delete this.uploadFiles[seq];
@@ -925,7 +940,9 @@ var FileRender = class extends Render {
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_default.getMessage("fileButton")}</label>
+        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_default.getMessage(
+      "fileButton"
+    )}</label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
@@ -2816,7 +2833,7 @@ var DaraForm = class {
     };
     this.isValidField = (fieldName) => {
       const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-      if (typeof filedInfo === "undefined") {
+      if (utils_default.isUndefined(filedInfo)) {
         throw new Error(`Field name [${fieldName}] not found`);
       }
       const renderInfo = filedInfo.$renderer;
@@ -2871,14 +2888,8 @@ var DaraForm = class {
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
-      const fieldRowElement = this.formElement.querySelector(
-        `#${fileldInfo.$key}`
-      );
-      fileldInfo.$renderer = new fileldInfo.$renderer(
-        fileldInfo,
-        fieldRowElement,
-        this
-      );
+      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
       fieldRowElement?.removeAttribute("id");
     });
   }
@@ -2902,7 +2913,7 @@ var DaraForm = class {
             <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
                 ${field.labelStyle?.hide ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
             </div>
-            <div class="df-field-container">
+            <div class="df-field-container ${field.required ? "required" : ""}">
                 ${fieldHtml}
             </div>
         `;
@@ -2910,7 +2921,7 @@ var DaraForm = class {
   getLabelTemplate(field) {
     const requiredTemplate = field.required ? `<span class="required"></span>` : "";
     const tooltipTemplate = utils_default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-    return `${field.label} ${tooltipTemplate} ${requiredTemplate}`;
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
   /**
    * 그룹 템플릿
@@ -2950,11 +2961,11 @@ var DaraForm = class {
         childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : "";
       }
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
+      let labelHideFlag = childField.labelStyle?.hide;
+      labelHideFlag = labelHideFlag ? labelHideFlag : utils_default.isUndefined(childField.label) ? true : false;
       childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${childField.labelStyle?.hide ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(
-        childField
-      )}</span>`}
-                <span class="df-field-container">${childTempate}</span>
+                ${labelHideFlag ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
+                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
             </li>`);
     }
     childTemplae.push("</ul>");
