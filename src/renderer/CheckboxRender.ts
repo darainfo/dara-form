@@ -21,7 +21,7 @@ export default class CheckboxRender extends Render {
     public initEvent() {
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
         this.defaultCheckValue = [];
-        this.field.values.forEach((val) => {
+        this.field.listItem?.list?.forEach((val) => {
             if (val.selected) {
                 this.defaultCheckValue.push(val.value);
             }
@@ -45,14 +45,17 @@ export default class CheckboxRender extends Render {
 
         const desc = field.description ? `<div>${field.description}</div>` : '';
 
-        templates.push(` <div class="df-field"><div class="field-group">`);
-        field.values.forEach((val) => {
+        const labelKey = this.valuesLabelKey(field);
+        const valueKey = this.valuesValueKey(field);
 
+        templates.push(` <div class="df-field"><div class="field-group">`);
+        field.listItem?.list?.forEach((val) => {
+            const checkVal = val[valueKey];
             templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${val.value ? utils.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
-                        ${val.label}
+                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        ${this.valuesLabelValue(labelKey, val)}
                     </label>
                 </span>
             `);
@@ -70,7 +73,7 @@ export default class CheckboxRender extends Render {
 
         const containerEle = this.rowElement.querySelector('.df-field-container');
         if (containerEle) {
-            this.field.values = items;
+            this.field.listItem.list = items;
             containerEle.innerHTML = CheckboxRender.template(this.field);
 
             this.initEvent();
@@ -91,7 +94,13 @@ export default class CheckboxRender extends Render {
             });
             return checkValue;
         } else {
-            return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).length > 0;
+            const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement; 
+
+            if(checkElement.checked){
+                return checkElement.value ? checkElement.value :true; 
+            }
+
+            return checkElement.value ? '' : false;
         }
     }
 
@@ -127,7 +136,7 @@ export default class CheckboxRender extends Render {
     }
 
     reset() {
-        if (this.field.values.length == 1 && this.defaultCheckValue.length == 1) {
+        if (this.field.listItem?.list?.length == 1 && this.defaultCheckValue.length == 1) {
             this.setValue(true);
         } else {
             this.setValue(this.defaultCheckValue);
@@ -154,6 +163,6 @@ export default class CheckboxRender extends Render {
 
         invalidMessage(this.field, this.rowElement, validResult);
 
-        return true;
+        return validResult;
     }
 }

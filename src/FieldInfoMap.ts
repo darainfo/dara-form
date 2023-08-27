@@ -116,8 +116,7 @@ export default class FieldInfoMap {
      */
     public getAllFieldValue(formValue: any, isValid: boolean) {
         if (isValid !== true) {
-            for (const fieldKey in this.allFieldInfo) {
-                const filedInfo = this.allFieldInfo[fieldKey];
+            for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
                 formValue[filedInfo.name] = filedInfo.$renderer.getValue();
             }
             return formValue;
@@ -125,8 +124,7 @@ export default class FieldInfoMap {
 
         return new Promise((resolve, reject) => {
 
-            for (const fieldKey in this.allFieldInfo) {
-                const filedInfo = this.allFieldInfo[fieldKey];
+            for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
                 
                 if(!this.isValueFieldCheck(filedInfo)){
                     continue; 
@@ -155,13 +153,12 @@ export default class FieldInfoMap {
         if (isValid !== true) {
             let reval = new FormData();
 
-            for (const formKey in formValue) {
-                reval.set(formKey, formValue[formKey]);
+            for (let [key, value] of Object.entries(formValue)) {
+                reval.set(key, value as any);
             }
 
-            for (const fieldKey in this.allFieldInfo) {
-                const filedInfo = this.allFieldInfo[fieldKey];
-                reval.set(filedInfo.name, filedInfo.$renderer.getValue());
+            for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
+                addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
             }
 
             return reval;
@@ -170,29 +167,29 @@ export default class FieldInfoMap {
         return new Promise((resolve, reject) => {
             let reval = new FormData();
 
-            for (const formKey in formValue) {
-                reval.set(formKey, formValue[formKey]);
+            for (let [key, value] of Object.entries(formValue)) {
+                reval.set(key, value as any);
             }
 
-            for (const fieldKey in this.allFieldInfo) {
-                const filedInfo = this.allFieldInfo[fieldKey];
+            for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
                 
-                if(!this.isValueFieldCheck(filedInfo)){
+                if(!this.isValueFieldCheck(fieldInfo)){
                     continue; 
                 }
 
-                const renderInfo = filedInfo.$renderer;
+                const renderInfo = fieldInfo.$renderer;
                 let fieldValid = renderInfo.valid();
 
                 if (fieldValid !== true) {
                     renderInfo.focus();
                     fieldValid = fieldValid as ValidResult;
-                    fieldValid.message = Lanauage.validMessage(filedInfo, fieldValid)[0];
+                    fieldValid.message = Lanauage.validMessage(fieldInfo, fieldValid)[0];
                     reject(new Error(fieldValid.message, { cause: fieldValid }));
                     return;
                 }
 
-                reval.set(filedInfo.name, renderInfo.getValue());
+                addFieldFormData(reval, fieldInfo, renderInfo.getValue());
+                                
             }
 
             resolve(reval);
@@ -269,4 +266,19 @@ export default class FieldInfoMap {
             }
         })
     }
+}
+
+function addFieldFormData(formData: FormData, fieldInfo: FormField, fieldValue:any) {
+    if(fieldInfo.renderType === 'file'){
+
+        const uploadFiles = fieldValue['uploadFile'];
+
+        for(let uploadFile of uploadFiles){
+            formData.append(fieldInfo.name, uploadFile);	
+        }
+
+        formData.set(fieldInfo.name+'RemoveIds', fieldValue['removeIds']);
+    }else{
+        formData.set(fieldInfo.name, fieldValue);
+    }    
 }

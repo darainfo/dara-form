@@ -10,17 +10,10 @@ export interface OptionCallback {
   (...params: any[]): any;
 }
 
-/**
- * radio , checkbox, dropdown 값
- *
- * @export
- * @interface CodeValue
- * @typedef {CodeValue}
- */
-export interface CodeValue {
-  label: string;
-  value: string;
-  selected: boolean;
+export interface ValuesInfo{
+  labelField: string;
+	valueField : string;
+  list : any[];
 }
 
 /**
@@ -98,7 +91,7 @@ export interface FormField {
   };
   template: OptionCallback | string; // 필드 템플릿
   defaultValue: string; // 기본값
-  values: any[]; // dropdown, radio, checkbox
+  listItem: ValuesInfo; // dropdown, radio, checkbox
   children: FormField[]; // child field
   validator?: OptionCallback; // custom validator
   onChange: OptionCallback; //  입력값 변경시 체크 function

@@ -12,9 +12,9 @@ export default class RadioRender extends Render {
 
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
         super(daraForm, field, rowElement);
-        this.defaultCheckValue = this.field.values[0].value;
+        this.defaultCheckValue = this.field.listItem?.list[0].value;
 
-        this.field.values.forEach((val) => {
+        this.field.listItem?.list?.forEach((val) => {
             if (val.selected) {
                 this.defaultCheckValue = val.value;
             }
@@ -46,14 +46,20 @@ export default class RadioRender extends Render {
 
         const desc = field.description ? `<div>${field.description}</div>` : '';
 
+        const labelKey = this.valuesLabelKey(field);
+        const valueKey = this.valuesValueKey(field);
+
         templates.push(`<div class="df-field"><div class="field-group">`);
-        field.values.forEach((val) => {
+        
+        field.listItem?.list?.forEach((val) => {
+
+            const radioVal = val[valueKey];
 
             templates.push(
                 `<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                 <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" ${val.selected ? 'checked' : ''} />
-                    ${val.label}
+                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? 'checked' : ''} />
+                    ${this.valuesLabelValue(labelKey, val)}
                 </label>
                 </span>
                 `
@@ -72,7 +78,7 @@ export default class RadioRender extends Render {
 
         const containerEle = this.rowElement.querySelector('.df-field-container');
         if (containerEle) {
-            this.field.values = items;
+            this.field.listItem.list = items;
             containerEle.innerHTML = RadioRender.template(this.field);
 
             this.initEvent();
@@ -130,7 +136,7 @@ export default class RadioRender extends Render {
 
         invalidMessage(this.field, this.rowElement, validResult);
 
-        return true;
+        return validResult;
     }
 
 }

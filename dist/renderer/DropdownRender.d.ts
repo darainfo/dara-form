@@ -13,4 +13,5 @@ export default class DropdownRender extends Render {
     reset(): void;
     getElement(): HTMLElement;
     valid(): any;
+    static dropdownValuesTemplate(field: FormField): string;
 }

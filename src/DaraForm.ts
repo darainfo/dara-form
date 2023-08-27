@@ -357,8 +357,8 @@ export default class DaraForm {
     this.conditionCheck();
   };
 
-  public setFieldValue = (fieldName: string, values: any) => {
-    this._setFieldValue(fieldName, values);
+  public setFieldValue = (fieldName: string, value: any) => {
+    this._setFieldValue(fieldName, value);
     this.conditionCheck();
   };
 

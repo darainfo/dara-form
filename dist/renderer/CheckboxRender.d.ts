@@ -8,7 +8,7 @@ export default class CheckboxRender extends Render {
     getSelector(): string;
     static template(field: FormField): string;
     setValueItems(items: any): void;
-    getValue(): boolean | any[];
+    getValue(): string | boolean | any[];
     setValue(value: any): void;
     reset(): void;
     getElement(): any;

@@ -16,10 +16,9 @@ export default class DropdownRender extends Render {
       `[name="${field.$xssName}"]`
     ) as HTMLSelectElement;
 
-    this.defaultCheckValue =
-      this.field.values.length > 0 ? this.field.values[0].value : "";
+    this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0].value : "";
 
-    this.field.values.forEach((val) => {
+    this.field.listItem?.list?.forEach((val) => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
       }
@@ -36,29 +35,18 @@ export default class DropdownRender extends Render {
   static template(field: FormField): string {
     const desc = field.description ? `<div>${field.description}</div>` : "";
 
-    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
-
-    field.values.forEach((val) => {
-      template += `<option value="${val.value}" ${
-        val.selected ? "selected" : ""
-      }>${val.label}</option>`;
-    });
-
-    template += `</select> <i class="help-icon"></i></div>
-                    ${desc}
-                    <div class="help-message"></div>
-        `;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">;
+          ${DropdownRender.dropdownValuesTemplate(field)}
+          </select> <i class="help-icon"></i></div>
+                ${desc}
+      <div class="help-message"></div>
+    `;
     return template;
   }
-
+  
   public setValueItems(items: any): void {
-    const containerEle = this.rowElement.querySelector(".df-field-container");
-    if (containerEle) {
-      this.field.values = items;
-      containerEle.innerHTML = DropdownRender.template(this.field);
-
-      this.initEvent();
-    }
+      this.field.listItem.list = items;
+      this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
   }
 
   getValue() {
@@ -93,6 +81,21 @@ export default class DropdownRender extends Render {
 
     invalidMessage(this.field, this.rowElement, validResult);
 
-    return true;
+    return validResult;
   }
+
+  static dropdownValuesTemplate(field: FormField) {
+    const labelKey = this.valuesLabelKey(field);
+    const valueKey = this.valuesValueKey(field);
+    let template = '';
+    field.listItem?.list?.forEach((val) => {
+      template += `<option value="${val[valueKey]}" ${
+        val.selected ? "selected" : ""
+      }>${this.valuesLabelValue(labelKey, val)}</option>`;
+    });
+
+    return template;
+  }
+  
+  
 }

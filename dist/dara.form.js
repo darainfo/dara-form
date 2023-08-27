@@ -110,8 +110,8 @@ class DaraForm {
       });
       this.conditionCheck();
     };
-    this.setFieldValue = (fieldName, values) => {
-      this._setFieldValue(fieldName, values);
+    this.setFieldValue = (fieldName, value) => {
+      this._setFieldValue(fieldName, value);
       this.conditionCheck();
     };
     this.setFieldItems = (fieldName, values) => {
@@ -518,15 +518,13 @@ class FieldInfoMap {
    */
   getAllFieldValue(formValue, isValid) {
     if (isValid !== true) {
-      for (const fieldKey in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldKey];
+      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
         formValue[filedInfo.name] = filedInfo.$renderer.getValue();
       }
       return formValue;
     }
     return new Promise((resolve, reject) => {
-      for (const fieldKey in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldKey];
+      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
         if (!this.isValueFieldCheck(filedInfo)) {
           continue;
         }
@@ -549,37 +547,35 @@ class FieldInfoMap {
   getFormDataValue(formValue, isValid) {
     if (isValid !== true) {
       let reval = new FormData();
-      for (const formKey in formValue) {
-        reval.set(formKey, formValue[formKey]);
+      for (let [key, value] of Object.entries(formValue)) {
+        reval.set(key, value);
       }
-      for (const fieldKey in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldKey];
-        reval.set(filedInfo.name, filedInfo.$renderer.getValue());
+      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
+        addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
       }
       return reval;
     }
     return new Promise((resolve, reject) => {
       let reval = new FormData();
-      for (const formKey in formValue) {
-        reval.set(formKey, formValue[formKey]);
+      for (let [key, value] of Object.entries(formValue)) {
+        reval.set(key, value);
       }
-      for (const fieldKey in this.allFieldInfo) {
-        const filedInfo = this.allFieldInfo[fieldKey];
-        if (!this.isValueFieldCheck(filedInfo)) {
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        if (!this.isValueFieldCheck(fieldInfo)) {
           continue;
         }
-        const renderInfo = filedInfo.$renderer;
+        const renderInfo = fieldInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
           renderInfo.focus();
           fieldValid = fieldValid;
-          fieldValid.message = Lanauage_1.default.validMessage(filedInfo, fieldValid)[0];
+          fieldValid.message = Lanauage_1.default.validMessage(fieldInfo, fieldValid)[0];
           reject(new Error(fieldValid.message, {
             cause: fieldValid
           }));
           return;
         }
-        reval.set(filedInfo.name, renderInfo.getValue());
+        addFieldFormData(reval, fieldInfo, renderInfo.getValue());
       }
       resolve(reval);
     });
@@ -643,6 +639,17 @@ class FieldInfoMap {
   }
 }
 exports["default"] = FieldInfoMap;
+function addFieldFormData(formData, fieldInfo, fieldValue) {
+  if (fieldInfo.renderType === 'file') {
+    const uploadFiles = fieldValue['uploadFile'];
+    for (let uploadFile of uploadFiles) {
+      formData.append(fieldInfo.name, uploadFile);
+    }
+    formData.set(fieldInfo.name + 'RemoveIds', fieldValue['removeIds']);
+  } else {
+    formData.set(fieldInfo.name, fieldValue);
+  }
+}
 
 /***/ }),
 
@@ -856,9 +863,10 @@ class CheckboxRender extends Render_1.default {
     this.setDefaultInfo();
   }
   initEvent() {
+    var _a, _b;
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
     this.defaultCheckValue = [];
-    this.field.values.forEach(val => {
+    (_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue.push(val.value);
       }
@@ -874,16 +882,20 @@ class CheckboxRender extends Render_1.default {
     return `input[type="checkbox"][name="${this.field.$xssName}"]`;
   }
   static template(field) {
+    var _a, _b;
     const templates = [];
     const fieldName = field.name;
     const desc = field.description ? `<div>${field.description}</div>` : '';
+    const labelKey = this.valuesLabelKey(field);
+    const valueKey = this.valuesValueKey(field);
     templates.push(` <div class="df-field"><div class="field-group">`);
-    field.values.forEach(val => {
+    (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+      const checkVal = val[valueKey];
       templates.push(`
                 <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${val.value ? utils_1.default.replace(val.value) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
-                        ${val.label}
+                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        ${this.valuesLabelValue(labelKey, val)}
                     </label>
                 </span>
             `);
@@ -897,7 +909,7 @@ class CheckboxRender extends Render_1.default {
   setValueItems(items) {
     const containerEle = this.rowElement.querySelector('.df-field-container');
     if (containerEle) {
-      this.field.values = items;
+      this.field.listItem.list = items;
       containerEle.innerHTML = CheckboxRender.template(this.field);
       this.initEvent();
     }
@@ -914,7 +926,11 @@ class CheckboxRender extends Render_1.default {
       });
       return checkValue;
     } else {
-      return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).length > 0;
+      const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`);
+      if (checkElement.checked) {
+        return checkElement.value ? checkElement.value : true;
+      }
+      return checkElement.value ? '' : false;
     }
   }
   setValue(value) {
@@ -943,7 +959,8 @@ class CheckboxRender extends Render_1.default {
     });
   }
   reset() {
-    if (this.field.values.length == 1 && this.defaultCheckValue.length == 1) {
+    var _a, _b;
+    if (((_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.length) == 1 && this.defaultCheckValue.length == 1) {
       this.setValue(true);
     } else {
       this.setValue(this.defaultCheckValue);
@@ -966,7 +983,7 @@ class CheckboxRender extends Render_1.default {
       }
     }
     (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
-    return true;
+    return validResult;
   }
 }
 exports["default"] = CheckboxRender;
@@ -1130,10 +1147,11 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class DropdownRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
+    var _a, _b, _c, _d, _e;
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.defaultCheckValue = this.field.values.length > 0 ? this.field.values[0].value : "";
-    this.field.values.forEach(val => {
+    this.defaultCheckValue = ((_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.length) > 0 ? (_c = this.field.listItem) === null || _c === void 0 ? void 0 : _c.list[0].value : "";
+    (_e = (_d = this.field.listItem) === null || _d === void 0 ? void 0 : _d.list) === null || _e === void 0 ? void 0 : _e.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
       }
@@ -1146,23 +1164,17 @@ class DropdownRender extends Render_1.default {
   }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
-    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
-    field.values.forEach(val => {
-      template += `<option value="${val.value}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
-    });
-    template += `</select> <i class="help-icon"></i></div>
-                    ${desc}
-                    <div class="help-message"></div>
-        `;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">;
+          ${DropdownRender.dropdownValuesTemplate(field)}
+          </select> <i class="help-icon"></i></div>
+                ${desc}
+      <div class="help-message"></div>
+    `;
     return template;
   }
   setValueItems(items) {
-    const containerEle = this.rowElement.querySelector(".df-field-container");
-    if (containerEle) {
-      this.field.values = items;
-      containerEle.innerHTML = DropdownRender.template(this.field);
-      this.initEvent();
-    }
+    this.field.listItem.list = items;
+    this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
   }
   getValue() {
     return this.element.value;
@@ -1191,7 +1203,17 @@ class DropdownRender extends Render_1.default {
       }
     }
     (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
-    return true;
+    return validResult;
+  }
+  static dropdownValuesTemplate(field) {
+    var _a, _b;
+    const labelKey = this.valuesLabelKey(field);
+    const valueKey = this.valuesValueKey(field);
+    let template = '';
+    (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+      template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+    });
+    return template;
   }
 }
 exports["default"] = DropdownRender;
@@ -1217,13 +1239,14 @@ const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/Lana
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class FileRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
+    var _a;
     super(daraForm, field, rowElement);
     this.removeIds = [];
     this.uploadFiles = {};
     this.fileList = [];
     this.fileSeq = 0;
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    this.fileList = field.values || [];
+    this.fileList = ((_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) || [];
     this.initEvent();
   }
   initEvent() {
@@ -1321,8 +1344,9 @@ class FileRender extends Render_1.default {
     };
   }
   setValue(value) {
+    this.element.value = '';
+    this.fileList = value || [];
     this.field.$value = value;
-    this.element.value = value;
   }
   reset() {
     this.setValue("");
@@ -1559,9 +1583,10 @@ const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils *
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class RadioRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
+    var _a, _b, _c;
     super(daraForm, field, rowElement);
-    this.defaultCheckValue = this.field.values[0].value;
-    this.field.values.forEach(val => {
+    this.defaultCheckValue = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list[0].value;
+    (_c = (_b = this.field.listItem) === null || _b === void 0 ? void 0 : _b.list) === null || _c === void 0 ? void 0 : _c.forEach(val => {
       if (val.selected) {
         this.defaultCheckValue = val.value;
       }
@@ -1582,15 +1607,19 @@ class RadioRender extends Render_1.default {
     return `input[type="radio"][name="${this.field.$xssName}"]`;
   }
   static template(field) {
+    var _a, _b;
     const templates = [];
     const fieldName = field.name;
     const desc = field.description ? `<div>${field.description}</div>` : '';
+    const labelKey = this.valuesLabelKey(field);
+    const valueKey = this.valuesValueKey(field);
     templates.push(`<div class="df-field"><div class="field-group">`);
-    field.values.forEach(val => {
+    (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+      const radioVal = val[valueKey];
       templates.push(`<span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
                 <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" ${val.selected ? 'checked' : ''} />
-                    ${val.label}
+                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? 'checked' : ''} />
+                    ${this.valuesLabelValue(labelKey, val)}
                 </label>
                 </span>
                 `);
@@ -1604,7 +1633,7 @@ class RadioRender extends Render_1.default {
   setValueItems(items) {
     const containerEle = this.rowElement.querySelector('.df-field-container');
     if (containerEle) {
-      this.field.values = items;
+      this.field.listItem.list = items;
       containerEle.innerHTML = RadioRender.template(this.field);
       this.initEvent();
     }
@@ -1653,7 +1682,7 @@ class RadioRender extends Render_1.default {
       }
     }
     (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
-    return true;
+    return validResult;
   }
 }
 exports["default"] = RadioRender;
@@ -1764,12 +1793,33 @@ class Render {
   }
   setValueItems(value) {}
   changeEventCall(field, e, rederInfo) {
+    var _a;
     if (field.onChange) {
-      field.onChange.call(null, {
+      let fieldValue = rederInfo.getValue();
+      let changeValue = {
         field: field,
-        evt: e,
-        value: rederInfo.getValue()
-      });
+        evt: e
+      };
+      changeValue.value = fieldValue;
+      if ((_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) {
+        let valuesItem = [];
+        const valueKey = Render.valuesValueKey(field);
+        for (let val of field.listItem.list) {
+          let changeVal = val[valueKey];
+          if (utils_1.default.isString(fieldValue)) {
+            if (changeVal == fieldValue) {
+              valuesItem.push(val);
+              break;
+            }
+          } else if (utils_1.default.isArray(fieldValue)) {
+            if (fieldValue.includes(changeVal)) {
+              valuesItem.push(val);
+            }
+          }
+        }
+        changeValue.valueItem = valuesItem;
+      }
+      field.onChange.call(null, changeValue);
     }
     this.daraForm.conditionCheck();
   }
@@ -1787,6 +1837,25 @@ class Render {
   }
   commonValidator() {
     //this.field.diff
+  }
+  static valuesValueKey(field) {
+    var _a;
+    return ((_a = field.listItem) === null || _a === void 0 ? void 0 : _a.valueField) ? field.listItem.valueField : 'value';
+  }
+  static valuesLabelKey(field) {
+    var _a;
+    return ((_a = field.listItem) === null || _a === void 0 ? void 0 : _a.labelField) ? field.listItem.labelField : 'label';
+  }
+  static valuesLabelValue(label, val) {
+    let replaceFlag = false;
+    const resultValue = label.replace(/\{\{([A-Za-z0-9_.]*)\}\}/g, (match, key) => {
+      replaceFlag = true;
+      return val[key] || '';
+    });
+    if (replaceFlag) {
+      return resultValue;
+    }
+    return val[label] || '';
   }
 }
 exports["default"] = Render;

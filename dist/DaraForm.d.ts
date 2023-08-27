@@ -91,7 +91,7 @@ export default class DaraForm {
      * @param values
      */
     setValue: (values: any) => void;
-    setFieldValue: (fieldName: string, values: any) => void;
+    setFieldValue: (fieldName: string, value: any) => void;
     private _setFieldValue;
     setFieldItems: (fieldName: string, values: any) => void;
     /**

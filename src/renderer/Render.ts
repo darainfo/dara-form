@@ -46,11 +46,37 @@ export default abstract class Render {
 
     public changeEventCall(field: FormField, e: Event | null, rederInfo: Render) {
         if (field.onChange) {
-            field.onChange.call(null, {
+            
+            let fieldValue = rederInfo.getValue();
+
+            let changeValue:any = {
                 field: field,
-                evt: e,
-                value: rederInfo.getValue()
-            });
+                evt: e
+            };
+
+            changeValue.value = fieldValue;
+                   
+            if(field.listItem?.list){
+                let valuesItem = [];
+                const valueKey = Render.valuesValueKey(field);
+
+                for(let val of field.listItem.list){
+                    let changeVal = val[valueKey]; 
+                    if(utils.isString(fieldValue)){
+                        if(changeVal==fieldValue){
+                            valuesItem.push(val);
+                            break; 
+                        }    
+                    }else if(utils.isArray(fieldValue)){
+                        if(fieldValue.includes(changeVal)){
+                            valuesItem.push(val);
+                        }
+                    }
+                }
+                changeValue.valueItem = valuesItem;
+            }
+
+            field.onChange.call(null,changeValue);
         }
 
         this.daraForm.conditionCheck();
@@ -72,6 +98,28 @@ export default abstract class Render {
 
     public commonValidator() {
         //this.field.diff
+    }
+
+    public static valuesValueKey(field: FormField):string {
+        return field.listItem?.valueField ? field.listItem.valueField :'value';
+    }
+
+    public static valuesLabelKey(field: FormField):string {
+        return field.listItem?.labelField ? field.listItem.labelField :'label';
+    }
+
+    public static valuesLabelValue(label:string, val:any){
+        let replaceFlag = false; 
+        const resultValue = label.replace(/\{\{([A-Za-z0-9_.]*)\}\}/g, (match, key) => {
+            replaceFlag = true; 
+            return val[key]||'';
+        });
+
+        if(replaceFlag){
+            return resultValue;
+        }
+
+        return val[label]||'';
     }
 
 }

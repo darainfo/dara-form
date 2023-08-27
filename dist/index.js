@@ -104,7 +104,7 @@ var init_Render = __esm({
   "src/renderer/Render.ts"() {
     "use strict";
     init_utils();
-    Render = class {
+    Render = class _Render {
       constructor(form, field, rowElement) {
         this.daraForm = form;
         this.field = field;
@@ -130,11 +130,31 @@ var init_Render = __esm({
       }
       changeEventCall(field, e, rederInfo) {
         if (field.onChange) {
-          field.onChange.call(null, {
+          let fieldValue = rederInfo.getValue();
+          let changeValue = {
             field,
-            evt: e,
-            value: rederInfo.getValue()
-          });
+            evt: e
+          };
+          changeValue.value = fieldValue;
+          if (field.listItem?.list) {
+            let valuesItem = [];
+            const valueKey = _Render.valuesValueKey(field);
+            for (let val of field.listItem.list) {
+              let changeVal = val[valueKey];
+              if (utils_default.isString(fieldValue)) {
+                if (changeVal == fieldValue) {
+                  valuesItem.push(val);
+                  break;
+                }
+              } else if (utils_default.isArray(fieldValue)) {
+                if (fieldValue.includes(changeVal)) {
+                  valuesItem.push(val);
+                }
+              }
+            }
+            changeValue.valueItem = valuesItem;
+          }
+          field.onChange.call(null, changeValue);
         }
         this.daraForm.conditionCheck();
       }
@@ -151,6 +171,23 @@ var init_Render = __esm({
         ;
       }
       commonValidator() {
+      }
+      static valuesValueKey(field) {
+        return field.listItem?.valueField ? field.listItem.valueField : "value";
+      }
+      static valuesLabelKey(field) {
+        return field.listItem?.labelField ? field.listItem.labelField : "label";
+      }
+      static valuesLabelValue(label, val) {
+        let replaceFlag = false;
+        const resultValue = label.replace(/\{\{([A-Za-z0-9_.]*)\}\}/g, (match, key) => {
+          replaceFlag = true;
+          return val[key] || "";
+        });
+        if (replaceFlag) {
+          return resultValue;
+        }
+        return val[label] || "";
       }
     };
   }
@@ -551,8 +588,8 @@ var init_DropdownRender = __esm({
         this.element = rowElement.querySelector(
           `[name="${field.$xssName}"]`
         );
-        this.defaultCheckValue = this.field.values.length > 0 ? this.field.values[0].value : "";
-        this.field.values.forEach((val) => {
+        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0].value : "";
+        this.field.listItem?.list?.forEach((val) => {
           if (val.selected) {
             this.defaultCheckValue = val.value;
           }
@@ -565,23 +602,17 @@ var init_DropdownRender = __esm({
       }
       static template(field) {
         const desc = field.description ? `<div>${field.description}</div>` : "";
-        let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">`;
-        field.values.forEach((val) => {
-          template += `<option value="${val.value}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
-        });
-        template += `</select> <i class="help-icon"></i></div>
-                    ${desc}
-                    <div class="help-message"></div>
-        `;
+        let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">;
+          ${_DropdownRender.dropdownValuesTemplate(field)}
+          </select> <i class="help-icon"></i></div>
+                ${desc}
+      <div class="help-message"></div>
+    `;
         return template;
       }
       setValueItems(items) {
-        const containerEle = this.rowElement.querySelector(".df-field-container");
-        if (containerEle) {
-          this.field.values = items;
-          containerEle.innerHTML = _DropdownRender.template(this.field);
-          this.initEvent();
-        }
+        this.field.listItem.list = items;
+        this.element.innerHTML = _DropdownRender.dropdownValuesTemplate(this.field);
       }
       getValue() {
         return this.element.value;
@@ -607,7 +638,16 @@ var init_DropdownRender = __esm({
           }
         }
         invalidMessage(this.field, this.rowElement, validResult);
-        return true;
+        return validResult;
+      }
+      static dropdownValuesTemplate(field) {
+        const labelKey = this.valuesLabelKey(field);
+        const valueKey = this.valuesValueKey(field);
+        let template = "";
+        field.listItem?.list?.forEach((val) => {
+          template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+        });
+        return template;
       }
     };
   }
@@ -685,7 +725,7 @@ var init_CheckboxRender = __esm({
       initEvent() {
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
         this.defaultCheckValue = [];
-        this.field.values.forEach((val) => {
+        this.field.listItem?.list?.forEach((val) => {
           if (val.selected) {
             this.defaultCheckValue.push(val.value);
           }
@@ -704,13 +744,16 @@ var init_CheckboxRender = __esm({
         const templates = [];
         const fieldName = field.name;
         const desc = field.description ? `<div>${field.description}</div>` : "";
+        const labelKey = this.valuesLabelKey(field);
+        const valueKey = this.valuesValueKey(field);
         templates.push(` <div class="df-field"><div class="field-group">`);
-        field.values.forEach((val) => {
+        field.listItem?.list?.forEach((val) => {
+          const checkVal = val[valueKey];
           templates.push(`
                 <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${val.value ? utils_default.replace(val.value) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
-                        ${val.label}
+                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                        ${this.valuesLabelValue(labelKey, val)}
                     </label>
                 </span>
             `);
@@ -724,7 +767,7 @@ var init_CheckboxRender = __esm({
       setValueItems(items) {
         const containerEle = this.rowElement.querySelector(".df-field-container");
         if (containerEle) {
-          this.field.values = items;
+          this.field.listItem.list = items;
           containerEle.innerHTML = _CheckboxRender.template(this.field);
           this.initEvent();
         }
@@ -741,7 +784,11 @@ var init_CheckboxRender = __esm({
           });
           return checkValue;
         } else {
-          return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]:checked`).length > 0;
+          const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`);
+          if (checkElement.checked) {
+            return checkElement.value ? checkElement.value : true;
+          }
+          return checkElement.value ? "" : false;
         }
       }
       setValue(value) {
@@ -771,7 +818,7 @@ var init_CheckboxRender = __esm({
         });
       }
       reset() {
-        if (this.field.values.length == 1 && this.defaultCheckValue.length == 1) {
+        if (this.field.listItem?.list?.length == 1 && this.defaultCheckValue.length == 1) {
           this.setValue(true);
         } else {
           this.setValue(this.defaultCheckValue);
@@ -791,7 +838,7 @@ var init_CheckboxRender = __esm({
           }
         }
         invalidMessage(this.field, this.rowElement, validResult);
-        return true;
+        return validResult;
       }
     };
   }
@@ -810,8 +857,8 @@ var init_RadioRender = __esm({
     RadioRender = class _RadioRender extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.defaultCheckValue = this.field.values[0].value;
-        this.field.values.forEach((val) => {
+        this.defaultCheckValue = this.field.listItem?.list[0].value;
+        this.field.listItem?.list?.forEach((val) => {
           if (val.selected) {
             this.defaultCheckValue = val.value;
           }
@@ -835,13 +882,16 @@ var init_RadioRender = __esm({
         const templates = [];
         const fieldName = field.name;
         const desc = field.description ? `<div>${field.description}</div>` : "";
+        const labelKey = this.valuesLabelKey(field);
+        const valueKey = this.valuesValueKey(field);
         templates.push(`<div class="df-field"><div class="field-group">`);
-        field.values.forEach((val) => {
+        field.listItem?.list?.forEach((val) => {
+          const radioVal = val[valueKey];
           templates.push(
             `<span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
                 <label>
-                    <input type="radio" name="${fieldName}" value="${val.value}" class="form-field radio" ${val.selected ? "checked" : ""} />
-                    ${val.label}
+                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+                    ${this.valuesLabelValue(labelKey, val)}
                 </label>
                 </span>
                 `
@@ -856,7 +906,7 @@ var init_RadioRender = __esm({
       setValueItems(items) {
         const containerEle = this.rowElement.querySelector(".df-field-container");
         if (containerEle) {
-          this.field.values = items;
+          this.field.listItem.list = items;
           containerEle.innerHTML = _RadioRender.template(this.field);
           this.initEvent();
         }
@@ -901,7 +951,7 @@ var init_RadioRender = __esm({
           }
         }
         invalidMessage(this.field, this.rowElement, validResult);
-        return true;
+        return validResult;
       }
     };
   }
@@ -999,7 +1049,7 @@ var init_FileRender = __esm({
         this.element = rowElement.querySelector(
           `[name="${field.$xssName}"]`
         );
-        this.fileList = field.values || [];
+        this.fileList = field.listItem?.list || [];
         this.initEvent();
       }
       initEvent() {
@@ -1110,8 +1160,9 @@ var init_FileRender = __esm({
         };
       }
       setValue(value) {
+        this.element.value = "";
+        this.fileList = value || [];
         this.field.$value = value;
-        this.element.value = value;
       }
       reset() {
         this.setValue("");
@@ -2736,6 +2787,17 @@ var init_renderFactory = __esm({
 });
 
 // src/FieldInfoMap.ts
+function addFieldFormData(formData, fieldInfo, fieldValue) {
+  if (fieldInfo.renderType === "file") {
+    const uploadFiles = fieldValue["uploadFile"];
+    for (let uploadFile of uploadFiles) {
+      formData.append(fieldInfo.name, uploadFile);
+    }
+    formData.set(fieldInfo.name + "RemoveIds", fieldValue["removeIds"]);
+  } else {
+    formData.set(fieldInfo.name, fieldValue);
+  }
+}
 var FieldInfoMap;
 var init_FieldInfoMap = __esm({
   "src/FieldInfoMap.ts"() {
@@ -2828,15 +2890,13 @@ var init_FieldInfoMap = __esm({
        */
       getAllFieldValue(formValue, isValid) {
         if (isValid !== true) {
-          for (const fieldKey in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldKey];
+          for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
             formValue[filedInfo.name] = filedInfo.$renderer.getValue();
           }
           return formValue;
         }
         return new Promise((resolve, reject) => {
-          for (const fieldKey in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldKey];
+          for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
             if (!this.isValueFieldCheck(filedInfo)) {
               continue;
             }
@@ -2857,35 +2917,33 @@ var init_FieldInfoMap = __esm({
       getFormDataValue(formValue, isValid) {
         if (isValid !== true) {
           let reval = new FormData();
-          for (const formKey in formValue) {
-            reval.set(formKey, formValue[formKey]);
+          for (let [key, value] of Object.entries(formValue)) {
+            reval.set(key, value);
           }
-          for (const fieldKey in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldKey];
-            reval.set(filedInfo.name, filedInfo.$renderer.getValue());
+          for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
+            addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
           }
           return reval;
         }
         return new Promise((resolve, reject) => {
           let reval = new FormData();
-          for (const formKey in formValue) {
-            reval.set(formKey, formValue[formKey]);
+          for (let [key, value] of Object.entries(formValue)) {
+            reval.set(key, value);
           }
-          for (const fieldKey in this.allFieldInfo) {
-            const filedInfo = this.allFieldInfo[fieldKey];
-            if (!this.isValueFieldCheck(filedInfo)) {
+          for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+            if (!this.isValueFieldCheck(fieldInfo)) {
               continue;
             }
-            const renderInfo = filedInfo.$renderer;
+            const renderInfo = fieldInfo.$renderer;
             let fieldValid = renderInfo.valid();
             if (fieldValid !== true) {
               renderInfo.focus();
               fieldValid = fieldValid;
-              fieldValid.message = Lanauage_default.validMessage(filedInfo, fieldValid)[0];
+              fieldValid.message = Lanauage_default.validMessage(fieldInfo, fieldValid)[0];
               reject(new Error(fieldValid.message, { cause: fieldValid }));
               return;
             }
-            reval.set(filedInfo.name, renderInfo.getValue());
+            addFieldFormData(reval, fieldInfo, renderInfo.getValue());
           }
           resolve(reval);
         });
@@ -3037,8 +3095,8 @@ var init_DaraForm = __esm({
           });
           this.conditionCheck();
         };
-        this.setFieldValue = (fieldName, values) => {
-          this._setFieldValue(fieldName, values);
+        this.setFieldValue = (fieldName, value) => {
+          this._setFieldValue(fieldName, value);
           this.conditionCheck();
         };
         this.setFieldItems = (fieldName, values) => {

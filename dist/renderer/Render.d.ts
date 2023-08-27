@@ -20,4 +20,7 @@ export default abstract class Render {
     show(): void;
     hide(): void;
     commonValidator(): void;
+    static valuesValueKey(field: FormField): string;
+    static valuesLabelKey(field: FormField): string;
+    static valuesLabelValue(label: string, val: any): any;
 }

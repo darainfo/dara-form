@@ -19,7 +19,7 @@ export default class FileRender extends Render {
     this.element = rowElement.querySelector(
       `[name="${field.$xssName}"]`
     ) as HTMLInputElement;
-    this.fileList = field.values || [];
+    this.fileList = field.listItem?.list || [];
     this.initEvent();
   }
 
@@ -160,8 +160,9 @@ export default class FileRender extends Render {
   }
 
   setValue(value: any): void {
+    this.element.value = '';
+    this.fileList = value||[];
     this.field.$value = value;
-    this.element.value = value;
   }
 
   reset() {
