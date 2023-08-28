@@ -16,9 +16,7 @@ export default class FileRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
 
-    this.element = rowElement.querySelector(
-      `[name="${field.$xssName}"]`
-    ) as HTMLInputElement;
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.fileList = field.listItem?.list || [];
     this.initEvent();
   }
@@ -48,10 +46,7 @@ export default class FileRender extends Render {
 
     for (let item of files) {
       const fileCheckList = this.fileList.filter(
-        (fileItem) =>
-          fileItem.fileName == item.name &&
-          fileItem.fileSize == item.size &&
-          fileItem.lastModified == item.lastModified
+        (fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified
       );
 
       if (fileCheckList.length > 0) continue;
@@ -74,60 +69,98 @@ export default class FileRender extends Render {
     }
   }
 
-  setFileList(fileList: FielInfo[]) {
+  private setFileList(fileList: FielInfo[], initFlag?: boolean | undefined) {
     const fileListElement = this.rowElement.querySelector(".dara-file-list");
+
     if (fileListElement) {
+      if (initFlag === true) {
+        fileListElement.innerHTML = "";
+      }
+
       const fileTemplateHtml: string[] = [];
 
       fileList.forEach((file) => {
         fileTemplateHtml.push(`
         <div class="file-item" data-seq="${file.$seq}">
-          ${
-            file.fileId
-              ? '<span class="file-icon download"></span>'
-              : '<span class="file-icon"></span>'
-          } <span class="file-icon remove"></span>
+          ${file.fileId ? '<span class="file-icon download"></span>' : '<span class="file-icon"></span>'} <span class="file-icon remove"></span>
           <span class="file-name">${file.fileName}</span > 
         </div>`);
       });
 
-      fileListElement.insertAdjacentHTML(
-        "beforeend",
-        fileTemplateHtml.join("")
-      );
+      fileListElement.insertAdjacentHTML("beforeend", fileTemplateHtml.join(""));
 
       fileList.forEach((item) => {
-        const ele = fileListElement.querySelector(
-          `[data-seq="${item.$seq}"] .remove`
-        );
-        if (ele) {
-          ele.addEventListener("click", (evt: Event) => {
-            const fileItemElement = (evt.target as Element).closest(
-              ".file-item"
-            );
+        this.removeFileEvent(item, fileListElement);
+        this.downloadFileEvent(item, fileListElement);
+      });
+    }
+  }
 
-            if (fileItemElement) {
-              const attrSeq = fileItemElement.getAttribute("data-seq");
-              if (attrSeq) {
-                const seq = parseInt(attrSeq, 10);
-                const removeIdx = this.fileList.findIndex(
-                  (v) => v.$seq === seq
-                );
+  /**
+   * 파일 다운로드 이벤트 처리.
+   *
+   * @param item
+   * @param fileListElement
+   */
+  private downloadFileEvent(item: FielInfo, fileListElement: Element) {
+    const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .download`);
+    if (ele) {
+      ele.addEventListener("click", (evt: Event) => {
+        const fileItemElement = (evt.target as Element).closest(".file-item");
 
-                const removeItem = this.fileList[removeIdx];
+        if (fileItemElement) {
+          const attrSeq = fileItemElement.getAttribute("data-seq");
+          if (attrSeq) {
+            const seq = parseInt(attrSeq, 10);
+            const idx = this.fileList.findIndex((v) => v.$seq === seq);
 
-                this.fileList.splice(removeIdx, 1);
-                delete this.uploadFiles[seq];
-                fileItemElement.remove();
+            const item = this.fileList[idx];
 
-                if (removeItem.fileId) {
-                  this.removeIds.push(removeItem.fileId);
-                }
-              }
+            if (item["url"]) {
+              location.href = item["url"];
+              return;
             }
-            this.valid();
-          });
+
+            if (this.field.fileDownload) {
+              this.field.fileDownload.call(null, { file: item, field: this.field });
+              return;
+            }
+          }
         }
+      });
+    }
+  }
+
+  /**
+   * 파일 삭제  처리.
+   *
+   * @param item
+   * @param fileListElement
+   */
+  private removeFileEvent(item: FielInfo, fileListElement: Element) {
+    const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
+    if (ele) {
+      ele.addEventListener("click", (evt: Event) => {
+        const fileItemElement = (evt.target as Element).closest(".file-item");
+
+        if (fileItemElement) {
+          const attrSeq = fileItemElement.getAttribute("data-seq");
+          if (attrSeq) {
+            const seq = parseInt(attrSeq, 10);
+            const removeIdx = this.fileList.findIndex((v) => v.$seq === seq);
+
+            const removeItem = this.fileList[removeIdx];
+
+            this.fileList.splice(removeIdx, 1);
+            delete this.uploadFiles[seq];
+            fileItemElement.remove();
+
+            if (removeItem.fileId) {
+              this.removeIds.push(removeItem.fileId);
+            }
+          }
+        }
+        this.valid();
       });
     }
   }
@@ -138,9 +171,7 @@ export default class FileRender extends Render {
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${
-          field.name
-        }" class="form-field file" multiple />${Lanauage.getMessage(
+        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage.getMessage(
       "fileButton"
     )}</label>
         <i class="dara-icon help-icon"></i>
@@ -159,14 +190,27 @@ export default class FileRender extends Render {
     };
   }
 
+  public setValueItems(value: any): void {
+    this.fileList = [];
+    this.uploadFiles = [];
+    this.removeIds = [];
+    for (let file of value) {
+      file.$seq = this.fileSeq += 1;
+
+      this.fileList.push(file);
+    }
+
+    this.setFileList(this.fileList, true);
+  }
+
   setValue(value: any): void {
-    this.element.value = '';
-    this.fileList = value||[];
+    this.element.value = "";
     this.field.$value = value;
   }
 
   reset() {
     this.setValue("");
+    this.setValueItems([]);
     resetRowElementStyleClass(this.rowElement);
   }
 

@@ -1,19 +1,14 @@
-import {
-  FORM_FIELD_TYPE,
-  RENDER_TYPE,
-  REGEXP_TYPE,
-  TEXT_ALIGN_TYPE,
-} from "src/constants";
+import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE } from "src/constants";
 import Render from "src/renderer/Render";
 
 export interface OptionCallback {
   (...params: any[]): any;
 }
 
-export interface ValuesInfo{
+export interface ValuesInfo {
   labelField: string;
-	valueField : string;
-  list : any[];
+  valueField: string;
+  list: any[];
 }
 
 /**
@@ -96,6 +91,7 @@ export interface FormField {
   validator?: OptionCallback; // custom validator
   onChange: OptionCallback; //  입력값 변경시 체크 function
   onClick: OptionCallback; // button onclick function
+  fileDownload: OptionCallback; // file download function
   renderer: Render; // custom renderer
   conditional: ConditionInfo; // 보이기 여부
   $renderer: Render; // 실제 render

@@ -11,10 +11,9 @@
         <button type="button" onclick="formObj.addItem()">Add</button>
         <button type="button" onclick="formObj.getValue()">getValue</button>
         <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
-        <button type="button" onclick="formBuilder.isValidForm()">
-          valid check
-        </button>
+        <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
         <button type="button" onclick="formBuilder.resetForm()">Reset</button>
+        <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
       </div>
     </div>
 
@@ -89,7 +88,10 @@
       {
         name: "picture",
         label: "사진",
-        renderType : 'file'
+        renderType: "file",
+        fileDownload: (item) => {
+          console.log(item);
+        },
       },
       ,
       {
@@ -97,17 +99,17 @@
         label: "드랍다운",
         renderType: "dropdown",
         required: true,
-        listItem:{
-          labelField : '{{label}}({{value}})'
-          ,valueField : 'value'
-          ,list : [
-            {value:'111', label:'AAA'},
-            {value:'222', label:'BBB'}
-          ]
-        } ,
-        onChange : function (a  ){
+        listItem: {
+          labelField: "{{label}}({{value}})",
+          valueField: "value",
+          list: [
+            { value: "111", label: "AAA" },
+            { value: "222", label: "BBB" },
+          ],
+        },
+        onChange: function (a) {
           console.log(a);
-        }
+        },
       },
       {
         name: "birth2",
@@ -133,9 +135,9 @@
 
             required: true,
             renderType: "checkbox",
-            listItem:{
-              list : [{ label: "option1", value:"Y", selected: true }]
-            }, 
+            listItem: {
+              list: [{ label: "option1", value: "Y", selected: true }],
+            },
             onChange: (arg) => {
               console.log(arg);
             },
@@ -262,25 +264,29 @@
       });
     },
     getValue: () => {
-      
       alert(JSON.stringify(formBuilder.getValue()));
-    }
-    ,getValuePromise: () => {
+    },
+    getValuePromise: () => {
       formBuilder
         .getFormDataValue(true)
         .then((aa) => {
-
           console.log(aa);
 
           for (let [name, value] of aa.entries()) {
-				  console.log(`${name} :  ${value}`);
-				}
+            console.log(`${name} :  ${value}`);
+          }
 
           alert(JSON.stringify(aa));
         })
         .catch((e) => {
           alert(e.message);
         });
+    },
+    setFieldItems: () => {
+      formBuilder.setFieldItems("picture", [
+        { fileId: "test1", fileName: "aaa.zip" },
+        { fileId: "test2", fileName: "bbb.zip" },
+      ]);
     },
   };
 </script>

@@ -1046,9 +1046,7 @@ var init_FileRender = __esm({
         this.uploadFiles = {};
         this.fileList = [];
         this.fileSeq = 0;
-        this.element = rowElement.querySelector(
-          `[name="${field.$xssName}"]`
-        );
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.fileList = field.listItem?.list || [];
         this.initEvent();
       }
@@ -1091,9 +1089,12 @@ var init_FileRender = __esm({
           this.fileList.push(...newFiles);
         }
       }
-      setFileList(fileList) {
+      setFileList(fileList, initFlag) {
         const fileListElement = this.rowElement.querySelector(".dara-file-list");
         if (fileListElement) {
+          if (initFlag === true) {
+            fileListElement.innerHTML = "";
+          }
           const fileTemplateHtml = [];
           fileList.forEach((file) => {
             fileTemplateHtml.push(`
@@ -1102,38 +1103,69 @@ var init_FileRender = __esm({
           <span class="file-name">${file.fileName}</span > 
         </div>`);
           });
-          fileListElement.insertAdjacentHTML(
-            "beforeend",
-            fileTemplateHtml.join("")
-          );
+          fileListElement.insertAdjacentHTML("beforeend", fileTemplateHtml.join(""));
           fileList.forEach((item) => {
-            const ele = fileListElement.querySelector(
-              `[data-seq="${item.$seq}"] .remove`
-            );
-            if (ele) {
-              ele.addEventListener("click", (evt) => {
-                const fileItemElement = evt.target.closest(
-                  ".file-item"
-                );
-                if (fileItemElement) {
-                  const attrSeq = fileItemElement.getAttribute("data-seq");
-                  if (attrSeq) {
-                    const seq = parseInt(attrSeq, 10);
-                    const removeIdx = this.fileList.findIndex(
-                      (v) => v.$seq === seq
-                    );
-                    const removeItem = this.fileList[removeIdx];
-                    this.fileList.splice(removeIdx, 1);
-                    delete this.uploadFiles[seq];
-                    fileItemElement.remove();
-                    if (removeItem.fileId) {
-                      this.removeIds.push(removeItem.fileId);
-                    }
-                  }
+            this.removeFileEvent(item, fileListElement);
+            this.downloadFileEvent(item, fileListElement);
+          });
+        }
+      }
+      /**
+       * 파일 다운로드 이벤트 처리.
+       *
+       * @param item
+       * @param fileListElement
+       */
+      downloadFileEvent(item, fileListElement) {
+        const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .download`);
+        if (ele) {
+          ele.addEventListener("click", (evt) => {
+            const fileItemElement = evt.target.closest(".file-item");
+            if (fileItemElement) {
+              const attrSeq = fileItemElement.getAttribute("data-seq");
+              if (attrSeq) {
+                const seq = parseInt(attrSeq, 10);
+                const idx = this.fileList.findIndex((v) => v.$seq === seq);
+                const item2 = this.fileList[idx];
+                if (item2["url"]) {
+                  location.href = item2["url"];
+                  return;
                 }
-                this.valid();
-              });
+                if (this.field.fileDownload) {
+                  this.field.fileDownload.call(null, { file: item2, field: this.field });
+                  return;
+                }
+              }
             }
+          });
+        }
+      }
+      /**
+       * 파일 삭제  처리.
+       *
+       * @param item
+       * @param fileListElement
+       */
+      removeFileEvent(item, fileListElement) {
+        const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
+        if (ele) {
+          ele.addEventListener("click", (evt) => {
+            const fileItemElement = evt.target.closest(".file-item");
+            if (fileItemElement) {
+              const attrSeq = fileItemElement.getAttribute("data-seq");
+              if (attrSeq) {
+                const seq = parseInt(attrSeq, 10);
+                const removeIdx = this.fileList.findIndex((v) => v.$seq === seq);
+                const removeItem = this.fileList[removeIdx];
+                this.fileList.splice(removeIdx, 1);
+                delete this.uploadFiles[seq];
+                fileItemElement.remove();
+                if (removeItem.fileId) {
+                  this.removeIds.push(removeItem.fileId);
+                }
+              }
+            }
+            this.valid();
           });
         }
       }
@@ -1159,13 +1191,23 @@ var init_FileRender = __esm({
           removeIds: this.removeIds
         };
       }
+      setValueItems(value) {
+        this.fileList = [];
+        this.uploadFiles = [];
+        this.removeIds = [];
+        for (let file of value) {
+          file.$seq = this.fileSeq += 1;
+          this.fileList.push(file);
+        }
+        this.setFileList(this.fileList, true);
+      }
       setValue(value) {
         this.element.value = "";
-        this.fileList = value || [];
         this.field.$value = value;
       }
       reset() {
         this.setValue("");
+        this.setValueItems([]);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
