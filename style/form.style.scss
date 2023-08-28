@@ -65,6 +65,15 @@
     visibility: collapse;
   }
 
+  input,
+  select,
+  textarea {
+    &[disabled] {
+      background-color: #ebebeb;
+      opacity: 0.8;
+    }
+  }
+
   .df-label,
   .sub-label {
     position: relative;

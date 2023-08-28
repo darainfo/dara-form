@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import DaraForm from "src/DaraForm";
-import 'dara-datetimepicker/dist/dara.datetimepicker.min.css';
+import "dara-datetimepicker/dist/dara.datetimepicker.min.css";
 export default class DateRender extends Render {
     private element;
     private dateObj;

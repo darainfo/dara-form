@@ -8,161 +8,171 @@ import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class CheckboxRender extends Render {
-    private defaultCheckValue: any[] = [];
+  private defaultCheckValue: any[] = [];
 
-    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, field, rowElement);
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm, field, rowElement);
 
-        this.initEvent();
+    this.defaultCheckValue = [];
+    if (!utils.isUndefined(field.defaultValue)) {
+      if (utils.isArray(field.defaultValue)) {
+        this.defaultCheckValue = field.defaultValue;
+      } else {
+        this.defaultCheckValue = [field.defaultValue];
+      }
+    } else {
+      const valueKey = CheckboxRender.valuesValueKey(field);
 
-        this.setDefaultInfo();
+      this.field.listItem?.list?.forEach((val) => {
+        if (val.selected) {
+          this.defaultCheckValue = val[valueKey];
+        }
+      });
     }
 
-    public initEvent() {
-        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-        this.defaultCheckValue = [];
-        this.field.listItem?.list?.forEach((val) => {
-            if (val.selected) {
-                this.defaultCheckValue.push(val.value);
-            }
-        });
+    this.initEvent();
 
-        checkboxes.forEach(ele => {
-            ele.addEventListener('change', (e: Event) => {
-                customChangeEventCall(this.field, e, this);
-                this.valid();
-            })
-        })
-    }
+    this.setDefaultInfo();
+  }
 
-    public getSelector() {
-        return `input[type="checkbox"][name="${this.field.$xssName}"]`;
-    }
+  public initEvent() {
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
-    static template(field: FormField): string {
-        const templates: string[] = [];
-        const fieldName = field.name;
+    checkboxes.forEach((ele) => {
+      ele.addEventListener("change", (e: Event) => {
+        customChangeEventCall(this.field, e, this);
+        this.valid();
+      });
+    });
+  }
 
-        const desc = field.description ? `<div>${field.description}</div>` : '';
+  public getSelector() {
+    return `input[type="checkbox"][name="${this.field.$xssName}"]`;
+  }
 
-        const labelKey = this.valuesLabelKey(field);
-        const valueKey = this.valuesValueKey(field);
+  static template(field: FormField): string {
+    const templates: string[] = [];
+    const fieldName = field.name;
 
-        templates.push(` <div class="df-field"><div class="field-group">`);
-        field.listItem?.list?.forEach((val) => {
-            const checkVal = val[valueKey];
-            templates.push(`
-                <span class="field ${field.viewMode == 'vertical' ? "vertical" : "horizontal"}">
+    const desc = field.description ? `<div>${field.description}</div>` : "";
+
+    const labelKey = this.valuesLabelKey(field);
+    const valueKey = this.valuesValueKey(field);
+
+    templates.push(` <div class="df-field"><div class="field-group">`);
+    field.listItem?.list?.forEach((val) => {
+      const checkVal = val[valueKey];
+      templates.push(`
+                <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
                     <label>
-                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ''}" class="form-field checkbox" ${val.selected ? 'checked' : ''}/>
+                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${
+        val.selected ? "checked" : ""
+      }/>
                         ${this.valuesLabelValue(labelKey, val)}
                     </label>
                 </span>
             `);
-        })
-        templates.push(`<i class="dara-icon help-icon"></i></div></div>
+    });
+    templates.push(`<i class="dara-icon help-icon"></i></div></div>
         ${desc}
         <div class="help-message"></div>
         `);
 
+    return templates.join("");
+  }
 
-        return templates.join('');
+  public setValueItems(items: any): void {
+    const containerEle = this.rowElement.querySelector(".df-field-container");
+    if (containerEle) {
+      this.field.listItem.list = items;
+      containerEle.innerHTML = CheckboxRender.template(this.field);
+
+      this.initEvent();
+    }
+  }
+
+  getValue() {
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+
+    if (checkboxes.length > 1) {
+      const checkValue: any[] = [];
+      checkboxes.forEach((ele) => {
+        const checkEle = ele as HTMLInputElement;
+        if (checkEle.checked) {
+          checkValue.push(checkEle.value);
+        }
+      });
+      return checkValue;
+    } else {
+      const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement;
+
+      if (checkElement.checked) {
+        return checkElement.value ? checkElement.value : true;
+      }
+
+      return checkElement.value ? "" : false;
+    }
+  }
+
+  setValue(value: any): void {
+    this.field.$value = value;
+    if (value === true) {
+      (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = true;
+      return;
     }
 
-    public setValueItems(items: any): void {
-
-        const containerEle = this.rowElement.querySelector('.df-field-container');
-        if (containerEle) {
-            this.field.listItem.list = items;
-            containerEle.innerHTML = CheckboxRender.template(this.field);
-
-            this.initEvent();
-        }
+    if (value === false) {
+      (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = false;
+      return;
     }
 
-    getValue() {
-
-        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-
-        if (checkboxes.length > 1) {
-            const checkValue: any[] = [];
-            checkboxes.forEach(ele => {
-                const checkEle = ele as HTMLInputElement;
-                if (checkEle.checked) {
-                    checkValue.push(checkEle.value);
-                }
-            });
-            return checkValue;
-        } else {
-            const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement; 
-
-            if(checkElement.checked){
-                return checkElement.value ? checkElement.value :true; 
-            }
-
-            return checkElement.value ? '' : false;
-        }
+    let valueArr: any[] = [];
+    if (Array.isArray(value)) {
+      valueArr = value;
+    } else {
+      valueArr.push(value);
     }
 
-    setValue(value: any): void {
-        this.field.$value = value;
-        if (value === true) {
-            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = true;
-            return;
-        }
+    const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
-        if (value === false) {
-            (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = false;
-            return;
-        }
+    checkboxes.forEach((ele) => {
+      (ele as HTMLInputElement).checked = false;
+    });
 
-        let valueArr: any[] = [];
-        if (Array.isArray(value)) {
-            valueArr = value;
-        } else {
-            valueArr.push(value);
-        }
+    valueArr.forEach((val) => {
+      const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`) as HTMLInputElement;
+      if (ele) ele.checked = true;
+    });
+  }
 
-        const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
+  reset() {
+    if (this.field.listItem?.list?.length == 1 && this.defaultCheckValue.length == 1) {
+      this.setValue(true);
+    } else {
+      this.setValue(this.defaultCheckValue);
+    }
+    this.setDisabled(false);
+    resetRowElementStyleClass(this.rowElement);
+  }
 
-        checkboxes.forEach(ele => {
-            (ele as HTMLInputElement).checked = false;
-        })
+  getElement(): any {
+    return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
+  }
 
-        valueArr.forEach(val => {
-            const ele = this.rowElement.querySelector(`[name="${this.field.$xssName}"][value="${val}"]`) as HTMLInputElement;
-            if (ele) ele.checked = true;
-        })
+  valid(): any {
+    const value = this.getValue();
+
+    let validResult: ValidResult | boolean = true;
+
+    if (this.field.required && utils.isArray(value)) {
+      if ((value as any[]).length < 1) {
+        validResult = { name: this.field.name, constraint: [] };
+        validResult.constraint.push(RULES.REQUIRED);
+      }
     }
 
-    reset() {
-        if (this.field.listItem?.list?.length == 1 && this.defaultCheckValue.length == 1) {
-            this.setValue(true);
-        } else {
-            this.setValue(this.defaultCheckValue);
-        }
-        resetRowElementStyleClass(this.rowElement);
-    }
+    invalidMessage(this.field, this.rowElement, validResult);
 
-    getElement(): any {
-        return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
-    }
-
-    valid(): any {
-        const value = this.getValue();
-
-        let validResult: ValidResult | boolean = true;
-
-        if (this.field.required && utils.isArray(value)) {
-
-            if ((value as any[]).length < 1) {
-                validResult = { name: this.field.name, constraint: [] };
-                validResult.constraint.push(RULES.REQUIRED);
-            }
-        }
-
-        invalidMessage(this.field, this.rowElement, validResult);
-
-        return validResult;
-    }
+    return validResult;
+  }
 }

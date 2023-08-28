@@ -19,6 +19,7 @@ export default abstract class Render {
     focus(): void;
     show(): void;
     hide(): void;
+    setDisabled(flag: boolean): void;
     commonValidator(): void;
     static valuesValueKey(field: FormField): string;
     static valuesLabelKey(field: FormField): string;

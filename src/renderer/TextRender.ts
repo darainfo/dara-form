@@ -20,7 +20,7 @@ export default class TextRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
@@ -40,7 +40,8 @@ export default class TextRender extends Render {
   }
 
   reset() {
-    this.setValue('');
+    this.setValue("");
+    this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
 
@@ -49,7 +50,6 @@ export default class TextRender extends Render {
   }
 
   valid(): any {
-
     const validResult = stringValidator(this.getValue(), this.field);
 
     invalidMessage(this.field, this.rowElement, validResult);

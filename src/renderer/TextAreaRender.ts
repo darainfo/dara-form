@@ -10,9 +10,7 @@ export default class TextAreaRender extends Render {
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
-    this.element = rowElement.querySelector(
-      `[name="${field.$xssName}"]`
-    ) as HTMLTextAreaElement;
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
     this.initEvent();
     this.setDefaultInfo();
   }
@@ -47,6 +45,7 @@ export default class TextAreaRender extends Render {
 
   reset() {
     this.setValue("");
+    this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
 

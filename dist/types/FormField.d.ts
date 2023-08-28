@@ -60,6 +60,7 @@ export interface FormField {
   };
   childLabelWidth: string; // child label 넓이
   tooltip: string; // 툴팁 문구
+  disabled?: boolean; // disabled
   description: string; // 설명
   placeholder: string; // input , textarea 문구
   viewMode: string; //'horizontal' // horizontal , vertical, horizontal-row /   // radio, checkbox, group

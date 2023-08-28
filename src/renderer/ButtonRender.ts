@@ -3,7 +3,6 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class ButtonRender extends Render {
-
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.initEvent();
@@ -18,7 +17,7 @@ export default class ButtonRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
 
     return `
       <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
@@ -26,15 +25,13 @@ export default class ButtonRender extends Render {
   }
 
   getValue() {
-    return '';
+    return "";
   }
 
-  setValue(value: any): void {
-
-  }
+  setValue(value: any): void {}
 
   reset() {
-
+    this.setDisabled(false);
   }
 
   getElement() {

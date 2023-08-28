@@ -5,6 +5,7 @@ import { RULES } from "src/constants";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { dropdownChangeEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
+import utils from "src/util/utils";
 
 export default class DropdownRender extends Render {
   private element: HTMLSelectElement;
@@ -12,17 +13,23 @@ export default class DropdownRender extends Render {
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
-    this.element = rowElement.querySelector(
-      `[name="${field.$xssName}"]`
-    ) as HTMLSelectElement;
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
-    this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0].value : "";
+    if (!utils.isUndefined(field.defaultValue)) {
+      this.defaultCheckValue = field.defaultValue;
+    } else {
+      const valueKey = DropdownRender.valuesValueKey(field);
 
-    this.field.listItem?.list?.forEach((val) => {
-      if (val.selected) {
-        this.defaultCheckValue = val.value;
+      this.field.listItem?.list?.forEach((val) => {
+        if (val.selected) {
+          this.defaultCheckValue = val[valueKey];
+        }
+      });
+
+      if (!this.defaultCheckValue) {
+        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
       }
-    });
+    }
 
     this.initEvent();
     this.setDefaultInfo();
@@ -43,10 +50,10 @@ export default class DropdownRender extends Render {
     `;
     return template;
   }
-  
+
   public setValueItems(items: any): void {
-      this.field.listItem.list = items;
-      this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
+    this.field.listItem.list = items;
+    this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
   }
 
   getValue() {
@@ -60,6 +67,7 @@ export default class DropdownRender extends Render {
 
   reset() {
     this.setValue(this.defaultCheckValue);
+    this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
 
@@ -87,15 +95,11 @@ export default class DropdownRender extends Render {
   static dropdownValuesTemplate(field: FormField) {
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
-    let template = '';
+    let template = "";
     field.listItem?.list?.forEach((val) => {
-      template += `<option value="${val[valueKey]}" ${
-        val.selected ? "selected" : ""
-      }>${this.valuesLabelValue(labelKey, val)}</option>`;
+      template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
     });
 
     return template;
   }
-  
-  
 }

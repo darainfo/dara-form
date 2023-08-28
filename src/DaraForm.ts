@@ -466,6 +466,11 @@ export default class DaraForm {
     this.fieldInfoMap.conditionCheck();
   }
 
+  public setFieldDisabled(fieldName: string, flag: boolean) {
+    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+    filedInfo.$renderer.setDisabled(flag);
+  }
+
   /*
     destroy = () => {
         return this.options;

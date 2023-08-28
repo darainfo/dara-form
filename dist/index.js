@@ -168,7 +168,17 @@ var init_Render = __esm({
         if (!this.rowElement.classList.contains("df-hidden")) {
           this.rowElement.classList.add("df-hidden");
         }
-        ;
+      }
+      setDisabled(flag) {
+        console.log("setDisabled");
+        const ele = this.getElement();
+        if (ele instanceof HTMLElement) {
+          if (flag === false) {
+            this.getElement().removeAttribute("disabled");
+          } else {
+            this.getElement().setAttribute("disabled", true);
+          }
+        }
       }
       commonValidator() {
       }
@@ -455,6 +465,7 @@ var init_NumberRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -529,9 +540,7 @@ var init_TextAreaRender = __esm({
     TextAreaRender = class extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.element = rowElement.querySelector(
-          `[name="${field.$xssName}"]`
-        );
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
         this.setDefaultInfo();
       }
@@ -559,6 +568,7 @@ var init_TextAreaRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -585,15 +595,20 @@ var init_DropdownRender = __esm({
     DropdownRender = class _DropdownRender extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.element = rowElement.querySelector(
-          `[name="${field.$xssName}"]`
-        );
-        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0].value : "";
-        this.field.listItem?.list?.forEach((val) => {
-          if (val.selected) {
-            this.defaultCheckValue = val.value;
+        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+        if (field.defaultValue) {
+          this.defaultCheckValue = field.defaultValue;
+        } else {
+          const valueKey = _DropdownRender.valuesValueKey(field);
+          this.field.listItem?.list?.forEach((val) => {
+            if (val.selected) {
+              this.defaultCheckValue = val[valueKey];
+            }
+          });
+          if (!this.defaultCheckValue) {
+            this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
           }
-        });
+        }
         this.initEvent();
         this.setDefaultInfo();
       }
@@ -623,6 +638,7 @@ var init_DropdownRender = __esm({
       }
       reset() {
         this.setValue(this.defaultCheckValue);
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -691,6 +707,7 @@ var init_TextRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -823,6 +840,7 @@ var init_CheckboxRender = __esm({
         } else {
           this.setValue(this.defaultCheckValue);
         }
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -936,6 +954,7 @@ var init_RadioRender = __esm({
       }
       reset() {
         this.setValue(this.defaultCheckValue);
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -995,6 +1014,7 @@ var init_PasswordRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -1379,6 +1399,7 @@ var init_ButtonRender = __esm({
       setValue(value) {
       }
       reset() {
+        this.setDisabled(false);
       }
       getElement() {
         return null;
@@ -1435,6 +1456,7 @@ var init_RangeRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -2602,6 +2624,7 @@ var init_DateRender = __esm({
           if (dateOnChangeEvent) {
             dateOnChangeEvent.call(null, dt, e);
           }
+          this.setValue(dt);
           this.changeEventCall(this.field, e, this);
         };
         this.dateObj = new DaraDateTimePicker(this.element, this.field.customOptions, {});
@@ -2625,6 +2648,7 @@ var init_DateRender = __esm({
       }
       reset() {
         this.setValue("");
+        this.setDisabled(false);
         resetRowElementStyleClass(this.rowElement);
       }
       getElement() {
@@ -3415,6 +3439,10 @@ var init_DaraForm = __esm({
       }
       conditionCheck() {
         this.fieldInfoMap.conditionCheck();
+      }
+      setFieldDisabled(fieldName, flag) {
+        const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+        filedInfo.$renderer.setDisabled(flag);
       }
       static {
         /*

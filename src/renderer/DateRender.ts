@@ -5,8 +5,7 @@ import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
 import { DaraDateTimePicker } from "dara-datetimepicker";
 
-import 'dara-datetimepicker/dist/dara.datetimepicker.min.css'
-
+import "dara-datetimepicker/dist/dara.datetimepicker.min.css";
 
 export default class DateRender extends Render {
   private element: HTMLInputElement;
@@ -20,9 +19,8 @@ export default class DateRender extends Render {
   }
 
   initEvent() {
-
     let dateOnChangeEvent: any;
-    if (typeof this.field.customOptions.onChange !== 'undefined') {
+    if (typeof this.field.customOptions.onChange !== "undefined") {
       dateOnChangeEvent = typeof this.field.customOptions.onChange;
     }
 
@@ -31,14 +29,16 @@ export default class DateRender extends Render {
         dateOnChangeEvent.call(null, dt, e);
       }
 
+      this.setValue(dt);
+
       this.changeEventCall(this.field, e, this);
-    }
+    };
 
     this.dateObj = new DaraDateTimePicker(this.element, this.field.customOptions, {} as any);
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
@@ -58,7 +58,8 @@ export default class DateRender extends Render {
   }
 
   reset() {
-    this.setValue('');
+    this.setValue("");
+    this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
 
@@ -67,7 +68,6 @@ export default class DateRender extends Render {
   }
 
   valid(): any {
-
     const validResult = stringValidator(this.getValue(), this.field);
 
     invalidMessage(this.field, this.rowElement, validResult);

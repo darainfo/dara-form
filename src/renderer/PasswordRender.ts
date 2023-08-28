@@ -6,54 +6,55 @@ import { inputEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 
 export default class PasswordRender extends Render {
-    private element: HTMLInputElement;
+  private element: HTMLInputElement;
 
-    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, field, rowElement);
-        this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
-        this.initEvent();
-        this.setDefaultInfo();
-    }
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm, field, rowElement);
+    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
+    this.initEvent();
+    this.setDefaultInfo();
+  }
 
-    initEvent() {
-        inputEvent(this.field, this.element, this);
-    }
+  initEvent() {
+    inputEvent(this.field, this.element, this);
+  }
 
-    static template(field: FormField): string {
-        const desc = field.description ? `<div>${field.description}</div>` : '';
+  static template(field: FormField): string {
+    const desc = field.description ? `<div>${field.description}</div>` : "";
 
-        return `
+    return `
             <div class="df-field">
                 <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
             </div>
             ${desc}
             <div class="help-message"></div>
         `;
-    }
+  }
 
-    getValue() {
-        return this.element.value;
-    }
+  getValue() {
+    return this.element.value;
+  }
 
-    setValue(value: any): void {
-        this.field.$value = value;
-        this.element.value = value;
-    }
+  setValue(value: any): void {
+    this.field.$value = value;
+    this.element.value = value;
+  }
 
-    reset() {
-        this.setValue('');
-        resetRowElementStyleClass(this.rowElement);
-    }
+  reset() {
+    this.setValue("");
+    this.setDisabled(false);
+    resetRowElementStyleClass(this.rowElement);
+  }
 
-    getElement(): HTMLElement {
-        return this.element;
-    }
+  getElement(): HTMLElement {
+    return this.element;
+  }
 
-    valid(): any {
-        const validResult = stringValidator(this.getValue(), this.field);
+  valid(): any {
+    const validResult = stringValidator(this.getValue(), this.field);
 
-        invalidMessage(this.field, this.rowElement, validResult);
+    invalidMessage(this.field, this.rowElement, validResult);
 
-        return validResult;
-    }
+    return validResult;
+  }
 }

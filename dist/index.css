@@ -381,6 +381,12 @@
   transition: all 0.25s ease-out;
   visibility: collapse;
 }
+.dara-form input[disabled],
+.dara-form select[disabled],
+.dara-form textarea[disabled] {
+  background-color: #ebebeb;
+  opacity: 0.8;
+}
 .dara-form .df-label,
 .dara-form .sub-label {
   position: relative;
