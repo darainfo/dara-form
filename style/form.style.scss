@@ -61,8 +61,10 @@
 
   .df-hidden {
     max-height: 0vh !important;
-    transition: all 0.25s ease-out;
+    transition: all 0.1s ease-out;
     visibility: collapse;
+    padding: 0px !important;
+    margin: 0px !important;
   }
 
   input,
@@ -78,7 +80,8 @@
   .sub-label {
     position: relative;
     font-weight: 700;
-    padding-right: 15px;
+    vertical-align: top;
+    padding: 5px 15px 0px 0px;
 
     .df-tooltip {
       visibility: visible;
@@ -145,30 +148,15 @@
       padding: 0px;
       margin: 0px;
       list-style: none;
+      margin-bottom: -5px;
 
       &.vertical {
         display: block;
 
         .sub-row {
-          padding-top: 5px;
+          padding-bottom: 5px;
           max-height: 100vh;
           transition: all 0.25s ease-in;
-
-          + .sub-row {
-            padding-top: 5px;
-          }
-
-          + .df-hidden {
-            padding-top: 0px;
-          }
-        }
-
-        .sub-row:first-child {
-          padding-top: 0px;
-        }
-
-        .df-hidden:first-child:has(~ .sub-row) {
-          padding-top: 0px;
         }
       }
 
@@ -178,11 +166,10 @@
 
         .sub-row {
           display: table-row;
-          letter-spacing: 5px;
 
           > * {
             display: table-cell;
-            padding-top: 5px;
+            padding-bottom: 7px;
           }
         }
       }
@@ -208,10 +195,6 @@
             }
           }
 
-          .sub-label {
-            padding-right: 10px;
-          }
-
           > span {
             display: table-cell;
           }
@@ -222,10 +205,11 @@
 
   > .df-row {
     width: 100%;
-    margin: 0px 0px 10px 0px;
     max-height: 100vh;
 
     > .df-label {
+      vertical-align: top;
+      padding: 5px 10px 0px 0px;
       .required {
         &::after {
           content: "*";
@@ -387,6 +371,11 @@
 
       &.horizontal {
         display: inline;
+
+        > label {
+          display: inline-block;
+          margin-top: 3px;
+        }
       }
     }
   }

@@ -592,11 +592,12 @@ var init_DropdownRender = __esm({
     init_constants();
     init_validUtils();
     init_renderEvents();
+    init_utils();
     DropdownRender = class _DropdownRender extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-        if (field.defaultValue) {
+        if (!utils_default.isUndefined(field.defaultValue)) {
           this.defaultCheckValue = field.defaultValue;
         } else {
           const valueKey = _DropdownRender.valuesValueKey(field);
@@ -736,17 +737,26 @@ var init_CheckboxRender = __esm({
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
         this.defaultCheckValue = [];
+        this.defaultCheckValue = [];
+        if (!utils_default.isUndefined(field.defaultValue)) {
+          if (utils_default.isArray(field.defaultValue)) {
+            this.defaultCheckValue = field.defaultValue;
+          } else {
+            this.defaultCheckValue = [field.defaultValue];
+          }
+        } else {
+          const valueKey = _CheckboxRender.valuesValueKey(field);
+          this.field.listItem?.list?.forEach((val) => {
+            if (val.selected) {
+              this.defaultCheckValue.push(val[valueKey] ? val[valueKey] : true);
+            }
+          });
+        }
         this.initEvent();
         this.setDefaultInfo();
       }
       initEvent() {
         const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-        this.defaultCheckValue = [];
-        this.field.listItem?.list?.forEach((val) => {
-          if (val.selected) {
-            this.defaultCheckValue.push(val.value);
-          }
-        });
         checkboxes.forEach((ele) => {
           ele.addEventListener("change", (e) => {
             customChangeEventCall(this.field, e, this);
@@ -872,15 +882,24 @@ var init_RadioRender = __esm({
     init_validUtils();
     init_utils();
     init_renderEvents();
+    init_utils();
     RadioRender = class _RadioRender extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.defaultCheckValue = this.field.listItem?.list[0].value;
-        this.field.listItem?.list?.forEach((val) => {
-          if (val.selected) {
-            this.defaultCheckValue = val.value;
+        this.defaultCheckValue = [];
+        if (!utils_default.isUndefined(field.defaultValue)) {
+          this.defaultCheckValue = field.defaultValue;
+        } else {
+          const valueKey = _RadioRender.valuesValueKey(field);
+          this.field.listItem?.list?.forEach((val) => {
+            if (val.selected) {
+              this.defaultCheckValue.push(val[valueKey]);
+            }
+          });
+          if (!this.defaultCheckValue) {
+            this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
           }
-        });
+        }
         this.initEvent();
         this.setDefaultInfo();
       }

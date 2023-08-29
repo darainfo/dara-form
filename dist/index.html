@@ -128,7 +128,7 @@
       },
       {
         label: "주소",
-        viewMode: "horizontal-row", // 'vertical , horizontal'
+        viewMode: "horizontal-row", // 'vertical , horizontal' ,horizontal-row
         children: [
           {
             name: "newAddress",
@@ -137,7 +137,7 @@
             required: true,
             renderType: "checkbox",
             listItem: {
-              list: [{ label: "option1", value: "Y", selected: true }],
+              list: [{ label: "Password Change", value: "Y", selected: true }],
             },
             onChange: (arg) => {
               console.log(arg);
@@ -171,7 +171,7 @@
             conditional: {
               show: false,
               field: "newAddress",
-              eq: true,
+              eq: "Y",
               //custom?: OptionCallback
             },
           },
@@ -212,7 +212,7 @@
         conditional: {
           show: true,
           custom: function () {
-            return false;
+            return true;
           },
         },
         children: [
@@ -246,6 +246,10 @@
           },
         ],
       },
+      {
+        name: "custom",
+        label: "custom",
+      },
     ],
   };
 
@@ -277,7 +281,7 @@
             console.log(`${name} :  ${value}`);
           }
 
-          alert(JSON.stringify(aa));
+          alert("form data console 확인");
         })
         .catch((e) => {
           alert(e.message);

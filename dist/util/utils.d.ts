@@ -8,7 +8,7 @@ declare const _default: {
     isFunction(value: any): boolean;
     isString(value: any): value is string;
     isNumber(value: any): value is number;
-    isArray(value: any): boolean;
+    isArray(value: any): value is any[];
     replaceXssField(field: FormField): FormField;
     getHashCode(str: string): number;
     isHiddenField(field: FormField): boolean;

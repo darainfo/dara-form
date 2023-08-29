@@ -378,8 +378,10 @@
 }
 .dara-form .df-hidden {
   max-height: 0vh !important;
-  transition: all 0.25s ease-out;
+  transition: all 0.1s ease-out;
   visibility: collapse;
+  padding: 0px !important;
+  margin: 0px !important;
 }
 .dara-form input[disabled],
 .dara-form select[disabled],
@@ -391,7 +393,8 @@
 .dara-form .sub-label {
   position: relative;
   font-weight: 700;
-  padding-right: 15px;
+  vertical-align: top;
+  padding: 5px 15px 0px 0px;
 }
 .dara-form .df-label .df-tooltip,
 .dara-form .sub-label .df-tooltip {
@@ -453,26 +456,15 @@
   padding: 0px;
   margin: 0px;
   list-style: none;
+  margin-bottom: -5px;
 }
 .dara-form .df-field-container .sub-field-group.vertical {
   display: block;
 }
 .dara-form .df-field-container .sub-field-group.vertical .sub-row {
-  padding-top: 5px;
+  padding-bottom: 5px;
   max-height: 100vh;
   transition: all 0.25s ease-in;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row + .sub-row {
-  padding-top: 5px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row + .df-hidden {
-  padding-top: 0px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row:first-child {
-  padding-top: 0px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .df-hidden:first-child:has(~ .sub-row) {
-  padding-top: 0px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row {
   display: table;
@@ -480,11 +472,10 @@
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
   display: table-row;
-  letter-spacing: 5px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
   display: table-cell;
-  padding-top: 5px;
+  padding-bottom: 7px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal {
   display: table;
@@ -504,16 +495,16 @@
 .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
   margin-right: -16px;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row .sub-label {
-  padding-right: 10px;
-}
 .dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
   display: table-cell;
 }
 .dara-form > .df-row {
   width: 100%;
-  margin: 0px 0px 10px 0px;
   max-height: 100vh;
+}
+.dara-form > .df-row > .df-label {
+  vertical-align: top;
+  padding: 5px 10px 0px 0px;
 }
 .dara-form > .df-row > .df-label .required {
   color: var(--color-danger);
@@ -642,5 +633,9 @@
 }
 .dara-form .field-group .field.horizontal {
   display: inline;
+}
+.dara-form .field-group .field.horizontal > label {
+  display: inline-block;
+  margin-top: 3px;
 }
 /*# sourceMappingURL=index.css.map */

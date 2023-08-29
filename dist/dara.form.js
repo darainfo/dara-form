@@ -863,20 +863,29 @@ const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
 class CheckboxRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
+    var _a, _b;
     super(daraForm, field, rowElement);
     this.defaultCheckValue = [];
+    this.defaultCheckValue = [];
+    if (!utils_1.default.isUndefined(field.defaultValue)) {
+      if (utils_1.default.isArray(field.defaultValue)) {
+        this.defaultCheckValue = field.defaultValue;
+      } else {
+        this.defaultCheckValue = [field.defaultValue];
+      }
+    } else {
+      const valueKey = CheckboxRender.valuesValueKey(field);
+      (_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+        if (val.selected) {
+          this.defaultCheckValue.push(val[valueKey] ? val[valueKey] : true);
+        }
+      });
+    }
     this.initEvent();
     this.setDefaultInfo();
   }
   initEvent() {
-    var _a, _b;
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
-    this.defaultCheckValue = [];
-    (_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
-      if (val.selected) {
-        this.defaultCheckValue.push(val.value);
-      }
-    });
     checkboxes.forEach(ele => {
       ele.addEventListener("change", e => {
         (0, renderEvents_1.customChangeEventCall)(this.field, e, this);
@@ -1154,12 +1163,13 @@ const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class DropdownRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
     var _a, _b, _c, _d, _e;
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
-    if (field.defaultValue) {
+    if (!utils_1.default.isUndefined(field.defaultValue)) {
       this.defaultCheckValue = field.defaultValue;
     } else {
       const valueKey = DropdownRender.valuesValueKey(field);
@@ -1656,16 +1666,25 @@ const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 const renderEvents_1 = __webpack_require__(/*! src/event/renderEvents */ "./src/event/renderEvents.ts");
+const utils_2 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class RadioRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     super(daraForm, field, rowElement);
-    this.defaultCheckValue = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list[0].value;
-    (_c = (_b = this.field.listItem) === null || _b === void 0 ? void 0 : _b.list) === null || _c === void 0 ? void 0 : _c.forEach(val => {
-      if (val.selected) {
-        this.defaultCheckValue = val.value;
+    this.defaultCheckValue = [];
+    if (!utils_2.default.isUndefined(field.defaultValue)) {
+      this.defaultCheckValue = field.defaultValue;
+    } else {
+      const valueKey = RadioRender.valuesValueKey(field);
+      (_b = (_a = this.field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+        if (val.selected) {
+          this.defaultCheckValue.push(val[valueKey]);
+        }
+      });
+      if (!this.defaultCheckValue) {
+        this.defaultCheckValue = ((_d = (_c = this.field.listItem) === null || _c === void 0 ? void 0 : _c.list) === null || _d === void 0 ? void 0 : _d.length) > 0 ? (_e = this.field.listItem) === null || _e === void 0 ? void 0 : _e.list[0][valueKey] : "";
       }
-    });
+    }
     this.initEvent();
     this.setDefaultInfo();
   }
@@ -2557,7 +2576,7 @@ const xssFilter = {
   "&": "&amp;",
   "<": "&lt;",
   ">": "&gt;",
-  "\"": "&quot;",
+  '"': "&quot;",
   "'": "&#39;"
 };
 exports["default"] = {
@@ -2581,25 +2600,25 @@ exports["default"] = {
   },
   unFieldName(fieldName) {
     if (fieldName) {
-      return this.unReplace(fieldName).replaceAll("\"", "\\\"");
+      return this.unReplace(fieldName).replaceAll('"', '\\"');
     }
-    return '';
+    return "";
   },
   isBlank(value) {
     if (value === null) return true;
-    if (value === '') return true;
-    if (typeof value === 'undefined') return true;
-    if (typeof value === 'string' && (value === '' || value.replace(/\s/g, '') === '')) return true;
+    if (value === "") return true;
+    if (typeof value === "undefined") return true;
+    if (typeof value === "string" && (value === "" || value.replace(/\s/g, "") === "")) return true;
     return false;
   },
   isUndefined(value) {
-    return typeof value === 'undefined';
+    return typeof value === "undefined";
   },
   isFunction(value) {
-    return typeof value === 'function';
+    return typeof value === "function";
   },
   isString(value) {
-    return typeof value === 'string';
+    return typeof value === "string";
   },
   isNumber(value) {
     if (this.isBlank(value)) {
@@ -2626,7 +2645,7 @@ exports["default"] = {
     return hash;
   },
   isHiddenField(field) {
-    if (field.renderType === 'hidden') {
+    if (field.renderType === "hidden") {
       return true;
     }
     return false;
@@ -3171,8 +3190,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .df-hidden {
   max-height: 0vh !important;
-  transition: all 0.25s ease-out;
+  transition: all 0.1s ease-out;
   visibility: collapse;
+  padding: 0px !important;
+  margin: 0px !important;
 }
 .dara-form input[disabled],
 .dara-form select[disabled],
@@ -3184,7 +3205,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .sub-label {
   position: relative;
   font-weight: 700;
-  padding-right: 15px;
+  vertical-align: top;
+  padding: 5px 15px 0px 0px;
 }
 .dara-form .df-label .df-tooltip,
 .dara-form .sub-label .df-tooltip {
@@ -3246,26 +3268,15 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   padding: 0px;
   margin: 0px;
   list-style: none;
+  margin-bottom: -5px;
 }
 .dara-form .df-field-container .sub-field-group.vertical {
   display: block;
 }
 .dara-form .df-field-container .sub-field-group.vertical .sub-row {
-  padding-top: 5px;
+  padding-bottom: 5px;
   max-height: 100vh;
   transition: all 0.25s ease-in;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row + .sub-row {
-  padding-top: 5px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row + .df-hidden {
-  padding-top: 0px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .sub-row:first-child {
-  padding-top: 0px;
-}
-.dara-form .df-field-container .sub-field-group.vertical .df-hidden:first-child:has(~ .sub-row) {
-  padding-top: 0px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row {
   display: table;
@@ -3273,11 +3284,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
   display: table-row;
-  letter-spacing: 5px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
   display: table-cell;
-  padding-top: 5px;
+  padding-bottom: 7px;
 }
 .dara-form .df-field-container .sub-field-group.horizontal {
   display: table;
@@ -3297,16 +3307,16 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
   margin-right: -16px;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row .sub-label {
-  padding-right: 10px;
-}
 .dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
   display: table-cell;
 }
 .dara-form > .df-row {
   width: 100%;
-  margin: 0px 0px 10px 0px;
   max-height: 100vh;
+}
+.dara-form > .df-row > .df-label {
+  vertical-align: top;
+  padding: 5px 10px 0px 0px;
 }
 .dara-form > .df-row > .df-label .required {
   color: var(--color-danger);
@@ -3434,7 +3444,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .field-group .field.horizontal {
   display: inline;
-}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[".dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  &.horizontal {\r\n    display: table;\r\n    width: 100%;\r\n\r\n    > .df-row {\r\n      display: table-row;\r\n\r\n      > .df-label {\r\n        width: 10%;\r\n        display: table-cell;\r\n      }\r\n\r\n      > .df-field-container {\r\n        display: table-cell;\r\n        padding-bottom: 10px;\r\n      }\r\n    }\r\n  }\r\n\r\n  &.vertical {\r\n    > .df-row > * {\r\n      display: block;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    transition: all 0.25s ease-out;\r\n    visibility: collapse;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label,\r\n  .sub-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    padding-right: 15px;\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n\r\n    .sub-field-group {\r\n      padding: 0px;\r\n      margin: 0px;\r\n      list-style: none;\r\n\r\n      &.vertical {\r\n        display: block;\r\n\r\n        .sub-row {\r\n          padding-top: 5px;\r\n          max-height: 100vh;\r\n          transition: all 0.25s ease-in;\r\n\r\n          + .sub-row {\r\n            padding-top: 5px;\r\n          }\r\n\r\n          + .df-hidden {\r\n            padding-top: 0px;\r\n          }\r\n        }\r\n\r\n        .sub-row:first-child {\r\n          padding-top: 0px;\r\n        }\r\n\r\n        .df-hidden:first-child:has(~ .sub-row) {\r\n          padding-top: 0px;\r\n        }\r\n      }\r\n\r\n      &.horizontal-row {\r\n        display: table;\r\n        width: 100%;\r\n\r\n        .sub-row {\r\n          display: table-row;\r\n          letter-spacing: 5px;\r\n\r\n          > * {\r\n            display: table-cell;\r\n            padding-top: 5px;\r\n          }\r\n        }\r\n      }\r\n\r\n      &.horizontal {\r\n        display: table;\r\n\r\n        .df-hidden {\r\n          width: 0px;\r\n          padding-right: 0px !important;\r\n          display: none !important;\r\n        }\r\n\r\n        .sub-row {\r\n          display: table-cell;\r\n          padding-right: 15px;\r\n\r\n          .field-group {\r\n            position: relative;\r\n\r\n            .help-icon {\r\n              margin-right: -16px;\r\n            }\r\n          }\r\n\r\n          .sub-label {\r\n            padding-right: 10px;\r\n          }\r\n\r\n          > span {\r\n            display: table-cell;\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row {\r\n    width: 100%;\r\n    margin: 0px 0px 10px 0px;\r\n    max-height: 100vh;\r\n\r\n    > .df-label {\r\n      .required {\r\n        &::after {\r\n          content: \"*\";\r\n          vertical-align: middle;\r\n        }\r\n\r\n        color: var(--color-danger);\r\n      }\r\n    }\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    .dara-file-list {\r\n      .file-icon {\r\n        width: 20px;\r\n        height: 20px;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        cursor: pointer;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n\r\n        &.download {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n        }\r\n\r\n        &.remove {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n        }\r\n      }\r\n\r\n      .file-name {\r\n        text-overflow: ellipsis;\r\n        white-space: nowrap;\r\n        word-wrap: normal;\r\n        overflow: hidden;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        width: calc(100% - 55px);\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row,\r\n  .sub-row {\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n      }\r\n    }\r\n  }\r\n\r\n  .file-label {\r\n    border: 1px solid var(--border-color);\r\n    display: inline;\r\n    width: 100%;\r\n    padding: 3px 15px;\r\n    line-height: 1;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &:hover {\r\n      background-color: var(--background-button-hover);\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field {\r\n      &.vertical {\r\n        display: block;\r\n      }\r\n\r\n      &.horizontal {\r\n        display: inline;\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
+}
+.dara-form .field-group .field.horizontal > label {
+  display: inline-block;
+  margin-top: 3px;
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[".dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  &.horizontal {\r\n    display: table;\r\n    width: 100%;\r\n\r\n    > .df-row {\r\n      display: table-row;\r\n\r\n      > .df-label {\r\n        width: 10%;\r\n        display: table-cell;\r\n      }\r\n\r\n      > .df-field-container {\r\n        display: table-cell;\r\n        padding-bottom: 10px;\r\n      }\r\n    }\r\n  }\r\n\r\n  &.vertical {\r\n    > .df-row > * {\r\n      display: block;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    transition: all 0.1s ease-out;\r\n    visibility: collapse;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label,\r\n  .sub-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 5px 15px 0px 0px;\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n\r\n    .sub-field-group {\r\n      padding: 0px;\r\n      margin: 0px;\r\n      list-style: none;\r\n      margin-bottom: -5px;\r\n\r\n      &.vertical {\r\n        display: block;\r\n\r\n        .sub-row {\r\n          padding-bottom: 5px;\r\n          max-height: 100vh;\r\n          transition: all 0.25s ease-in;\r\n        }\r\n      }\r\n\r\n      &.horizontal-row {\r\n        display: table;\r\n        width: 100%;\r\n\r\n        .sub-row {\r\n          display: table-row;\r\n\r\n          > * {\r\n            display: table-cell;\r\n            padding-bottom: 7px;\r\n          }\r\n        }\r\n      }\r\n\r\n      &.horizontal {\r\n        display: table;\r\n\r\n        .df-hidden {\r\n          width: 0px;\r\n          padding-right: 0px !important;\r\n          display: none !important;\r\n        }\r\n\r\n        .sub-row {\r\n          display: table-cell;\r\n          padding-right: 15px;\r\n\r\n          .field-group {\r\n            position: relative;\r\n\r\n            .help-icon {\r\n              margin-right: -16px;\r\n            }\r\n          }\r\n\r\n          > span {\r\n            display: table-cell;\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row {\r\n    width: 100%;\r\n    max-height: 100vh;\r\n\r\n    > .df-label {\r\n      vertical-align: top;\r\n      padding: 5px 10px 0px 0px;\r\n      .required {\r\n        &::after {\r\n          content: \"*\";\r\n          vertical-align: middle;\r\n        }\r\n\r\n        color: var(--color-danger);\r\n      }\r\n    }\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    .dara-file-list {\r\n      .file-icon {\r\n        width: 20px;\r\n        height: 20px;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        cursor: pointer;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n\r\n        &.download {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n        }\r\n\r\n        &.remove {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n        }\r\n      }\r\n\r\n      .file-name {\r\n        text-overflow: ellipsis;\r\n        white-space: nowrap;\r\n        word-wrap: normal;\r\n        overflow: hidden;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        width: calc(100% - 55px);\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row,\r\n  .sub-row {\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      .df-field-container.required .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n      }\r\n    }\r\n  }\r\n\r\n  .file-label {\r\n    border: 1px solid var(--border-color);\r\n    display: inline;\r\n    width: 100%;\r\n    padding: 3px 15px;\r\n    line-height: 1;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &:hover {\r\n      background-color: var(--background-button-hover);\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field {\r\n      &.vertical {\r\n        display: block;\r\n      }\r\n\r\n      &.horizontal {\r\n        display: inline;\r\n\r\n        > label {\r\n          display: inline-block;\r\n          margin-top: 3px;\r\n        }\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

@@ -25,7 +25,7 @@ export default class CheckboxRender extends Render {
 
       this.field.listItem?.list?.forEach((val) => {
         if (val.selected) {
-          this.defaultCheckValue = val[valueKey];
+          this.defaultCheckValue.push(val[valueKey] ? val[valueKey] : true);
         }
       });
     }
