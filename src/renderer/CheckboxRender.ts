@@ -51,6 +51,7 @@ export default class CheckboxRender extends Render {
   }
 
   static template(field: FormField): string {
+    console.log("checkbox");
     const templates: string[] = [];
     const fieldName = field.name;
 

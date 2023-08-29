@@ -116,8 +116,15 @@ export default class DaraForm {
     let fieldHtml = "";
 
     if (field.children) {
-      this.addRowFieldInfo(field);
-      fieldHtml = this.groupTemplate(field);
+      if (!utils.isUndefined(field.name)) {
+        fieldHtml = this.getFieldTempate(field);
+      } else {
+        this.addRowFieldInfo(field);
+      }
+
+      console.log("field.name : ", field.name, field, fieldHtml, "asdf");
+
+      fieldHtml += this.groupTemplate(field);
     } else {
       fieldHtml = this.getFieldTempate(field);
     }
@@ -174,7 +181,7 @@ export default class DaraForm {
       }
     }
 
-    childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
+    childTemplae.push(`<div class="sub-field-group ${viewStyleClass}">`);
 
     for (const childField of field.children) {
       childField.$parent = field;
@@ -197,16 +204,17 @@ export default class DaraForm {
 
       let labelHideFlag = childField.labelStyle?.hide;
       labelHideFlag = labelHideFlag ? labelHideFlag : utils.isUndefined(childField.label) ? true : false;
-      childTemplae.push(`<li class="sub-row" id="${childField.$key}">
+      childTemplae.push(`<div class="sub-row" id="${childField.$key}">
                 ${
                   labelHideFlag
                     ? ""
                     : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`
                 }
                 <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </li>`);
+                ${labelHideFlag ? "<span></span>" : ""}
+            </div>`);
     }
-    childTemplae.push("</ul>");
+    childTemplae.push("</div>");
 
     return childTemplae.join("");
   }

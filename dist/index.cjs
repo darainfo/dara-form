@@ -153,7 +153,6 @@ var Render = class _Render {
     }
   }
   setDisabled(flag) {
-    console.log("setDisabled");
     const ele = this.getElement();
     if (ele instanceof HTMLElement) {
       if (flag === false) {
@@ -1059,9 +1058,10 @@ var FileRender = class extends Render {
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_default.getMessage(
-      "fileButton"
-    )}</label>
+        <label class="file-label">
+          <input type="file" name="${field.name}" class="form-field file" multiple />
+          ${Lanauage_default.getMessage("fileButton")}
+        </label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
@@ -3086,7 +3086,7 @@ var DaraForm = class {
         viewStyleClass = "horizontal";
       }
     }
-    childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
+    childTemplae.push(`<div class="sub-field-group ${viewStyleClass}">`);
     for (const childField of field.children) {
       childField.$parent = field;
       let childTempate = "";
@@ -3104,12 +3104,12 @@ var DaraForm = class {
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
       let labelHideFlag = childField.labelStyle?.hide;
       labelHideFlag = labelHideFlag ? labelHideFlag : utils_default.isUndefined(childField.label) ? true : false;
-      childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${labelHideFlag ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </li>`);
+      childTemplae.push(`<div class="sub-row" id="${childField.$key}">
+          <span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${labelHideFlag ? "" : this.getLabelTemplate(childField)}</span>
+          <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
+      </div>`);
     }
-    childTemplae.push("</ul>");
+    childTemplae.push("</div>");
     return childTemplae.join("");
   }
   /**

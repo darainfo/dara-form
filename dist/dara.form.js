@@ -291,7 +291,7 @@ class DaraForm {
         viewStyleClass = "horizontal";
       }
     }
-    childTemplae.push(`<ul class="sub-field-group ${viewStyleClass}">`);
+    childTemplae.push(`<div class="sub-field-group ${viewStyleClass}">`);
     for (const childField of field.children) {
       childField.$parent = field;
       let childTempate = "";
@@ -309,12 +309,12 @@ class DaraForm {
       let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
       let labelHideFlag = (_c = childField.labelStyle) === null || _c === void 0 ? void 0 : _c.hide;
       labelHideFlag = labelHideFlag ? labelHideFlag : utils_1.default.isUndefined(childField.label) ? true : false;
-      childTemplae.push(`<li class="sub-row" id="${childField.$key}">
-                ${labelHideFlag ? "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </li>`);
+      childTemplae.push(`<div class="sub-row" id="${childField.$key}">
+          <span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${labelHideFlag ? "" : this.getLabelTemplate(childField)}</span>
+          <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
+      </div>`);
     }
-    childTemplae.push("</ul>");
+    childTemplae.push("</div>");
     return childTemplae.join("");
   }
   /**
@@ -1401,7 +1401,10 @@ class FileRender extends Render_1.default {
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage_1.default.getMessage("fileButton")}</label>
+        <label class="file-label">
+          <input type="file" name="${field.name}" class="form-field file" multiple />
+          ${Lanauage_1.default.getMessage("fileButton")}
+        </label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
@@ -1931,7 +1934,6 @@ class Render {
     }
   }
   setDisabled(flag) {
-    console.log("setDisabled");
     const ele = this.getElement();
     if (ele instanceof HTMLElement) {
       if (flag === false) {

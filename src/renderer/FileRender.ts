@@ -171,9 +171,10 @@ export default class FileRender extends Render {
     return `
     <div class="df-field">
       <span class="file-wrapper">
-        <label class="file-label"><input type="file" name="${field.name}" class="form-field file" multiple />${Lanauage.getMessage(
-      "fileButton"
-    )}</label>
+        <label class="file-label">
+          <input type="file" name="${field.name}" class="form-field file" multiple />
+          ${Lanauage.getMessage("fileButton")}
+        </label>
         <i class="dara-icon help-icon"></i>
       </span>
     </div>

@@ -94,7 +94,6 @@ export default abstract class Render {
   }
 
   public setDisabled(flag: boolean) {
-    console.log("setDisabled");
     const ele = this.getElement();
     if (ele instanceof HTMLElement) {
       if (flag === false) {

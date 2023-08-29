@@ -128,21 +128,20 @@
       },
       {
         label: "주소",
-        viewMode: "horizontal-row", // 'vertical , horizontal' ,horizontal-row
-        children: [
-          {
-            name: "newAddress",
-            // label: "신규주소여부",
+        viewMode: "vertical", // 'vertical , horizontal' ,horizontal-row
+        name: "newAddress",
+        // label: "신규주소여부",
 
-            required: true,
-            renderType: "checkbox",
-            listItem: {
-              list: [{ label: "Password Change", value: "Y", selected: true }],
-            },
-            onChange: (arg) => {
-              console.log(arg);
-            },
-          },
+        required: true,
+        renderType: "checkbox",
+        listItem: {
+          list: [{ label: "Password Change", value: "Y", selected: true }],
+        },
+        onChange: (arg) => {
+          console.log(arg);
+        },
+
+        children: [
           {
             name: "address",
             label: "주소",
