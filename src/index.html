@@ -128,7 +128,7 @@
       },
       {
         label: "주소",
-        viewMode: "vertical", // 'vertical , horizontal' ,horizontal-row
+        viewMode: "horizontal-row", // 'vertical , horizontal' ,horizontal-row
         name: "newAddress",
         // label: "신규주소여부",
 
@@ -143,10 +143,32 @@
 
         children: [
           {
+            name: "address32",
+            label: "주소1",
+            labelStyle: {
+              align: "left",
+              hide: true,
+            },
+            required: true,
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+            conditional: {
+              show: false,
+              field: "newAddress",
+              eq: "Y",
+              //custom?: OptionCallback
+            },
+          },
+          {
             name: "address",
             label: "주소",
             hideLabel: true,
             required: true,
+            labelStyle: {
+              align: "right",
+            },
             rule: {
               minLength: 2,
               maxLength: 100,
@@ -161,7 +183,10 @@
           {
             name: "address2",
             label: "주소1",
-            hideLabel: true,
+            labelStyle: {
+              align: "left",
+              hide: true,
+            },
             required: true,
             rule: {
               minLength: 2,

@@ -1,4 +1,4 @@
-import { FormField } from "@t/FormField";
+import { FormField, ValuesInfo } from "@t/FormField";
 import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
@@ -86,7 +86,14 @@ export default class RadioRender extends Render {
   public setValueItems(items: any): void {
     const containerEle = this.rowElement.querySelector(".df-field-container");
     if (containerEle) {
-      this.field.listItem.list = items;
+      if (this.field.listItem) {
+        this.field.listItem.list = items;
+      } else {
+        this.field.listItem = {
+          list: items,
+        } as ValuesInfo;
+      }
+
       containerEle.innerHTML = RadioRender.template(this.field);
 
       this.initEvent();

@@ -1,4 +1,4 @@
-import { FormField } from "@t/FormField";
+import { FormField, ValuesInfo } from "@t/FormField";
 import Render from "./Render";
 import utils from "src/util/utils";
 import { ValidResult } from "@t/ValidResult";
@@ -51,7 +51,6 @@ export default class CheckboxRender extends Render {
   }
 
   static template(field: FormField): string {
-    console.log("checkbox");
     const templates: string[] = [];
     const fieldName = field.name;
 
@@ -85,7 +84,13 @@ export default class CheckboxRender extends Render {
   public setValueItems(items: any): void {
     const containerEle = this.rowElement.querySelector(".df-field-container");
     if (containerEle) {
-      this.field.listItem.list = items;
+      if (this.field.listItem) {
+        this.field.listItem.list = items;
+      } else {
+        this.field.listItem = {
+          list: items,
+        } as ValuesInfo;
+      }
       containerEle.innerHTML = CheckboxRender.template(this.field);
 
       this.initEvent();

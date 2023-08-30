@@ -1,4 +1,4 @@
-import { FormField } from "@t/FormField";
+import { FormField, ValuesInfo } from "@t/FormField";
 import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
@@ -52,7 +52,13 @@ export default class DropdownRender extends Render {
   }
 
   public setValueItems(items: any): void {
-    this.field.listItem.list = items;
+    if (this.field.listItem) {
+      this.field.listItem.list = items;
+    } else {
+      this.field.listItem = {
+        list: items,
+      } as ValuesInfo;
+    }
     this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
   }
 

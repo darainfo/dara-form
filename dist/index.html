@@ -129,18 +129,36 @@
       {
         label: "주소",
         viewMode: "horizontal-row", // 'vertical , horizontal' ,horizontal-row
+        name: "newAddress",
+        // label: "신규주소여부",
+
+        required: true,
+        renderType: "checkbox",
+        listItem: {
+          list: [{ label: "Password Change", value: "Y", selected: true }],
+        },
+        onChange: (arg) => {
+          console.log(arg);
+        },
+
         children: [
           {
-            name: "newAddress",
-            // label: "신규주소여부",
-
-            required: true,
-            renderType: "checkbox",
-            listItem: {
-              list: [{ label: "Password Change", value: "Y", selected: true }],
+            name: "address32",
+            label: "주소1",
+            labelStyle: {
+              align: "left",
+              hide: true,
             },
-            onChange: (arg) => {
-              console.log(arg);
+            required: true,
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+            conditional: {
+              show: false,
+              field: "newAddress",
+              eq: "Y",
+              //custom?: OptionCallback
             },
           },
           {
@@ -148,6 +166,9 @@
             label: "주소",
             hideLabel: true,
             required: true,
+            labelStyle: {
+              align: "right",
+            },
             rule: {
               minLength: 2,
               maxLength: 100,
@@ -162,7 +183,10 @@
           {
             name: "address2",
             label: "주소1",
-            hideLabel: true,
+            labelStyle: {
+              align: "left",
+              hide: true,
+            },
             required: true,
             rule: {
               minLength: 2,

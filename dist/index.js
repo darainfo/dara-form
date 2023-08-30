@@ -626,7 +626,13 @@ var init_DropdownRender = __esm({
         return template;
       }
       setValueItems(items) {
-        this.field.listItem.list = items;
+        if (this.field.listItem) {
+          this.field.listItem.list = items;
+        } else {
+          this.field.listItem = {
+            list: items
+          };
+        }
         this.element.innerHTML = _DropdownRender.dropdownValuesTemplate(this.field);
       }
       getValue() {
@@ -793,7 +799,13 @@ var init_CheckboxRender = __esm({
       setValueItems(items) {
         const containerEle = this.rowElement.querySelector(".df-field-container");
         if (containerEle) {
-          this.field.listItem.list = items;
+          if (this.field.listItem) {
+            this.field.listItem.list = items;
+          } else {
+            this.field.listItem = {
+              list: items
+            };
+          }
           containerEle.innerHTML = _CheckboxRender.template(this.field);
           this.initEvent();
         }
@@ -942,7 +954,13 @@ var init_RadioRender = __esm({
       setValueItems(items) {
         const containerEle = this.rowElement.querySelector(".df-field-container");
         if (containerEle) {
-          this.field.listItem.list = items;
+          if (this.field.listItem) {
+            this.field.listItem.list = items;
+          } else {
+            this.field.listItem = {
+              list: items
+            };
+          }
           containerEle.innerHTML = _RadioRender.template(this.field);
           this.initEvent();
         }
@@ -2860,9 +2878,10 @@ var init_renderFactory = __esm({
   "src/util/renderFactory.ts"() {
     "use strict";
     init_constants();
+    init_utils();
     getRenderer = (field) => {
       let renderType = field.renderType || "text";
-      if (field.children) {
+      if (utils_default.isUndefined(field.name) && field.children) {
         return RENDER_TEMPLATE["group"];
       }
       let render = RENDER_TEMPLATE[renderType];
@@ -2891,6 +2910,7 @@ var init_FieldInfoMap = __esm({
     init_utils();
     init_renderFactory();
     init_Lanauage();
+    init_utils();
     FieldInfoMap = class {
       constructor(selector) {
         this.fieldIdx = 0;
@@ -2926,7 +2946,7 @@ var init_FieldInfoMap = __esm({
         return this.allFieldInfo[this.keyNameMap[fieldName]];
       }
       /**
-       * 필드 키로 정보 구하기 
+       * 필드 키로 정보 구하기
        *
        * @public
        * @param {string} fieldKey
@@ -2936,7 +2956,7 @@ var init_FieldInfoMap = __esm({
         return this.allFieldInfo[fieldKey];
       }
       /**
-       * 필드명 있는지 여부 체크. 
+       * 필드명 있는지 여부 체크.
        *
        * @public
        * @param {string} fieldName 필드명
@@ -2949,7 +2969,7 @@ var init_FieldInfoMap = __esm({
         return false;
       }
       /**
-       * 모든 필드 정보 
+       * 모든 필드 정보
        *
        * @public
        * @returns {NumberFieldMap}
@@ -2981,20 +3001,22 @@ var init_FieldInfoMap = __esm({
           return formValue;
         }
         return new Promise((resolve, reject) => {
-          for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-            if (!this.isValueFieldCheck(filedInfo)) {
+          for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+            if (!this.isValueFieldCheck(fieldInfo)) {
               continue;
             }
-            const renderInfo = filedInfo.$renderer;
+            const renderInfo = fieldInfo.$renderer;
             let fieldValid = renderInfo.valid();
             if (fieldValid !== true) {
               renderInfo.focus();
               fieldValid = fieldValid;
-              fieldValid.message = Lanauage_default.validMessage(filedInfo, fieldValid)[0];
+              if (utils_default.isUndefined(fieldValid.message)) {
+                fieldValid.message = Lanauage_default.validMessage(fieldInfo, fieldValid)[0];
+              }
               reject(new Error(fieldValid.message, { cause: fieldValid }));
               return;
             }
-            formValue[filedInfo.name] = renderInfo.getValue();
+            formValue[fieldInfo.name] = renderInfo.getValue();
           }
           resolve(formValue);
         });
@@ -3024,7 +3046,9 @@ var init_FieldInfoMap = __esm({
             if (fieldValid !== true) {
               renderInfo.focus();
               fieldValid = fieldValid;
-              fieldValid.message = Lanauage_default.validMessage(fieldInfo, fieldValid)[0];
+              if (utils_default.isUndefined(fieldValid.message)) {
+                fieldValid.message = Lanauage_default.validMessage(fieldInfo, fieldValid)[0];
+              }
               reject(new Error(fieldValid.message, { cause: fieldValid }));
               return;
             }
@@ -3034,10 +3058,10 @@ var init_FieldInfoMap = __esm({
         });
       }
       /**
-       * 
-       * 
-       * @param field 
-       * @returns 
+       *
+       *
+       * @param field
+       * @returns
        */
       isValueFieldCheck(field) {
         let parent = field;
@@ -3051,9 +3075,9 @@ var init_FieldInfoMap = __esm({
       }
       /**
        * field 활성 비활성화 여부.
-       * 
+       *
        * @param field form field
-       * @returns 
+       * @returns
        */
       isConditionField(field) {
         if (!this.conditionFields.includes(field.$key)) {
@@ -3075,7 +3099,7 @@ var init_FieldInfoMap = __esm({
         return condFlag;
       }
       /**
-       * 컬럼 로우 보이고 안보이기 체크. 
+       * 컬럼 로우 보이고 안보이기 체크.
        *
        * @public
        */
@@ -3309,8 +3333,12 @@ var init_DaraForm = __esm({
       rowTemplate(field) {
         let fieldHtml = "";
         if (field.children) {
-          this.addRowFieldInfo(field);
-          fieldHtml = this.groupTemplate(field);
+          if (!utils_default.isUndefined(field.name)) {
+            fieldHtml = this.getFieldTempate(field);
+          } else {
+            this.addRowFieldInfo(field);
+          }
+          fieldHtml += this.groupTemplate(field);
         } else {
           fieldHtml = this.getFieldTempate(field);
         }
@@ -3350,15 +3378,19 @@ var init_DaraForm = __esm({
         if (field.viewMode === "vertical") {
           viewStyleClass = "vertical";
         } else {
+          childLabelWidth = field.childLabelWidth ? field.childLabelWidth : "";
           if (field.viewMode === "horizontal-row") {
-            childLabelWidth = field.childLabelWidth ? `width:${field.childLabelWidth};` : "";
             viewStyleClass = "horizontal-row";
+            isHorizontal = true;
           } else {
             isHorizontal = true;
             viewStyleClass = "horizontal";
           }
         }
         childTemplae.push(`<div class="sub-field-group ${viewStyleClass}">`);
+        let beforeLabelAlignStyleClass = "";
+        let firstFlag = true;
+        let isEmptyLabel = false;
         for (const childField of field.children) {
           childField.$parent = field;
           let childTempate = "";
@@ -3370,16 +3402,28 @@ var init_DaraForm = __esm({
             }
             childTempate = this.getFieldTempate(childField);
           }
+          let childLabelWidthStyle = "";
           if (isHorizontal) {
-            childLabelWidth = childField.labelStyle?.width ? `width:${childField.labelStyle?.width};` : "";
+            childLabelWidth = childField.labelStyle?.width ? childField.labelStyle?.width : childLabelWidth;
+            childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
+            childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
           }
-          let labelAlignStyleClass = this.getTextAlignStyle(childField, field);
+          let labelAlignStyleClass = this.getTextAlignStyle(childField, field, true);
+          if (utils_default.isBlank(labelAlignStyleClass)) {
+            labelAlignStyleClass = beforeLabelAlignStyleClass;
+          } else if (firstFlag) {
+            beforeLabelAlignStyleClass = labelAlignStyleClass + "";
+          }
           let labelHideFlag = childField.labelStyle?.hide;
           labelHideFlag = labelHideFlag ? labelHideFlag : utils_default.isUndefined(childField.label) ? true : false;
           childTemplae.push(`<div class="sub-row" id="${childField.$key}">
-          <span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidth}">${labelHideFlag ? "" : this.getLabelTemplate(childField)}</span>
-          <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-      </div>`);
+                ${labelHideFlag ? isEmptyLabel ? `<span class="sub-label"></span>` : "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(childField)}</span>`}
+                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
+            </div>`);
+          if (!labelHideFlag) {
+            isEmptyLabel = true;
+          }
+          firstFlag = false;
         }
         childTemplae.push("</div>");
         return childTemplae.join("");
@@ -3391,8 +3435,16 @@ var init_DaraForm = __esm({
        * @param {(FormField | null)} parentField
        * @returns {string} style class
        */
-      getTextAlignStyle(filed, parentField) {
-        let labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
+      getTextAlignStyle(filed, parentField, isGroupChild) {
+        let labelAlign;
+        if (isGroupChild) {
+          labelAlign = filed.labelStyle?.align;
+          if (utils_default.isUndefined(labelAlign)) {
+            return null;
+          }
+        } else {
+          labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
+        }
         let labelAlignStyleClass;
         if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
           labelAlignStyleClass = TEXT_ALIGN[labelAlign];
