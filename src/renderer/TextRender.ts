@@ -40,7 +40,7 @@ export default class TextRender extends Render {
   }
 
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }

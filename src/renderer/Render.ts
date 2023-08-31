@@ -17,7 +17,9 @@ export default abstract class Render {
   }
 
   public setDefaultInfo() {
-    if (!utils.isUndefined(this.field.defaultValue)) {
+    if (utils.isUndefined(this.field.defaultValue)) {
+      this.setValue("");
+    } else {
       this.setValue(this.field.defaultValue);
     }
 

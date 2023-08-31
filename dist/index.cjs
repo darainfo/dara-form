@@ -96,7 +96,9 @@ var Render = class _Render {
       rowElement.querySelector(".df-tooltip")?.setAttribute("tooltip", field.tooltip);
   }
   setDefaultInfo() {
-    if (!utils_default.isUndefined(this.field.defaultValue)) {
+    if (utils_default.isUndefined(this.field.defaultValue)) {
+      this.setValue("");
+    } else {
       this.setValue(this.field.defaultValue);
     }
     if (!utils_default.isUndefined(this.field.placeholder)) {
@@ -400,7 +402,7 @@ var NumberRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -484,7 +486,7 @@ var TextAreaRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -513,18 +515,21 @@ var DropdownRender = class _DropdownRender extends Render {
         }
       });
       if (!this.defaultCheckValue) {
-        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
+        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
       }
     }
+    if (utils_default.isUndefined(this.defaultCheckValue)) {
+      this.defaultCheckValue = "";
+    }
     this.initEvent();
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
   initEvent() {
     dropdownChangeEvent(this.field, this.element, this);
   }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
-    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
           ${_DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
                 ${desc}
@@ -574,7 +579,11 @@ var DropdownRender = class _DropdownRender extends Render {
     const valueKey = this.valuesValueKey(field);
     let template = "";
     field.listItem?.list?.forEach((val) => {
-      template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+      if (utils_default.isUndefined(val[valueKey]) && val.label) {
+        template += `<option value="${val.value || ""}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
+      } else {
+        template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+      }
     });
     return template;
   }
@@ -609,7 +618,7 @@ var TextRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -786,7 +795,7 @@ var RadioRender = class _RadioRender extends Render {
       }
     }
     this.initEvent();
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
   initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
@@ -913,7 +922,7 @@ var PasswordRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -1158,7 +1167,7 @@ var CustomRender = class extends Render {
     }
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     resetRowElementStyleClass(this.rowElement);
   }
   getElement() {
@@ -1299,7 +1308,7 @@ var RangeRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -2469,7 +2478,7 @@ var DateRender = class extends Render {
     this.element.value = value;
   }
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -3097,39 +3106,44 @@ var DaraForm = class {
    * @returns {*}
    */
   groupTemplate(field) {
-    const childTemplae = [];
+    const childTemplate = [];
     let viewStyleClass = "";
     let childLabelWidth = "";
-    let isHorizontal = false;
-    if (field.viewMode === "vertical") {
-      viewStyleClass = "vertical";
-    } else {
+    let isHorizontal = false, isHorizontalRow = false;
+    if (field.viewMode === "horizontal" || field.viewMode === "horizontal-row") {
       childLabelWidth = field.childLabelWidth ? field.childLabelWidth : "";
-      if (field.viewMode === "horizontal-row") {
-        viewStyleClass = "horizontal-row";
-        isHorizontal = true;
-      } else {
+      if (field.viewMode === "horizontal") {
         isHorizontal = true;
         viewStyleClass = "horizontal";
+      } else {
+        isHorizontalRow = true;
+        viewStyleClass = "horizontal-row";
       }
+    } else {
+      viewStyleClass = "vertical";
     }
-    childTemplae.push(`<div class="sub-field-group ${viewStyleClass}">`);
+    childTemplate.push(`<div class="sub-field-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
     let beforeLabelAlignStyleClass = "";
     let firstFlag = true;
     let isEmptyLabel = false;
     for (const childField of field.children) {
       childField.$parent = field;
+      if (this.checkHiddenField(childField)) {
+        continue;
+      }
       let childTempate = "";
       if (childField.children) {
-        childTempate = this.groupTemplate(childField);
-      } else {
-        if (this.checkHiddenField(childField)) {
-          continue;
+        if (!utils_default.isUndefined(childField.name)) {
+          childTempate = this.getFieldTempate(childField);
+        } else {
+          this.addRowFieldInfo(childField);
         }
+        childTempate += this.groupTemplate(childField);
+      } else {
         childTempate = this.getFieldTempate(childField);
       }
       let childLabelWidthStyle = "";
-      if (isHorizontal) {
+      if (isHorizontal || isHorizontalRow) {
         childLabelWidth = childField.labelStyle?.width ? childField.labelStyle?.width : childLabelWidth;
         childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
         childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
@@ -3140,19 +3154,21 @@ var DaraForm = class {
       } else if (firstFlag) {
         beforeLabelAlignStyleClass = labelAlignStyleClass + "";
       }
+      childTemplate.push(isHorizontalRow ? `<div class="${viewStyleClass}">` : "");
       let labelHideFlag = childField.labelStyle?.hide;
       labelHideFlag = labelHideFlag ? labelHideFlag : utils_default.isUndefined(childField.label) ? true : false;
-      childTemplae.push(`<div class="sub-row" id="${childField.$key}">
+      childTemplate.push(`<div class="sub-row" id="${childField.$key}">
                 ${labelHideFlag ? isEmptyLabel ? `<span class="sub-label"></span>` : "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(childField)}</span>`}
                 <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
             </div>`);
+      childTemplate.push(isHorizontalRow ? "</div>" : "");
       if (!labelHideFlag) {
         isEmptyLabel = true;
       }
       firstFlag = false;
     }
-    childTemplae.push("</div>");
-    return childTemplae.join("");
+    childTemplate.push(`${!isHorizontalRow ? "</div>" : ""}</div>`);
+    return childTemplate.join("");
   }
   /**
    * text aling style

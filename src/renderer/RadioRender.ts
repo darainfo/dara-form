@@ -32,7 +32,7 @@ export default class RadioRender extends Render {
 
     this.initEvent();
 
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
 
   public initEvent() {

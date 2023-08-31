@@ -150,22 +150,26 @@
       list-style: none;
       margin-bottom: -5px;
 
-      &.vertical {
+      > .vertical {
         display: block;
 
-        .sub-row {
+        > .sub-row {
           padding-bottom: 5px;
           max-height: 100vh;
           transition: all 0.25s ease-in;
         }
       }
 
-      &.horizontal-row {
+      > .horizontal-row {
         display: table;
         width: 100%;
 
-        .sub-row {
+        > .sub-row {
           display: table-row;
+
+          > .sub-label {
+            width: 150px;
+          }
 
           > * {
             display: table-cell;
@@ -174,7 +178,7 @@
         }
       }
 
-      &.horizontal {
+      > .horizontal {
         display: table;
 
         .df-hidden {
@@ -183,7 +187,7 @@
           display: none !important;
         }
 
-        .sub-row {
+        > .sub-row {
           display: table-cell;
           padding-right: 15px;
 

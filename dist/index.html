@@ -84,47 +84,36 @@
           console.log(arg);
         },
       },
-
       {
-        name: "picture",
-        label: "사진",
-        renderType: "file",
-        fileDownload: (item) => {
-          console.log(item);
+        name: "age",
+        label: "나이",
+        required: true,
+        renderType: "number",
+        defaultValue: 5,
+      },
+      {
+        name: "sex",
+        label: "성별",
+        required: true,
+        renderType: "dropdown",
+        listItem: {
+          list: [
+            { label: "남", value: "Y", selected: true },
+            { label: "여", value: "X" },
+          ],
         },
       },
-      ,
       {
-        name: "dropdown",
-        label: "드랍다운",
+        name: "cmpCredId",
+        label: "credentials",
         renderType: "dropdown",
         required: true,
         listItem: {
-          labelField: "{{label}}({{value}})",
-          valueField: "value",
-          list: [
-            { value: "111", label: "AAA" },
-            { value: "222", label: "BBB" },
-          ],
+          labelField: "credName",
+          valueField: "credId",
+          list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
         },
-        onChange: function (a) {
-          console.log(a);
-        },
-      },
-      {
-        name: "birth2",
-        label: "생년월일2",
-        required: true,
-        renderType: "date",
-        customOptions: {
-          isEmbed: false,
-          mode: "datetime",
-          initialDate: new Date(),
-        },
-        onChange: (arg) => {
-          console.log(arg);
-          return true;
-        },
+        description: "",
       },
       {
         label: "주소",
@@ -200,12 +189,19 @@
             },
           },
           {
-            name: "hiddenMode1",
             renderType: "text",
             label: "주소 하위1",
-            childLabelWidth: "10%",
+            //childLabelWidth: "",
             viewMode: "horizontal", // 'vertical , horizontal, horizontal-row'
-            hideLabel: true,
+            labelStyle: {
+              width: "200px",
+            },
+            conditional: {
+              show: true,
+              custom: function () {
+                return true;
+              },
+            },
             children: [
               {
                 name: "address22222",
@@ -229,50 +225,6 @@
             },
           },
         ],
-      },
-      {
-        label: "비밀번호",
-        viewMode: "vertical",
-        conditional: {
-          show: true,
-          custom: function () {
-            return true;
-          },
-        },
-        children: [
-          {
-            name: "upw",
-            label: "비밀번호",
-            labelStyle: {
-              hide: true,
-            },
-            renderType: "password",
-            regexpType: "number-char",
-            rule: {
-              minLength: 3,
-            },
-            different: {
-              field: "uid",
-              message: "아이디와 달라야 합니다.",
-            },
-          },
-          {
-            name: "confirmUpw",
-            label: "확인 비밀번호",
-            labelStyle: {
-              hide: true,
-            },
-            renderType: "password",
-            identical: {
-              field: "upw",
-              message: "비밀번호가 같아야합니다.",
-            },
-          },
-        ],
-      },
-      {
-        name: "custom",
-        label: "custom",
       },
     ],
   };
@@ -316,6 +268,7 @@
         { fileId: "test1", fileName: "aaa.zip" },
         { fileId: "test2", fileName: "bbb.zip" },
       ]);
+      formBuilder.setValue({ sex: "X" });
     },
   };
 </script>

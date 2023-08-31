@@ -27,12 +27,15 @@ export default class DropdownRender extends Render {
       });
 
       if (!this.defaultCheckValue) {
-        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
+        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
       }
+    }
+    if (utils.isUndefined(this.defaultCheckValue)) {
+      this.defaultCheckValue = "";
     }
 
     this.initEvent();
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
 
   initEvent() {
@@ -42,7 +45,7 @@ export default class DropdownRender extends Render {
   static template(field: FormField): string {
     const desc = field.description ? `<div>${field.description}</div>` : "";
 
-    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">;
+    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
           ${DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
                 ${desc}
@@ -103,7 +106,11 @@ export default class DropdownRender extends Render {
     const valueKey = this.valuesValueKey(field);
     let template = "";
     field.listItem?.list?.forEach((val) => {
-      template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+      if (utils.isUndefined(val[valueKey]) && val.label) {
+        template += `<option value="${val.value || ""}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
+      } else {
+        template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+      }
     });
 
     return template;

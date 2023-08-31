@@ -458,44 +458,47 @@
   list-style: none;
   margin-bottom: -5px;
 }
-.dara-form .df-field-container .sub-field-group.vertical {
+.dara-form .df-field-container .sub-field-group > .vertical {
   display: block;
 }
-.dara-form .df-field-container .sub-field-group.vertical .sub-row {
+.dara-form .df-field-container .sub-field-group > .vertical > .sub-row {
   padding-bottom: 5px;
   max-height: 100vh;
   transition: all 0.25s ease-in;
 }
-.dara-form .df-field-container .sub-field-group.horizontal-row {
+.dara-form .df-field-container .sub-field-group > .horizontal-row {
   display: table;
   width: 100%;
 }
-.dara-form .df-field-container .sub-field-group.horizontal-row .sub-row {
+.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row {
   display: table-row;
 }
-.dara-form .df-field-container .sub-field-group.horizontal-row .sub-row > * {
+.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row > .sub-label {
+  width: 150px;
+}
+.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row > * {
   display: table-cell;
   padding-bottom: 7px;
 }
-.dara-form .df-field-container .sub-field-group.horizontal {
+.dara-form .df-field-container .sub-field-group > .horizontal {
   display: table;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .df-hidden {
+.dara-form .df-field-container .sub-field-group > .horizontal .df-hidden {
   width: 0px;
   padding-right: 0px !important;
   display: none !important;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row {
+.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row {
   display: table-cell;
   padding-right: 15px;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group {
+.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row .field-group {
   position: relative;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row .field-group .help-icon {
+.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row .field-group .help-icon {
   margin-right: -16px;
 }
-.dara-form .df-field-container .sub-field-group.horizontal .sub-row > span {
+.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row > span {
   display: table-cell;
 }
 .dara-form > .df-row {

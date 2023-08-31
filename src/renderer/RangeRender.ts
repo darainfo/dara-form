@@ -51,7 +51,7 @@ export default class RangeRender extends Render {
   }
 
   reset() {
-    this.setValue("");
+    this.setDefaultInfo();
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }

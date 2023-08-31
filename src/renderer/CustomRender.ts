@@ -20,21 +20,21 @@ export default class CustomRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : '';
+    const desc = field.description ? `<div>${field.description}</div>` : "";
 
     if ((field.renderer as any).template) {
       return ` <div class="df-field">${(field.renderer as any).template()}</div>
       ${desc}
         <div class="help-message"></div>`;
     }
-    return '';
+    return "";
   }
 
   getValue() {
     if (this.customFunction.getValue) {
       return (this.customFunction.getValue as any).call(this, this.field, this.rowElement);
     }
-    return '';
+    return "";
   }
 
   setValue(value: any): void {
@@ -45,7 +45,7 @@ export default class CustomRender extends Render {
   }
 
   reset() {
-    this.setValue('');
+    this.setDefaultInfo();
     resetRowElementStyleClass(this.rowElement);
   }
 
