@@ -91,16 +91,10 @@ export default class DaraForm {
     }
 
     this.addRowFields = [];
-    const rowElement = document.createElement("div");
-    rowElement.className = `df-row`;
 
     let rednerTemplate = this.rowTemplate(field);
 
-    rowElement.setAttribute("id", field.$key);
-
-    rowElement.innerHTML = rednerTemplate;
-
-    this.formElement.appendChild(rowElement); // Append the element
+    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate); // Append the element
 
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
@@ -112,7 +106,7 @@ export default class DaraForm {
     });
   }
 
-  public rowTemplate(field: FormField) {
+  public rowTemplate1(field: FormField) {
     let fieldHtml = "";
 
     if (field.children) {
@@ -122,7 +116,7 @@ export default class DaraForm {
         this.addRowFieldInfo(field);
       }
 
-      fieldHtml += this.groupTemplate(field);
+      fieldHtml += this.rowTemplate(field);
     } else {
       fieldHtml = this.getFieldTempate(field);
     }
@@ -161,9 +155,7 @@ export default class DaraForm {
    * @param {FormField} field
    * @returns {*}
    */
-  public groupTemplate(field: FormField) {
-    const childTemplate = [];
-
+  public rowTemplate(field: FormField) {
     let viewStyleClass = "";
     let childLabelWidth = "";
     let isHorizontal = false,
@@ -181,7 +173,35 @@ export default class DaraForm {
       viewStyleClass = "vertical";
     }
 
-    childTemplate.push(`<div class="sub-field-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
+    const template = [];
+
+    if (field.children) {
+      template.push(this.childTemplate(field, childLabelWidth, isHorizontal, isHorizontalRow, viewStyleClass));
+    } else {
+      const fieldTemplate = this.getFieldTempate(field);
+      let labelAlignStyleClass = this.getTextAlignStyle(field, null);
+
+      console.log("labelAlignStyleClass ", labelAlignStyleClass);
+
+      template.push(`<div class="form-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
+      template.push(`<div class="df-row" id="${field.$key}">
+          <div class="df-label ${labelAlignStyleClass}" style="${childLabelWidth}">
+              ${field.labelStyle?.hide ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
+          </div>
+          <div class="df-field-container ${field.required ? "required" : ""}">
+              ${fieldTemplate}
+          </div>
+        </div>
+      `);
+      template.push(isHorizontalRow ? "</div>" : "");
+    }
+
+    return template.join("");
+  }
+  public childTemplate(field: FormField, childLabelWidth: string, isHorizontal: boolean, isHorizontalRow: boolean, viewStyleClass: string) {
+    const template = [];
+
+    template.push(`<div class="form-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
 
     let beforeLabelAlignStyleClass = "";
     let firstFlag = true;
@@ -202,7 +222,7 @@ export default class DaraForm {
           this.addRowFieldInfo(childField);
         }
 
-        childTempate += this.groupTemplate(childField);
+        childTempate += this.rowTemplate(childField);
       } else {
         childTempate = this.getFieldTempate(childField);
       }
@@ -210,7 +230,6 @@ export default class DaraForm {
 
       if (isHorizontal || isHorizontalRow) {
         childLabelWidth = childField.labelStyle?.width ? childField.labelStyle?.width : childLabelWidth;
-        childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
         childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
       }
 
@@ -222,15 +241,16 @@ export default class DaraForm {
         beforeLabelAlignStyleClass = labelAlignStyleClass + "";
       }
 
-      childTemplate.push(isHorizontalRow ? `<div class="${viewStyleClass}">` : "");
-      let labelHideFlag = childField.labelStyle?.hide;
-      labelHideFlag = labelHideFlag ? labelHideFlag : utils.isUndefined(childField.label) ? true : false;
-      childTemplate.push(`<div class="sub-row" id="${childField.$key}">
-                ${labelHideFlag ? (isEmptyLabel ? `<span class="sub-label"></span>` : "") : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </div>`);
+      let labelHideFlag = field.labelStyle?.hide;
+      labelHideFlag = labelHideFlag ? labelHideFlag : utils.isUndefined(field.label) ? true : false;
 
-      childTemplate.push(isHorizontalRow ? "</div>" : "");
+      const rowFieldTemplate = this.rowFieldTemplate(childField, labelHideFlag, labelAlignStyleClass, childLabelWidthStyle, isEmptyLabel, childTempate);
+
+      if (isHorizontalRow) {
+        template.push(`<div class="${viewStyleClass}"> ${rowFieldTemplate}</div>`);
+      } else {
+        template.push(rowFieldTemplate);
+      }
 
       if (!labelHideFlag) {
         isEmptyLabel = true;
@@ -238,9 +258,16 @@ export default class DaraForm {
 
       firstFlag = false;
     }
-    childTemplate.push(`${!isHorizontalRow ? "</div>" : ""}</div>`);
+    template.push(`${!isHorizontalRow ? "</div>" : ""}</div>`);
 
-    return childTemplate.join("");
+    return template.join("");
+  }
+
+  private rowFieldTemplate(field: FormField, labelHideFlag: boolean, labelAlignStyleClass: string | null, childLabelWidthStyle: string, isEmptyLabel: boolean, childTempate: string) {
+    return `<div class="df-row" id="${field.$key}">
+                ${labelHideFlag ? (isEmptyLabel ? `<span class="df-label"></span>` : "") : `<span class="df-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(field)}</span>`}
+                <span class="df-field-container ${field.required ? "required" : ""}">${childTempate}</span>
+            </div>`;
   }
 
   /**
@@ -283,6 +310,7 @@ export default class DaraForm {
     }
 
     this.addRowFieldInfo(field);
+    console.log(field);
 
     return (field.$renderer as any).template(field);
   }

@@ -76,12 +76,20 @@
     }
   }
 
-  .df-label,
-  .sub-label {
+  .df-label {
     position: relative;
     font-weight: 700;
     vertical-align: top;
     padding: 5px 15px 0px 0px;
+
+    .required {
+      &::after {
+        content: "*";
+        vertical-align: middle;
+      }
+
+      color: var(--color-danger);
+    }
 
     .df-tooltip {
       visibility: visible;
@@ -119,6 +127,68 @@
     }
   }
 
+  .form-group {
+    padding: 0px;
+    margin: 0px;
+    list-style: none;
+    margin-bottom: -5px;
+
+    > .vertical {
+      display: block;
+
+      > .df-row {
+        padding-bottom: 5px;
+        max-height: 100vh;
+        transition: all 0.25s ease-in;
+      }
+    }
+
+    > .horizontal-row {
+      display: table;
+      width: 100%;
+
+      > .df-row {
+        display: table-row;
+
+        > .df-label {
+          width: 150px;
+        }
+
+        > * {
+          display: table-cell;
+          padding-bottom: 7px;
+        }
+      }
+    }
+
+    > .horizontal {
+      display: table;
+
+      .df-hidden {
+        width: 0px;
+        padding-right: 0px !important;
+        display: none !important;
+      }
+
+      > .df-row {
+        display: table-cell;
+        padding-right: 15px;
+
+        .form-group {
+          position: relative;
+
+          .help-icon {
+            margin-right: -16px;
+          }
+        }
+
+        > span {
+          display: table-cell;
+        }
+      }
+    }
+  }
+
   .df-field-container {
     .df-field {
       position: relative;
@@ -143,86 +213,11 @@
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
       }
     }
-
-    .sub-field-group {
-      padding: 0px;
-      margin: 0px;
-      list-style: none;
-      margin-bottom: -5px;
-
-      > .vertical {
-        display: block;
-
-        > .sub-row {
-          padding-bottom: 5px;
-          max-height: 100vh;
-          transition: all 0.25s ease-in;
-        }
-      }
-
-      > .horizontal-row {
-        display: table;
-        width: 100%;
-
-        > .sub-row {
-          display: table-row;
-
-          > .sub-label {
-            width: 150px;
-          }
-
-          > * {
-            display: table-cell;
-            padding-bottom: 7px;
-          }
-        }
-      }
-
-      > .horizontal {
-        display: table;
-
-        .df-hidden {
-          width: 0px;
-          padding-right: 0px !important;
-          display: none !important;
-        }
-
-        > .sub-row {
-          display: table-cell;
-          padding-right: 15px;
-
-          .field-group {
-            position: relative;
-
-            .help-icon {
-              margin-right: -16px;
-            }
-          }
-
-          > span {
-            display: table-cell;
-          }
-        }
-      }
-    }
   }
 
   > .df-row {
     width: 100%;
     max-height: 100vh;
-
-    > .df-label {
-      vertical-align: top;
-      padding: 5px 10px 0px 0px;
-      .required {
-        &::after {
-          content: "*";
-          vertical-align: middle;
-        }
-
-        color: var(--color-danger);
-      }
-    }
 
     .help-message {
       display: none;
@@ -281,8 +276,7 @@
     }
   }
 
-  > .df-row,
-  .sub-row {
+  > .df-row {
     &.invalid {
       .form-field {
         border-color: var(--invalid-border-color);
@@ -366,23 +360,6 @@
 
     &.range {
       padding: 0px;
-    }
-  }
-
-  .field-group {
-    .field {
-      &.vertical {
-        display: block;
-      }
-
-      &.horizontal {
-        display: inline;
-
-        > label {
-          display: inline-block;
-          margin-top: 3px;
-        }
-      }
     }
   }
 }
