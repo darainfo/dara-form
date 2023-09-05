@@ -61,6 +61,7 @@ export default {
     if (this.isBlank(value)) {
       return false;
     }
+    value = +value;
     return !isNaN(value);
   },
 

@@ -15,10 +15,10 @@ export interface ValuesInfo {
  * 첨부 파일 정보
  *
  * @export
- * @interface FielInfo
- * @typedef {FielInfo}
+ * @interface FileInfo
+ * @typedef {FileInfo}
  */
-export interface FielInfo {
+export interface FileInfo {
   fileId: string;
   fileName: string;
   fileSize: number;
@@ -40,6 +40,11 @@ export interface ConditionInfo {
   custom?: OptionCallback;
 }
 
+export interface FieldStyle {
+  clazz: string;
+  style: string;
+}
+
 /**
  * form field
  *
@@ -53,10 +58,11 @@ export interface FormField {
   renderType?: RENDER_TYPE | string;
   customOptions: any;
   label: string; // '아이디'
-  labelStyle: {
-    hide: boolean;
-    width: string;
-    align: TEXT_ALIGN_TYPE;
+  style: {
+    labelHide: boolean;
+    labelAlign: TEXT_ALIGN_TYPE;
+    labelWidth: stirng | number;
+    valueWidth: stirng | number;
   };
   childLabelWidth: string; // child label 넓이
   tooltip: string; // 툴팁 문구

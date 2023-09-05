@@ -1,4 +1,4 @@
-import { FielInfo, FormField } from "@t/FormField";
+import { FileInfo, FormField } from "@t/FormField";
 import Render from "./Render";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { fileValidator } from "src/rule/fileValidator";
@@ -42,12 +42,10 @@ export default class FileRender extends Render {
   addFiles(files: FileList) {
     let addFlag = false;
 
-    const newFiles: FielInfo[] = [];
+    const newFiles: FileInfo[] = [];
 
     for (let item of files) {
-      const fileCheckList = this.fileList.filter(
-        (fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified
-      );
+      const fileCheckList = this.fileList.filter((fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified);
 
       if (fileCheckList.length > 0) continue;
       this.fileSeq += 1;
@@ -58,7 +56,7 @@ export default class FileRender extends Render {
         $seq: this.fileSeq,
         fileSize: item.size,
         lastModified: item.lastModified,
-      } as FielInfo;
+      } as FileInfo;
 
       newFiles.push(newFileInfo);
       addFlag = true;
@@ -69,7 +67,7 @@ export default class FileRender extends Render {
     }
   }
 
-  private setFileList(fileList: FielInfo[], initFlag?: boolean | undefined) {
+  private setFileList(fileList: FileInfo[], initFlag?: boolean | undefined) {
     const fileListElement = this.rowElement.querySelector(".dara-file-list");
 
     if (fileListElement) {
@@ -102,7 +100,7 @@ export default class FileRender extends Render {
    * @param item
    * @param fileListElement
    */
-  private downloadFileEvent(item: FielInfo, fileListElement: Element) {
+  private downloadFileEvent(item: FileInfo, fileListElement: Element) {
     const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .download`);
     if (ele) {
       ele.addEventListener("click", (evt: Event) => {
@@ -137,7 +135,7 @@ export default class FileRender extends Render {
    * @param item
    * @param fileListElement
    */
-  private removeFileEvent(item: FielInfo, fileListElement: Element) {
+  private removeFileEvent(item: FileInfo, fileListElement: Element) {
     const ele = fileListElement.querySelector(`[data-seq="${item.$seq}"] .remove`);
     if (ele) {
       ele.addEventListener("click", (evt: Event) => {
