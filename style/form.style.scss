@@ -1,5 +1,29 @@
 $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;
 
+@mixin rowFlex() {
+  &.top {
+    flex: 1;
+    display: block;
+    > div {
+      max-width: 100%;
+    }
+  }
+
+  &.reverse {
+    -ms-flex-direction: row-reverse;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: reverse;
+    flex-direction: row-reverse;
+  }
+
+  &.bottom {
+    flex-direction: column-reverse;
+    > div {
+      max-width: 100%;
+    }
+  }
+}
+
 .dara-form {
   --border-color: #dfe1e5;
   --color-danger: #d9534f;
@@ -188,20 +212,7 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       }
     }
 
-    &.block {
-      flex: 1;
-      display: block;
-      > div {
-        max-width: 100%;
-      }
-    }
-
-    &.reverse {
-      -ms-flex-direction: row-reverse;
-      -webkit-box-orient: horizontal;
-      -webkit-box-direction: reverse;
-      flex-direction: row-reverse;
-    }
+    @include rowFlex();
   }
 
   @each $size in $sizes {
@@ -311,18 +322,7 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   .form-group {
     margin-bottom: var(--field-margin-bottom);
 
-    &.block {
-      > * {
-        display: block;
-      }
-    }
-
-    &.reverse {
-      -ms-flex-direction: row-reverse;
-      -webkit-box-orient: horizontal;
-      -webkit-box-direction: reverse;
-      flex-direction: row-reverse;
-    }
+    @include rowFlex();
 
     .help-message {
       display: none;

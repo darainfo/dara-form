@@ -72,12 +72,12 @@ interface StringArrayMap {
 }
 
 export const FIELD_POSITION_STYLE: StringArrayMap = {
-  top: ["block", "txt-left"],
-  "top-center": ["block", "txt-center"],
-  "top-right": ["block", "txt-right"],
-  left: ["left", "txt-left"],
-  "left-center": ["left", "txt-center"],
-  "left-right": ["left", "txt-right"],
+  top: ["top", "txt-left"],
+  "top-center": ["top", "txt-center"],
+  "top-right": ["top", "txt-right"],
+  left: ["", "txt-left"],
+  "left-center": ["", "txt-center"],
+  "left-right": ["", "txt-right"],
   right: ["reverse", "txt-right"],
   "right-center": ["reverse", "txt-center"],
   "right-left": ["reverse", "txt-left"],
