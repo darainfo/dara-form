@@ -47,7 +47,7 @@
     "tslint-config-prettier": "^1.18.0"
   },
   "prettier": {
-    "printWidth": 512,
+    "printWidth": 256,
     "useTabs": false,
     "tabWidth": 2,
     "bracketSpacing": true,

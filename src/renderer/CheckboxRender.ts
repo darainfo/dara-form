@@ -63,13 +63,13 @@ export default class CheckboxRender extends Render {
     field.listItem?.list?.forEach((val) => {
       const checkVal = val[valueKey];
       templates.push(`
-                <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
-                    <label>
-                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
-                        ${this.valuesLabelValue(labelKey, val)}
-                    </label>
-                </span>
-            `);
+          <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
+              <label>
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                  ${this.valuesLabelValue(labelKey, val)}
+              </label>
+          </span>
+      `);
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div> ${desc}<div class="help-message"></div>`);
 

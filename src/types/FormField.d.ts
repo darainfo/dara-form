@@ -1,4 +1,4 @@
-import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE } from "src/constants";
+import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION } from "src/constants";
 import Render from "src/renderer/Render";
 
 export interface OptionCallback {
@@ -41,8 +41,14 @@ export interface ConditionInfo {
 }
 
 export interface FieldStyle {
-  clazz: string;
-  style: string;
+  rowStyleClass?: string;
+  fieldClass?: string;
+  fieldStyle?: string;
+  labelClass?: string;
+  labelStyle?: string;
+  labelAlignClass?: string;
+  valueClass?: string;
+  valueStyle?: string;
 }
 
 /**
@@ -61,15 +67,16 @@ export interface FormField {
   style: {
     labelHide: boolean;
     labelAlign: TEXT_ALIGN_TYPE;
+    width: stirng | number;
     labelWidth: stirng | number;
     valueWidth: stirng | number;
+    position: string;
   };
-  childLabelWidth: string; // child label 넓이
   tooltip: string; // 툴팁 문구
   disabled?: boolean; // disabled
   description: string; // 설명
   placeholder: string; // input , textarea 문구
-  viewMode: string; //'horizontal' // horizontal , vertical, horizontal-row /   // radio, checkbox, group
+  viewMode: "horizontal" | "vertical"; //'horizontal' // horizontal , vertical  // radio, checkbox, group
   required?: boolean; //true // 필요 여부
   regexpType?: REGEXP_TYPE; // 정규식 타입
   rule: {

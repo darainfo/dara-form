@@ -1,26 +1,28 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Dara Form</title>
-  </head>
 
-  <body onload="formObj.load()">
-    <div>
-      <div class="form-button">
-        <button type="button" onclick="formObj.addItem()">Add</button>
-        <button type="button" onclick="formObj.getValue()">getValue</button>
-        <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
-        <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
-        <button type="button" onclick="formBuilder.resetForm()">Reset</button>
-        <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
-      </div>
-    </div>
+<head>
+  <meta charset="utf-8" />
+  <title>Dara Form</title>
+</head>
 
-    <div style="padding: 0px 20px">
-      <form id="formArea"></form>
+<body onload="formObj.load()">
+  <div>
+    <div class="form-button">
+      <button type="button" onclick="formObj.addItem()">Add</button>
+      <button type="button" onclick="formObj.getValue()">getValue</button>
+      <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
+      <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
+      <button type="button" onclick="formBuilder.resetForm()">Reset</button>
+      <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
     </div>
-  </body>
+  </div>
+
+  <div style="padding: 0px 20px">
+    <form id="formArea"></form>
+  </div>
+</body>
+
 </html>
 <style>
   .form-button {
@@ -30,13 +32,12 @@
 <script>
   var formInfo = {
     message: "This value is not valid",
-    mode: "horizontal",
+    viewMode: "horizontal",
     //mode: 'vertical',
     //width: '600px',
     //autoFocus: false,
-    labelStyle: {
-      width: "150px",
-      align: "right",
+    style: {
+      position: 'left-right'
     },
     message: {
       empty: "{name} 필수 입력사항입니다.",
@@ -65,12 +66,15 @@
         tooltip: "아이디를 넣어주세요.",
         description: "설명설명설명",
         placeholder: "아이디를 넣어주세요.",
+        style: {
+          position: 'left-right'
+        },
         //required: true,
         rule: {
           minLength: 3,
           maxLength: 100,
         },
-        validator: (param) => {},
+        validator: (param) => { },
       },
       {
         name: "uname",
@@ -87,6 +91,9 @@
       {
         name: "age",
         label: "나이",
+        style: {
+          position: 'right'
+        },
         required: true,
         renderType: "number",
         defaultValue: 5,
@@ -117,10 +124,14 @@
       },
       {
         label: "주소",
-        viewMode: "horizontal-row", // 'vertical , horizontal' ,horizontal-row
+        viewMode: "horizontal", // 'vertical , horizontal'
         name: "newAddress",
         // label: "신규주소여부",
-
+        style: {
+          labelAlign: "left",
+          labelHide: false,
+        }
+        ,
         required: true,
         renderType: "checkbox",
         listItem: {
@@ -133,21 +144,16 @@
         children: [
           {
             name: "address32",
+            viewMode: 'vertical',
             label: "주소1",
-            labelStyle: {
-              align: "left",
-              hide: true,
+            style: {
+              labelAlign: "left",
+              labelHide: false,
             },
             required: true,
             rule: {
               minLength: 2,
               maxLength: 100,
-            },
-            conditional: {
-              show: false,
-              field: "newAddress",
-              eq: "Y",
-              //custom?: OptionCallback
             },
           },
           {
