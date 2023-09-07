@@ -32,12 +32,13 @@
 <script>
   var formInfo = {
     message: "This value is not valid",
-    viewMode: "horizontal",
     //mode: 'vertical',
-    //width: '600px',
     //autoFocus: false,
     style: {
-      position: 'left-right'
+      //width: '600px',
+      position: 'left-left',
+      labelWidth: '200px'
+
     },
     message: {
       empty: "{name} 필수 입력사항입니다.",
@@ -91,9 +92,6 @@
       {
         name: "age",
         label: "나이",
-        style: {
-          position: 'right'
-        },
         required: true,
         renderType: "number",
         defaultValue: 5,
@@ -102,9 +100,6 @@
         name: "sex",
         label: "성별",
         required: true,
-        style: {
-          position: 'bottom'
-        },
         renderType: "dropdown",
         listItem: {
           list: [
@@ -126,12 +121,32 @@
         description: "",
       },
       {
+        label: "checkbox",
+
+        name: "checkbox11",
+        required: true,
+        renderType: "checkbox",
+        listItem: {
+          orientation: "horizontal", // 'vertical , horizontal'
+          list: [
+            { label: "checkbox value", value: "Y", selected: true }
+            , { label: "checkbox value111", value: "Y1" }
+            , { label: "checkbox value222", value: "Y2" }
+            , { label: "checkbox value333", value: "Y3" }
+          ],
+        },
+        onChange: (arg) => {
+          console.log(arg);
+        },
+      }
+      , {
         label: "주소",
-        viewMode: "horizontal", // 'vertical , horizontal'
+        orientation: "horizontal", // 'vertical , horizontal'
         name: "newAddress",
         // label: "신규주소여부",
         style: {
-          labelAlign: "left",
+          customClass: 'custom-class',
+          // position: 'left-center',
           labelHide: false,
         }
         ,
@@ -147,11 +162,11 @@
         children: [
           {
             name: "address32",
-            viewMode: 'vertical',
-            label: "주소1",
+            label: "주소",
             style: {
-              labelAlign: "left",
               labelHide: false,
+              position: 'left',
+              labelWidth: '120px'
             },
             required: true,
             rule: {
@@ -161,11 +176,11 @@
           },
           {
             name: "address",
-            label: "주소",
+            label: "주소2",
             hideLabel: true,
             required: true,
-            labelStyle: {
-              align: "right",
+            style: {
+              labelHide: false,
             },
             rule: {
               minLength: 2,
@@ -180,10 +195,11 @@
           },
           {
             name: "address2",
-            label: "주소1",
-            labelStyle: {
-              align: "left",
-              hide: true,
+            label: "주소3",
+            style: {
+              //width: '200px',
+              labelHide: false,
+              position: 'left-right'
             },
             required: true,
             rule: {
@@ -201,7 +217,7 @@
             renderType: "text",
             label: "주소 하위1",
             //childLabelWidth: "",
-            viewMode: "horizontal", // 'vertical , horizontal, horizontal-row'
+            orientation: "horizontal", // 'vertical , horizontal, horizontal-row'
             labelStyle: {
               width: "200px",
             },

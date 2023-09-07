@@ -4,7 +4,15 @@ import { FIELD_POSITION_STYLE, TEXT_ALIGN } from "src/constants";
 import { FormOptions } from "@t/FormOptions";
 
 export default {
-  fieldStyle(field: FormField, beforeFieldStyle?: FieldStyle): FieldStyle {
+  /**
+   * field style 처리
+   *
+   * @param formOptions FormOptions
+   * @param field FormField
+   * @param beforeField FormField
+   * @returns FieldStyle
+   */
+  fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null): FieldStyle {
     let fieldStyle: FieldStyle = {
       rowStyleClass: "",
       fieldClass: "",
@@ -16,16 +24,26 @@ export default {
       valueStyle: "",
     };
 
-    if (field.viewMode === "horizontal") {
+    if (field.orientation === "horizontal") {
       fieldStyle.rowStyleClass = "horizontal";
     } else {
       fieldStyle.rowStyleClass = "vertical";
     }
 
+    let defaultLabelWidth = formOptions.style.labelWidth || "3";
+    let defaultValueWidth = formOptions.style.valueWidth || "9";
+    let boforePostion = formOptions.style.position;
+    if (beforeField) {
+      defaultLabelWidth = beforeField.style?.labelWidth || defaultLabelWidth;
+      defaultValueWidth = beforeField.style?.valueWidth || defaultValueWidth;
+      boforePostion = beforeField.style?.position || boforePostion;
+    }
+
     let width = field.style?.width;
 
-    let positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE["top"];
-    fieldStyle.fieldClass = positionArr[0];
+    let positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[boforePostion] || FIELD_POSITION_STYLE["top"];
+
+    fieldStyle.fieldClass = positionArr[0] + " " + (field.style?.customClass || "");
     if (width) {
       if (utils.isNumber(width)) {
         fieldStyle.fieldClass += " col-xs-" + width;
@@ -34,28 +52,21 @@ export default {
       }
     }
 
-    let defaultLabelWidth = "3";
-    let defaultValueWidth = "9";
-    if (beforeFieldStyle) {
-      fieldStyle.labelClass = beforeFieldStyle?.labelClass || "";
-      fieldStyle.labelStyle = beforeFieldStyle?.labelStyle || "";
-      defaultLabelWidth = "";
-      defaultValueWidth = "";
-    }
-
     let labelWidth = field.style?.labelWidth || defaultLabelWidth;
-    let valueWidth = field.style?.valueWidth || defaultValueWidth;
-    fieldStyle.labelClass = positionArr[1];
+    fieldStyle.labelAlignClass = positionArr[1];
+
     if (labelWidth) {
       if (utils.isNumber(labelWidth)) {
+        labelWidth = +labelWidth;
+        defaultValueWidth = 12 - labelWidth + ""; // grid 12에서 value를 label 나머지 값으로  처리.
         fieldStyle.labelClass += " col-xs-" + labelWidth;
       } else {
         fieldStyle.labelStyle = `width:${labelWidth};`;
       }
     }
 
-    fieldStyle.valueClass = beforeFieldStyle?.valueClass || "";
-    fieldStyle.valueStyle = beforeFieldStyle?.valueStyle || "";
+    let valueWidth = field.style?.valueWidth || defaultValueWidth;
+
     if (valueWidth) {
       if (utils.isNumber(valueWidth)) {
         fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
@@ -63,37 +74,16 @@ export default {
         fieldStyle.valueStyle = `width:${valueWidth};`;
       }
     } else {
-      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : beforeFieldStyle?.valueClass || "";
+      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
     }
+    fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
 
     return fieldStyle;
   },
-
-  /**
-   * text aling style
-   *
-   * @param {FormField} filed
-   * @param {(FormField | null)} parentField
-   * @returns {string} style class
-   */
-  getTextAlignStyle(opts: FormOptions, filed: FormField, parentField: FormField | null, isGroupChild?: boolean): string {
-    let labelAlign;
-    if (isGroupChild) {
-      labelAlign = filed.style?.labelAlign;
-      if (utils.isUndefined(labelAlign)) {
-        return "";
-      }
-    } else {
-      labelAlign = filed.style?.labelAlign ? filed.style.labelAlign : parentField?.style?.labelAlign || opts.style.lableAlign;
-    }
-
-    let labelAlignStyleClass;
-    if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
-      labelAlignStyleClass = TEXT_ALIGN[labelAlign];
-    } else {
-      labelAlignStyleClass = TEXT_ALIGN.left;
-    }
-
-    return `txt-${labelAlignStyleClass}`;
-  },
 };
+
+function spaceReplace(str: string): string {
+  return str.replace(/\s+/g, " ").trim();
+}

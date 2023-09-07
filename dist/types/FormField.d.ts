@@ -1,4 +1,4 @@
-import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE } from "src/constants";
+import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
 import Render from "src/renderer/Render";
 
 export interface OptionCallback {
@@ -9,16 +9,17 @@ export interface ValuesInfo {
   labelField: string;
   valueField: string;
   list: any[];
+  orientation: ORIENTATION_TYPE;
 }
 
 /**
  * 첨부 파일 정보
  *
  * @export
- * @interface FielInfo
- * @typedef {FielInfo}
+ * @interface FileInfo
+ * @typedef {FileInfo}
  */
-export interface FielInfo {
+export interface FileInfo {
   fileId: string;
   fileName: string;
   fileSize: number;
@@ -40,6 +41,17 @@ export interface ConditionInfo {
   custom?: OptionCallback;
 }
 
+export interface FieldStyle {
+  rowStyleClass?: string;
+  fieldClass?: string;
+  fieldStyle?: string;
+  labelClass?: string;
+  labelStyle?: string;
+  labelAlignClass?: string;
+  valueClass?: string;
+  valueStyle?: string;
+}
+
 /**
  * form field
  *
@@ -53,17 +65,19 @@ export interface FormField {
   renderType?: RENDER_TYPE | string;
   customOptions: any;
   label: string; // '아이디'
-  labelStyle: {
-    hide: boolean;
-    width: string;
-    align: TEXT_ALIGN_TYPE;
+  style: {
+    width: stirng | number;
+    labelHide: boolean;
+    labelWidth: stirng | number;
+    customClass: string;
+    valueWidth: stirng | number;
+    position: string;
   };
-  childLabelWidth: string; // child label 넓이
   tooltip: string; // 툴팁 문구
   disabled?: boolean; // disabled
   description: string; // 설명
   placeholder: string; // input , textarea 문구
-  viewMode: string; //'horizontal' // horizontal , vertical, horizontal-row /   // radio, checkbox, group
+  orientation: ORIENTATION_TYPE; // children에 사용
   required?: boolean; //true // 필요 여부
   regexpType?: REGEXP_TYPE; // 정규식 타입
   rule: {

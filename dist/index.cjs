@@ -57,6 +57,7 @@ var utils_default = {
     if (this.isBlank(value)) {
       return false;
     }
+    value = +value;
     return !isNaN(value);
   },
   isArray(value) {
@@ -603,7 +604,7 @@ var TextRender = class extends Render {
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
-    <div class="df-field">
+     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
      ${desc}
@@ -677,18 +678,15 @@ var CheckboxRender = class _CheckboxRender extends Render {
     field.listItem?.list?.forEach((val) => {
       const checkVal = val[valueKey];
       templates.push(`
-                <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
-                    <label>
-                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
-                        ${this.valuesLabelValue(labelKey, val)}
-                    </label>
-                </span>
-            `);
+          <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
+              <label>
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                  ${this.valuesLabelValue(labelKey, val)}
+              </label>
+          </span>
+      `);
     });
-    templates.push(`<i class="dara-icon help-icon"></i></div></div>
-        ${desc}
-        <div class="help-message"></div>
-        `);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div> ${desc}<div class="help-message"></div>`);
     return templates.join("");
   }
   setValueItems(items) {
@@ -819,7 +817,7 @@ var RadioRender = class _RadioRender extends Render {
     field.listItem?.list?.forEach((val) => {
       const radioVal = val[valueKey];
       templates.push(
-        `<span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
+        `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
                 <label>
                     <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
                     ${this.valuesLabelValue(labelKey, val)}
@@ -979,9 +977,7 @@ var FileRender = class extends Render {
     let addFlag = false;
     const newFiles = [];
     for (let item of files) {
-      const fileCheckList = this.fileList.filter(
-        (fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified
-      );
+      const fileCheckList = this.fileList.filter((fileItem) => fileItem.fileName == item.name && fileItem.fileSize == item.size && fileItem.lastModified == item.lastModified);
       if (fileCheckList.length > 0)
         continue;
       this.fileSeq += 1;
@@ -2511,26 +2507,39 @@ var RULES = {
 };
 var FIELD_PREFIX = "dff";
 var RENDER_TEMPLATE = {
-  "number": NumberRender,
-  "textarea": TextAreaRender,
-  "dropdown": DropdownRender,
-  "checkbox": CheckboxRender,
-  "radio": RadioRender,
-  "text": TextRender,
-  "password": PasswordRender,
-  "file": FileRender,
-  "custom": CustomRender,
-  "group": GroupRender,
-  "hidden": HiddenRender,
-  "button": ButtonRender,
-  "range": RangeRender,
-  "date": DateRender
+  number: NumberRender,
+  textarea: TextAreaRender,
+  dropdown: DropdownRender,
+  checkbox: CheckboxRender,
+  radio: RadioRender,
+  text: TextRender,
+  password: PasswordRender,
+  file: FileRender,
+  custom: CustomRender,
+  group: GroupRender,
+  hidden: HiddenRender,
+  button: ButtonRender,
+  range: RangeRender,
+  date: DateRender
 };
-var TEXT_ALIGN = {
-  left: "left",
-  center: "center",
-  right: "right"
+var FIELD_POSITION_STYLE = {
+  "top-left": ["top", "txt-left"],
+  "top-center": ["top", "txt-center"],
+  "top-right": ["top", "txt-right"],
+  "left-left": ["", "txt-left"],
+  "left-center": ["", "txt-center"],
+  "left-right": ["", "txt-right"],
+  "right-right": ["right", "txt-right"],
+  "right-center": ["right", "txt-center"],
+  "right-left": ["right", "txt-left"],
+  "bottom-left": ["bottom", "txt-left"],
+  "bottom-center": ["bottom", "txt-center"],
+  "bottom-right": ["bottom", "txt-right"]
 };
+FIELD_POSITION_STYLE["top"] = FIELD_POSITION_STYLE["top-left"];
+FIELD_POSITION_STYLE["right"] = FIELD_POSITION_STYLE["right-right"];
+FIELD_POSITION_STYLE["left"] = FIELD_POSITION_STYLE["left-left"];
+FIELD_POSITION_STYLE["bottom"] = FIELD_POSITION_STYLE["bottom-left"];
 
 // src/util/Lanauage.ts
 var localeMessage2 = {
@@ -2864,14 +2873,88 @@ function addFieldFormData(formData, fieldInfo, fieldValue) {
   }
 }
 
+// src/util/styleUtils.ts
+var styleUtils_default = {
+  /**
+   * field style 처리
+   *
+   * @param formOptions FormOptions
+   * @param field FormField
+   * @param beforeField FormField
+   * @returns FieldStyle
+   */
+  fieldStyle(formOptions, field, beforeField) {
+    let fieldStyle = {
+      rowStyleClass: "",
+      fieldClass: "",
+      fieldStyle: "",
+      labelClass: "",
+      labelStyle: "",
+      labelAlignClass: "",
+      valueClass: "",
+      valueStyle: ""
+    };
+    if (field.orientation === "horizontal") {
+      fieldStyle.rowStyleClass = "horizontal";
+    } else {
+      fieldStyle.rowStyleClass = "vertical";
+    }
+    let defaultLabelWidth = formOptions.style.labelWidth || "3";
+    let defaultValueWidth = formOptions.style.valueWidth || "9";
+    let boforePostion = formOptions.style.position;
+    if (beforeField) {
+      defaultLabelWidth = beforeField.style?.labelWidth || defaultLabelWidth;
+      defaultValueWidth = beforeField.style?.valueWidth || defaultValueWidth;
+      boforePostion = beforeField.style?.position || boforePostion;
+    }
+    let width = field.style?.width;
+    let positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[boforePostion] || FIELD_POSITION_STYLE["top"];
+    fieldStyle.fieldClass = positionArr[0] + " " + (field.style?.customClass || "");
+    if (width) {
+      if (utils_default.isNumber(width)) {
+        fieldStyle.fieldClass += " col-xs-" + width;
+      } else {
+        fieldStyle.fieldStyle = `width:${width};`;
+      }
+    }
+    let labelWidth = field.style?.labelWidth || defaultLabelWidth;
+    fieldStyle.labelAlignClass = positionArr[1];
+    if (labelWidth) {
+      if (utils_default.isNumber(labelWidth)) {
+        labelWidth = +labelWidth;
+        defaultValueWidth = 12 - labelWidth + "";
+        fieldStyle.labelClass += " col-xs-" + labelWidth;
+      } else {
+        fieldStyle.labelStyle = `width:${labelWidth};`;
+      }
+    }
+    let valueWidth = field.style?.valueWidth || defaultValueWidth;
+    if (valueWidth) {
+      if (utils_default.isNumber(valueWidth)) {
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
+      } else {
+        fieldStyle.valueStyle = `width:${valueWidth};`;
+      }
+    } else {
+      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+    }
+    fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
+    return fieldStyle;
+  }
+};
+function spaceReplace(str) {
+  return str.replace(/\s+/g, " ").trim();
+}
+
 // src/DaraForm.ts
 var defaultOptions = {
-  mode: "horizontal",
-  // horizontal , vertical // 가로 세로 모드
-  width: "100%",
-  labelStyle: {
-    width: "20%",
-    align: TEXT_ALIGN.left
+  style: {
+    width: "100%",
+    labelWidth: 3,
+    valueWidth: 9,
+    position: "left-right"
   },
   notValidMessage: "This form is not valid.",
   fields: []
@@ -3021,11 +3104,13 @@ var DaraForm = class {
     daraFormIdx += 1;
     Lanauage_default.set(message2);
     this.fieldInfoMap = new FieldInfoMap(selector);
-    this.isHorizontal = this.options.mode === "horizontal";
     const formElement = document.querySelector(selector);
     if (formElement) {
-      formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? "horizontal" : "vertical"}`;
-      formElement.setAttribute("style", `width:${this.options.width};`);
+      formElement.className = `dara-form df-${daraFormIdx}`;
+      console.log(this.options.style.width);
+      if (this.options.style.width) {
+        formElement.setAttribute("style", `width:${this.options.style.width};`);
+      }
       this.formElement = formElement;
       this.createForm(this.options.fields);
     } else {
@@ -3051,12 +3136,8 @@ var DaraForm = class {
       return;
     }
     this.addRowFields = [];
-    const rowElement = document.createElement("div");
-    rowElement.className = `df-row`;
     let rednerTemplate = this.rowTemplate(field);
-    rowElement.setAttribute("id", field.$key);
-    rowElement.innerHTML = rednerTemplate;
-    this.formElement.appendChild(rowElement);
+    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate);
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
@@ -3064,35 +3145,6 @@ var DaraForm = class {
       fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
       fieldRowElement?.removeAttribute("id");
     });
-  }
-  rowTemplate(field) {
-    let fieldHtml = "";
-    if (field.children) {
-      if (!utils_default.isUndefined(field.name)) {
-        fieldHtml = this.getFieldTempate(field);
-      } else {
-        this.addRowFieldInfo(field);
-      }
-      fieldHtml += this.groupTemplate(field);
-    } else {
-      fieldHtml = this.getFieldTempate(field);
-    }
-    if (this.checkHiddenField(field)) {
-      return "";
-    }
-    let widthStyle = "";
-    if (this.isHorizontal) {
-      widthStyle = `width:${field.labelStyle?.width ? field.labelStyle.width : this.options.labelStyle.width};`;
-    }
-    let labelAlignStyleClass = this.getTextAlignStyle(field, null);
-    return `
-            <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
-                ${field.labelStyle?.hide ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
-            </div>
-            <div class="df-field-container ${field.required ? "required" : ""}">
-                ${fieldHtml}
-            </div>
-        `;
   }
   getLabelTemplate(field) {
     const requiredTemplate = field.required ? `<span class="required"></span>` : "";
@@ -3105,27 +3157,36 @@ var DaraForm = class {
    * @param {FormField} field
    * @returns {*}
    */
-  groupTemplate(field) {
-    const childTemplate = [];
-    let viewStyleClass = "";
-    let childLabelWidth = "";
-    let isHorizontal = false, isHorizontalRow = false;
-    if (field.viewMode === "horizontal" || field.viewMode === "horizontal-row") {
-      childLabelWidth = field.childLabelWidth ? field.childLabelWidth : "";
-      if (field.viewMode === "horizontal") {
-        isHorizontal = true;
-        viewStyleClass = "horizontal";
-      } else {
-        isHorizontalRow = true;
-        viewStyleClass = "horizontal-row";
+  rowTemplate(field) {
+    let fieldStyle = styleUtils_default.fieldStyle(this.options, field);
+    const template = [];
+    let fieldTemplate = "";
+    if (field.children) {
+      if (!utils_default.isUndefined(field.name)) {
+        fieldTemplate = this.getFieldTempate(field);
       }
+      fieldTemplate += this.childTemplate(field, fieldStyle);
     } else {
-      viewStyleClass = "vertical";
+      fieldTemplate = this.getFieldTempate(field);
     }
-    childTemplate.push(`<div class="sub-field-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
-    let beforeLabelAlignStyleClass = "";
+    let labelHideFlag = this.isLabelHide(field);
+    template.push(`
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
+              ${fieldTemplate}
+          </div>
+        </div>
+    `);
+    return template.join("");
+  }
+  childTemplate(field, parentFieldStyle) {
+    const template = [];
+    let beforeField = null;
     let firstFlag = true;
     let isEmptyLabel = false;
+    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
     for (const childField of field.children) {
       childField.$parent = field;
       if (this.checkHiddenField(childField)) {
@@ -3133,67 +3194,35 @@ var DaraForm = class {
       }
       let childTempate = "";
       if (childField.children) {
-        if (!utils_default.isUndefined(childField.name)) {
-          childTempate = this.getFieldTempate(childField);
-        } else {
-          this.addRowFieldInfo(childField);
-        }
-        childTempate += this.groupTemplate(childField);
+        childTempate = this.rowTemplate(childField);
       } else {
         childTempate = this.getFieldTempate(childField);
       }
-      let childLabelWidthStyle = "";
-      if (isHorizontal || isHorizontalRow) {
-        childLabelWidth = childField.labelStyle?.width ? childField.labelStyle?.width : childLabelWidth;
-        childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
-        childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
+      let childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField);
+      if (firstFlag) {
+        beforeField = childField;
       }
-      let labelAlignStyleClass = this.getTextAlignStyle(childField, field, true);
-      if (utils_default.isBlank(labelAlignStyleClass)) {
-        labelAlignStyleClass = beforeLabelAlignStyleClass;
-      } else if (firstFlag) {
-        beforeLabelAlignStyleClass = labelAlignStyleClass + "";
-      }
-      childTemplate.push(isHorizontalRow ? `<div class="${viewStyleClass}">` : "");
-      let labelHideFlag = childField.labelStyle?.hide;
-      labelHideFlag = labelHideFlag ? labelHideFlag : utils_default.isUndefined(childField.label) ? true : false;
-      childTemplate.push(`<div class="sub-row" id="${childField.$key}">
-                ${labelHideFlag ? isEmptyLabel ? `<span class="sub-label"></span>` : "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </div>`);
-      childTemplate.push(isHorizontalRow ? "</div>" : "");
+      let labelHideFlag = this.isLabelHide(childField);
+      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
+        ${labelHideFlag ? isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "" : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`}
+        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}">${childTempate}</span>
+      </div>`);
       if (!labelHideFlag) {
         isEmptyLabel = true;
       }
       firstFlag = false;
     }
-    childTemplate.push(`${!isHorizontalRow ? "</div>" : ""}</div>`);
-    return childTemplate.join("");
+    template.push("</div>");
+    return template.join("");
   }
   /**
-   * text aling style
+   * label 숨김 여부
    *
-   * @param {FormField} filed
-   * @param {(FormField | null)} parentField
-   * @returns {string} style class
+   * @param field formfield
+   * @returns
    */
-  getTextAlignStyle(filed, parentField, isGroupChild) {
-    let labelAlign;
-    if (isGroupChild) {
-      labelAlign = filed.labelStyle?.align;
-      if (utils_default.isUndefined(labelAlign)) {
-        return null;
-      }
-    } else {
-      labelAlign = filed.labelStyle?.align ? filed.labelStyle.align : parentField?.labelStyle?.align || this.options.labelStyle.align;
-    }
-    let labelAlignStyleClass;
-    if (Object.keys(TEXT_ALIGN).includes(labelAlign)) {
-      labelAlignStyleClass = TEXT_ALIGN[labelAlign];
-    } else {
-      labelAlignStyleClass = TEXT_ALIGN.left;
-    }
-    return `txt-${labelAlignStyleClass}`;
+  isLabelHide(field) {
+    return field.style?.labelHide || utils_default.isUndefined(field.label);
   }
   /**
    * field tempalte 구하기

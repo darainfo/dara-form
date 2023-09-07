@@ -67,21 +67,27 @@ export type PASSWORD_TYPE = "number" | "upper" | "upper-special" | "upper-specia
 
 export type FIELD_POSITION = "top" | "left" | "left-left" | "left-right" | "right" | "right-left" | "right-right" | "bottom";
 
+export type ORIENTATION_TYPE = "horizontal" | "vertical";
+
 interface StringArrayMap {
   [key: string]: string[];
 }
 
 export const FIELD_POSITION_STYLE: StringArrayMap = {
-  top: ["top", "txt-left"],
+  "top-left": ["top", "txt-left"],
   "top-center": ["top", "txt-center"],
   "top-right": ["top", "txt-right"],
-  left: ["", "txt-left"],
+  "left-left": ["", "txt-left"],
   "left-center": ["", "txt-center"],
   "left-right": ["", "txt-right"],
-  right: ["reverse", "txt-right"],
-  "right-center": ["reverse", "txt-center"],
-  "right-left": ["reverse", "txt-left"],
-  bottom: ["bottom", "txt-left"],
+  "right-right": ["right", "txt-right"],
+  "right-center": ["right", "txt-center"],
+  "right-left": ["right", "txt-left"],
+  "bottom-left": ["bottom", "txt-left"],
   "bottom-center": ["bottom", "txt-center"],
   "bottom-right": ["bottom", "txt-right"],
 };
+FIELD_POSITION_STYLE["top"] = FIELD_POSITION_STYLE["top-left"];
+FIELD_POSITION_STYLE["right"] = FIELD_POSITION_STYLE["right-right"];
+FIELD_POSITION_STYLE["left"] = FIELD_POSITION_STYLE["left-left"];
+FIELD_POSITION_STYLE["bottom"] = FIELD_POSITION_STYLE["bottom-left"];

@@ -12,12 +12,11 @@ import { TEXT_ALIGN } from "./constants";
 import styleUtils from "./util/styleUtils";
 
 const defaultOptions = {
-  viewMode: "horizontal", // horizontal , vertical // 가로 세로 모드
   style: {
     width: "100%",
     labelWidth: 3,
     valueWidth: 9,
-    lableAlign: TEXT_ALIGN.left,
+    position: "left-right",
   },
   notValidMessage: "This form is not valid.",
   fields: [],
@@ -58,7 +57,12 @@ export default class DaraForm {
     const formElement = document.querySelector(selector);
     if (formElement) {
       formElement.className = `dara-form df-${daraFormIdx}`;
-      formElement.setAttribute("style", `width:${this.options.style.width};`);
+
+      console.log(this.options.style.width);
+
+      if (this.options.style.width) {
+        formElement.setAttribute("style", `width:${this.options.style.width};`);
+      }
 
       this.formElement = formElement;
       this.createForm(this.options.fields);
@@ -120,8 +124,7 @@ export default class DaraForm {
    * @returns {*}
    */
   public rowTemplate(field: FormField) {
-    let fieldStyle: FieldStyle = styleUtils.fieldStyle(field);
-    fieldStyle.labelAlignClass = styleUtils.getTextAlignStyle(this.options, field, null);
+    let fieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, field);
 
     const template = [];
 
@@ -139,8 +142,8 @@ export default class DaraForm {
     let labelHideFlag = this.isLabelHide(field);
 
     template.push(`
-        <div class="df-row ${fieldStyle.fieldClass}" id="${field.$key}">
-          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
 
           <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
               ${fieldTemplate}
@@ -153,7 +156,7 @@ export default class DaraForm {
   public childTemplate(field: FormField, parentFieldStyle: FieldStyle) {
     const template = [];
 
-    let beforeFieldStyle: FieldStyle = {};
+    let beforeField: FormField = null as any;
     let firstFlag = true;
     let isEmptyLabel = false;
     template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
@@ -172,14 +175,10 @@ export default class DaraForm {
         childTempate = this.getFieldTempate(childField);
       }
 
-      let childFieldStyle: FieldStyle = styleUtils.fieldStyle(childField, beforeFieldStyle);
+      let childFieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, childField, beforeField);
 
-      childFieldStyle.labelAlignClass = styleUtils.getTextAlignStyle(this.options, childField, field, true);
-
-      if (utils.isBlank(childFieldStyle.labelAlignClass)) {
-        childFieldStyle.labelAlignClass = beforeFieldStyle?.labelAlignClass || "";
-      } else if (firstFlag) {
-        beforeFieldStyle = childFieldStyle;
+      if (firstFlag) {
+        beforeField = childField;
       }
 
       let labelHideFlag = this.isLabelHide(childField);
@@ -188,7 +187,7 @@ export default class DaraForm {
         ${
           labelHideFlag
             ? isEmptyLabel
-              ? `<span class="df-label ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>`
+              ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>`
               : ""
             : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`
         }
@@ -214,7 +213,7 @@ export default class DaraForm {
    * @returns
    */
   private isLabelHide(field: FormField): boolean {
-    return field.style?.labelHide || (utils.isUndefined(field.label) ? true : false);
+    return field.style?.labelHide || utils.isUndefined(field.label);
   }
 
   /**

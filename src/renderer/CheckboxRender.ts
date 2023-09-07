@@ -63,7 +63,7 @@ export default class CheckboxRender extends Render {
     field.listItem?.list?.forEach((val) => {
       const checkVal = val[valueKey];
       templates.push(`
-          <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
+          <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
                   <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
                   ${this.valuesLabelValue(labelKey, val)}

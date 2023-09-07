@@ -8,12 +8,11 @@ import { TEXT_ALIGN_TYPE } from "src/constants";
  * @typedef {FormOptions}
  */
 export interface FormOptions {
-  viewMode: string; //'horizontal' // horizontal , vertical // 가로 세로 모드
   style: {
     width: string;
     labelWidth: string | number;
     valueWidth: string | number;
-    lableAlign: TEXT_ALIGN_TYPE;
+    position: string;
   };
   autoFocus: boolean; //  default true
   notValidMessage: string; //'This value is not valid'

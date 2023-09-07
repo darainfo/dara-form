@@ -2,24 +2,23 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
 
 @mixin rowFlex() {
   &.top {
-    flex: 1;
-    display: block;
+    flex-direction: column;
     > div {
-      max-width: 100%;
+      max-width: 100% !important;
     }
   }
 
-  &.reverse {
-    -ms-flex-direction: row-reverse;
-    -webkit-box-orient: horizontal;
-    -webkit-box-direction: reverse;
-    flex-direction: row-reverse;
+  &.right {
+    -ms-flex-direction: row-reverse !important;
+    -webkit-box-orient: horizontal !important;
+    -webkit-box-direction: reverse !important;
+    flex-direction: row-reverse !important;
   }
 
   &.bottom {
-    flex-direction: column-reverse;
+    flex-direction: column-reverse !important;
     > div {
-      max-width: 100%;
+      max-width: 100% !important;
     }
   }
 }
@@ -65,6 +64,7 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     max-height: 0vh !important;
     width: 0px;
     visibility: collapse;
+    display: none !important;
     padding: 0px !important;
     margin: 0px !important;
   }
@@ -198,17 +198,9 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       flex: 0 0 auto;
       width: auto;
       max-width: none;
-      > .form-group {
-        display: flex;
-        -ms-flex: 0 1 auto;
-        -webkit-box-flex: 0;
-        flex: 0 1 auto;
-        -ms-flex-direction: row;
-        -webkit-box-orient: horizontal;
-        -webkit-box-direction: normal;
-        flex-direction: row;
-        -ms-flex-wrap: wrap;
-        flex-wrap: wrap;
+
+      > .form-group > .empty {
+        display: none !important;
       }
     }
 
@@ -316,10 +308,27 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   }
 
   .field-group {
-    margin-bottom: var(--field-margin-bottom);
+    .field.vertical {
+      > * {
+        display: block;
+      }
+    }
   }
 
   .form-group {
+    box-sizing: border-box;
+    display: -ms-flexbox;
+    display: -webkit-box;
+    display: flex;
+    -ms-flex: 0 1 auto;
+    -webkit-box-flex: 0;
+    flex: 0 1 auto;
+    -ms-flex-direction: row;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    flex-direction: row;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
     margin-bottom: var(--field-margin-bottom);
 
     @include rowFlex();

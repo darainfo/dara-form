@@ -1,4 +1,4 @@
-import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION } from "src/constants";
+import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
 import Render from "src/renderer/Render";
 
 export interface OptionCallback {
@@ -9,6 +9,7 @@ export interface ValuesInfo {
   labelField: string;
   valueField: string;
   list: any[];
+  orientation: ORIENTATION_TYPE;
 }
 
 /**
@@ -65,10 +66,10 @@ export interface FormField {
   customOptions: any;
   label: string; // '아이디'
   style: {
-    labelHide: boolean;
-    labelAlign: TEXT_ALIGN_TYPE;
     width: stirng | number;
+    labelHide: boolean;
     labelWidth: stirng | number;
+    customClass: string;
     valueWidth: stirng | number;
     position: string;
   };
@@ -76,7 +77,7 @@ export interface FormField {
   disabled?: boolean; // disabled
   description: string; // 설명
   placeholder: string; // input , textarea 문구
-  viewMode: "horizontal" | "vertical"; //'horizontal' // horizontal , vertical  // radio, checkbox, group
+  orientation: ORIENTATION_TYPE; // children에 사용
   required?: boolean; //true // 필요 여부
   regexpType?: REGEXP_TYPE; // 정규식 타입
   rule: {

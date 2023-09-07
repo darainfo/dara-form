@@ -30,13 +30,13 @@ const stringValidator_1 = __webpack_require__(/*! ./rule/stringValidator */ "./s
 const numberValidator_1 = __webpack_require__(/*! ./rule/numberValidator */ "./src/rule/numberValidator.ts");
 const regexpValidator_1 = __webpack_require__(/*! ./rule/regexpValidator */ "./src/rule/regexpValidator.ts");
 const FieldInfoMap_1 = tslib_1.__importDefault(__webpack_require__(/*! src/FieldInfoMap */ "./src/FieldInfoMap.ts"));
-const constants_1 = __webpack_require__(/*! ./constants */ "./src/constants.ts");
+const styleUtils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/styleUtils */ "./src/util/styleUtils.ts"));
 const defaultOptions = {
-  mode: "horizontal",
-  width: "100%",
-  labelStyle: {
-    width: "20%",
-    align: constants_1.TEXT_ALIGN.left
+  style: {
+    width: "100%",
+    labelWidth: 3,
+    valueWidth: 9,
+    position: "left-right"
   },
   notValidMessage: "This form is not valid.",
   fields: []
@@ -193,11 +193,13 @@ class DaraForm {
     daraFormIdx += 1;
     Lanauage_1.default.set(message);
     this.fieldInfoMap = new FieldInfoMap_1.default(selector);
-    this.isHorizontal = this.options.mode === "horizontal";
     const formElement = document.querySelector(selector);
     if (formElement) {
-      formElement.className = `dara-form df-${daraFormIdx} ${this.isHorizontal ? "horizontal" : "vertical"}`;
-      formElement.setAttribute("style", `width:${this.options.width};`);
+      formElement.className = `dara-form df-${daraFormIdx}`;
+      console.log(this.options.style.width);
+      if (this.options.style.width) {
+        formElement.setAttribute("style", `width:${this.options.style.width};`);
+      }
       this.formElement = formElement;
       this.createForm(this.options.fields);
     } else {
@@ -223,12 +225,9 @@ class DaraForm {
       return;
     }
     this.addRowFields = [];
-    const rowElement = document.createElement("div");
-    rowElement.className = `df-row`;
     let rednerTemplate = this.rowTemplate(field);
-    rowElement.setAttribute("id", field.$key);
-    rowElement.innerHTML = rednerTemplate;
-    this.formElement.appendChild(rowElement); // Append the element
+    //console.log(rednerTemplate);
+    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate); // Append the element
     this.addRowFields.forEach(fieldSeq => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils_1.default.unFieldName(fileldInfo.name);
@@ -236,36 +235,6 @@ class DaraForm {
       fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
       fieldRowElement === null || fieldRowElement === void 0 ? void 0 : fieldRowElement.removeAttribute("id");
     });
-  }
-  rowTemplate(field) {
-    var _a, _b;
-    let fieldHtml = "";
-    if (field.children) {
-      if (!utils_1.default.isUndefined(field.name)) {
-        fieldHtml = this.getFieldTempate(field);
-      } else {
-        this.addRowFieldInfo(field);
-      }
-      fieldHtml += this.groupTemplate(field);
-    } else {
-      fieldHtml = this.getFieldTempate(field);
-    }
-    if (this.checkHiddenField(field)) {
-      return "";
-    }
-    let widthStyle = "";
-    if (this.isHorizontal) {
-      widthStyle = `width:${((_a = field.labelStyle) === null || _a === void 0 ? void 0 : _a.width) ? field.labelStyle.width : this.options.labelStyle.width};`;
-    }
-    let labelAlignStyleClass = this.getTextAlignStyle(field, null);
-    return `
-            <div class="df-label ${labelAlignStyleClass} " style="${widthStyle}">
-                ${((_b = field.labelStyle) === null || _b === void 0 ? void 0 : _b.hide) ? "" : `<span>${this.getLabelTemplate(field)}</span>`}
-            </div>
-            <div class="df-field-container ${field.required ? "required" : ""}">
-                ${fieldHtml}
-            </div>
-        `;
   }
   getLabelTemplate(field) {
     const requiredTemplate = field.required ? `<span class="required"></span>` : "";
@@ -278,29 +247,36 @@ class DaraForm {
    * @param {FormField} field
    * @returns {*}
    */
-  groupTemplate(field) {
-    var _a, _b, _c;
-    const childTemplate = [];
-    let viewStyleClass = "";
-    let childLabelWidth = "";
-    let isHorizontal = false,
-      isHorizontalRow = false;
-    if (field.viewMode === "horizontal" || field.viewMode === "horizontal-row") {
-      childLabelWidth = field.childLabelWidth ? field.childLabelWidth : "";
-      if (field.viewMode === "horizontal") {
-        isHorizontal = true;
-        viewStyleClass = "horizontal";
-      } else {
-        isHorizontalRow = true;
-        viewStyleClass = "horizontal-row";
+  rowTemplate(field) {
+    let fieldStyle = styleUtils_1.default.fieldStyle(this.options, field);
+    const template = [];
+    let fieldTemplate = "";
+    if (field.children) {
+      if (!utils_1.default.isUndefined(field.name)) {
+        fieldTemplate = this.getFieldTempate(field);
       }
+      fieldTemplate += this.childTemplate(field, fieldStyle);
     } else {
-      viewStyleClass = "vertical";
+      fieldTemplate = this.getFieldTempate(field);
     }
-    childTemplate.push(`<div class="sub-field-group"> ${!isHorizontalRow ? `<div class="${viewStyleClass}">` : ""}`);
-    let beforeLabelAlignStyleClass = "";
+    let labelHideFlag = this.isLabelHide(field);
+    template.push(`
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
+              ${fieldTemplate}
+          </div>
+        </div>
+    `);
+    return template.join("");
+  }
+  childTemplate(field, parentFieldStyle) {
+    const template = [];
+    let beforeField = null;
     let firstFlag = true;
     let isEmptyLabel = false;
+    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
     for (const childField of field.children) {
       childField.$parent = field;
       if (this.checkHiddenField(childField)) {
@@ -308,68 +284,36 @@ class DaraForm {
       }
       let childTempate = "";
       if (childField.children) {
-        if (!utils_1.default.isUndefined(childField.name)) {
-          childTempate = this.getFieldTempate(childField);
-        } else {
-          this.addRowFieldInfo(childField);
-        }
-        childTempate += this.groupTemplate(childField);
+        childTempate = this.rowTemplate(childField);
       } else {
         childTempate = this.getFieldTempate(childField);
       }
-      let childLabelWidthStyle = "";
-      if (isHorizontal || isHorizontalRow) {
-        childLabelWidth = ((_a = childField.labelStyle) === null || _a === void 0 ? void 0 : _a.width) ? (_b = childField.labelStyle) === null || _b === void 0 ? void 0 : _b.width : childLabelWidth;
-        childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
-        childLabelWidthStyle = childLabelWidth ? `width:${childLabelWidth};` : "";
+      let childFieldStyle = styleUtils_1.default.fieldStyle(this.options, childField, beforeField);
+      if (firstFlag) {
+        beforeField = childField;
       }
-      let labelAlignStyleClass = this.getTextAlignStyle(childField, field, true);
-      if (utils_1.default.isBlank(labelAlignStyleClass)) {
-        labelAlignStyleClass = beforeLabelAlignStyleClass;
-      } else if (firstFlag) {
-        beforeLabelAlignStyleClass = labelAlignStyleClass + "";
-      }
-      childTemplate.push(isHorizontalRow ? `<div class="${viewStyleClass}">` : "");
-      let labelHideFlag = (_c = childField.labelStyle) === null || _c === void 0 ? void 0 : _c.hide;
-      labelHideFlag = labelHideFlag ? labelHideFlag : utils_1.default.isUndefined(childField.label) ? true : false;
-      childTemplate.push(`<div class="sub-row" id="${childField.$key}">
-                ${labelHideFlag ? isEmptyLabel ? `<span class="sub-label"></span>` : "" : `<span class="sub-label ${labelAlignStyleClass}" style="${childLabelWidthStyle}">${this.getLabelTemplate(childField)}</span>`}
-                <span class="df-field-container ${childField.required ? "required" : ""}">${childTempate}</span>
-            </div>`);
-      childTemplate.push(isHorizontalRow ? "</div>" : "");
+      let labelHideFlag = this.isLabelHide(childField);
+      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
+        ${labelHideFlag ? isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "" : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`}
+        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}">${childTempate}</span>
+      </div>`);
       if (!labelHideFlag) {
         isEmptyLabel = true;
       }
       firstFlag = false;
     }
-    childTemplate.push(`${!isHorizontalRow ? "</div>" : ""}</div>`);
-    return childTemplate.join("");
+    template.push("</div>");
+    return template.join("");
   }
   /**
-   * text aling style
+   * label 숨김 여부
    *
-   * @param {FormField} filed
-   * @param {(FormField | null)} parentField
-   * @returns {string} style class
+   * @param field formfield
+   * @returns
    */
-  getTextAlignStyle(filed, parentField, isGroupChild) {
-    var _a, _b, _c;
-    let labelAlign;
-    if (isGroupChild) {
-      labelAlign = (_a = filed.labelStyle) === null || _a === void 0 ? void 0 : _a.align;
-      if (utils_1.default.isUndefined(labelAlign)) {
-        return null;
-      }
-    } else {
-      labelAlign = ((_b = filed.labelStyle) === null || _b === void 0 ? void 0 : _b.align) ? filed.labelStyle.align : ((_c = parentField === null || parentField === void 0 ? void 0 : parentField.labelStyle) === null || _c === void 0 ? void 0 : _c.align) || this.options.labelStyle.align;
-    }
-    let labelAlignStyleClass;
-    if (Object.keys(constants_1.TEXT_ALIGN).includes(labelAlign)) {
-      labelAlignStyleClass = constants_1.TEXT_ALIGN[labelAlign];
-    } else {
-      labelAlignStyleClass = constants_1.TEXT_ALIGN.left;
-    }
-    return `txt-${labelAlignStyleClass}`;
+  isLabelHide(field) {
+    var _a;
+    return ((_a = field.style) === null || _a === void 0 ? void 0 : _a.labelHide) || utils_1.default.isUndefined(field.label);
   }
   /**
    * field tempalte 구하기
@@ -709,7 +653,7 @@ function addFieldFormData(formData, fieldInfo, fieldValue) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.TEXT_ALIGN = exports.RENDER_TEMPLATE = exports.FIELD_PREFIX = exports.RULES = void 0;
+exports.FIELD_POSITION_STYLE = exports.TEXT_ALIGN = exports.RENDER_TEMPLATE = exports.FIELD_PREFIX = exports.RULES = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const NumberRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/NumberRender */ "./src/renderer/NumberRender.ts"));
 const TextAreaRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/TextAreaRender */ "./src/renderer/TextAreaRender.ts"));
@@ -726,43 +670,61 @@ const ButtonRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./rendere
 const RangeRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/RangeRender */ "./src/renderer/RangeRender.ts"));
 const DateRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/DateRender */ "./src/renderer/DateRender.ts"));
 exports.RULES = {
-  NAN: 'nan',
-  MIN: 'minimum',
-  EXCLUSIVE_MIN: 'exclusiveMinimum',
-  MAX: 'maximum',
-  EXCLUSIVE_MAX: 'exclusiveMaximum',
-  MIN_LENGTH: 'minLength',
-  MAX_LENGTH: 'maxLength',
-  BETWEEN: 'between',
-  BETWEEN_EXCLUSIVE_MIN: 'betweenExclusiveMin',
-  BETWEEN_EXCLUSIVE_MAX: 'betweenExclusiveMax',
-  BETWEEN_EXCLUSIVE_MINMAX: 'betweenExclusiveMinMax',
-  REGEXP: 'regexp',
-  REQUIRED: 'required',
-  VALIDATOR: 'validator'
+  NAN: "nan",
+  MIN: "minimum",
+  EXCLUSIVE_MIN: "exclusiveMinimum",
+  MAX: "maximum",
+  EXCLUSIVE_MAX: "exclusiveMaximum",
+  MIN_LENGTH: "minLength",
+  MAX_LENGTH: "maxLength",
+  BETWEEN: "between",
+  BETWEEN_EXCLUSIVE_MIN: "betweenExclusiveMin",
+  BETWEEN_EXCLUSIVE_MAX: "betweenExclusiveMax",
+  BETWEEN_EXCLUSIVE_MINMAX: "betweenExclusiveMinMax",
+  REGEXP: "regexp",
+  REQUIRED: "required",
+  VALIDATOR: "validator"
 };
-exports.FIELD_PREFIX = 'dff'; // dara form field
+exports.FIELD_PREFIX = "dff"; // dara form field
 exports.RENDER_TEMPLATE = {
-  'number': NumberRender_1.default,
-  'textarea': TextAreaRender_1.default,
-  'dropdown': DropdownRender_1.default,
-  'checkbox': CheckboxRender_1.default,
-  'radio': RadioRender_1.default,
-  'text': TextRender_1.default,
-  'password': PasswordRender_1.default,
-  'file': FileRender_1.default,
-  'custom': CustomRender_1.default,
-  'group': GroupRender_1.default,
-  'hidden': HiddenRender_1.default,
-  'button': ButtonRender_1.default,
-  'range': RangeRender_1.default,
-  'date': DateRender_1.default
+  number: NumberRender_1.default,
+  textarea: TextAreaRender_1.default,
+  dropdown: DropdownRender_1.default,
+  checkbox: CheckboxRender_1.default,
+  radio: RadioRender_1.default,
+  text: TextRender_1.default,
+  password: PasswordRender_1.default,
+  file: FileRender_1.default,
+  custom: CustomRender_1.default,
+  group: GroupRender_1.default,
+  hidden: HiddenRender_1.default,
+  button: ButtonRender_1.default,
+  range: RangeRender_1.default,
+  date: DateRender_1.default
 };
 exports.TEXT_ALIGN = {
-  left: 'left',
-  center: 'center',
-  right: 'right'
+  left: "left",
+  center: "center",
+  right: "right"
 };
+exports.FIELD_POSITION_STYLE = {
+  "top-left": ["top", "txt-left"],
+  "top-center": ["top", "txt-center"],
+  "top-right": ["top", "txt-right"],
+  "left-left": ["", "txt-left"],
+  "left-center": ["", "txt-center"],
+  "left-right": ["", "txt-right"],
+  "right-right": ["right", "txt-right"],
+  "right-center": ["right", "txt-center"],
+  "right-left": ["right", "txt-left"],
+  "bottom-left": ["bottom", "txt-left"],
+  "bottom-center": ["bottom", "txt-center"],
+  "bottom-right": ["bottom", "txt-right"]
+};
+exports.FIELD_POSITION_STYLE.top = exports.FIELD_POSITION_STYLE["top-left"];
+exports.FIELD_POSITION_STYLE.right = exports.FIELD_POSITION_STYLE["right-right"];
+exports.FIELD_POSITION_STYLE.left = exports.FIELD_POSITION_STYLE["left-left"];
+exports.FIELD_POSITION_STYLE.bottom = exports.FIELD_POSITION_STYLE["bottom-left"];
 
 /***/ }),
 
@@ -948,18 +910,15 @@ class CheckboxRender extends Render_1.default {
     (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
       const checkVal = val[valueKey];
       templates.push(`
-                <span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
-                    <label>
-                        <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
-                        ${this.valuesLabelValue(labelKey, val)}
-                    </label>
-                </span>
-            `);
+          <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
+              <label>
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                  ${this.valuesLabelValue(labelKey, val)}
+              </label>
+          </span>
+      `);
     });
-    templates.push(`<i class="dara-icon help-icon"></i></div></div>
-        ${desc}
-        <div class="help-message"></div>
-        `);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div> ${desc}<div class="help-message"></div>`);
     return templates.join("");
   }
   setValueItems(items) {
@@ -1773,7 +1732,7 @@ class RadioRender extends Render_1.default {
     templates.push(`<div class="df-field"><div class="field-group">`);
     (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
       const radioVal = val[valueKey];
-      templates.push(`<span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
+      templates.push(`<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
                 <label>
                     <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
                     ${this.valuesLabelValue(labelKey, val)}
@@ -2131,7 +2090,7 @@ class TextRender extends Render_1.default {
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
-    <div class="df-field">
+     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
      ${desc}
@@ -2181,7 +2140,7 @@ const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts
  *
  * @param {HTMLInputElement} element
  * @param {FormField} field
- * @param {FielInfo[]} fileList
+ * @param {FileInfo[]} fileList
  * @returns {(ValidResult | boolean)}
  */
 const fileValidator = (element, field, fileList) => {
@@ -2633,6 +2592,97 @@ exports.getRenderTemplate = getRenderTemplate;
 
 /***/ }),
 
+/***/ "./src/util/styleUtils.ts":
+/*!********************************!*\
+  !*** ./src/util/styleUtils.ts ***!
+  \********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./utils */ "./src/util/utils.ts"));
+const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
+exports["default"] = {
+  /**
+   * field style 처리
+   *
+   * @param formOptions FormOptions
+   * @param field FormField
+   * @param beforeField FormField
+   * @returns FieldStyle
+   */
+  fieldStyle(formOptions, field, beforeField) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    let fieldStyle = {
+      rowStyleClass: "",
+      fieldClass: "",
+      fieldStyle: "",
+      labelClass: "",
+      labelStyle: "",
+      labelAlignClass: "",
+      valueClass: "",
+      valueStyle: ""
+    };
+    if (field.orientation === "horizontal") {
+      fieldStyle.rowStyleClass = "horizontal";
+    } else {
+      fieldStyle.rowStyleClass = "vertical";
+    }
+    let defaultLabelWidth = formOptions.style.labelWidth || "3";
+    let defaultValueWidth = formOptions.style.valueWidth || "9";
+    let boforePostion = formOptions.style.position;
+    if (beforeField) {
+      defaultLabelWidth = ((_a = beforeField.style) === null || _a === void 0 ? void 0 : _a.labelWidth) || defaultLabelWidth;
+      defaultValueWidth = ((_b = beforeField.style) === null || _b === void 0 ? void 0 : _b.valueWidth) || defaultValueWidth;
+      boforePostion = ((_c = beforeField.style) === null || _c === void 0 ? void 0 : _c.position) || boforePostion;
+    }
+    let width = (_d = field.style) === null || _d === void 0 ? void 0 : _d.width;
+    let positionArr = constants_1.FIELD_POSITION_STYLE[(_e = field.style) === null || _e === void 0 ? void 0 : _e.position] || constants_1.FIELD_POSITION_STYLE[boforePostion] || constants_1.FIELD_POSITION_STYLE["top"];
+    fieldStyle.fieldClass = positionArr[0] + " " + (((_f = field.style) === null || _f === void 0 ? void 0 : _f.customClass) || "");
+    if (width) {
+      if (utils_1.default.isNumber(width)) {
+        fieldStyle.fieldClass += " col-xs-" + width;
+      } else {
+        fieldStyle.fieldStyle = `width:${width};`;
+      }
+    }
+    let labelWidth = ((_g = field.style) === null || _g === void 0 ? void 0 : _g.labelWidth) || defaultLabelWidth;
+    fieldStyle.labelAlignClass = positionArr[1];
+    if (labelWidth) {
+      if (utils_1.default.isNumber(labelWidth)) {
+        labelWidth = +labelWidth;
+        defaultValueWidth = 12 - labelWidth + ""; // grid 12에서 value를 label 나머지 값으로  처리.
+        fieldStyle.labelClass += " col-xs-" + labelWidth;
+      } else {
+        fieldStyle.labelStyle = `width:${labelWidth};`;
+      }
+    }
+    let valueWidth = ((_h = field.style) === null || _h === void 0 ? void 0 : _h.valueWidth) || defaultValueWidth;
+    if (valueWidth) {
+      if (utils_1.default.isNumber(valueWidth)) {
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
+      } else {
+        fieldStyle.valueStyle = `width:${valueWidth};`;
+      }
+    } else {
+      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+    }
+    fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
+    return fieldStyle;
+  }
+};
+function spaceReplace(str) {
+  return str.replace(/\s+/g, " ").trim();
+}
+
+/***/ }),
+
 /***/ "./src/util/utils.ts":
 /*!***************************!*\
   !*** ./src/util/utils.ts ***!
@@ -2696,6 +2746,7 @@ exports["default"] = {
     if (this.isBlank(value)) {
       return false;
     }
+    value = +value;
     return !isNaN(value);
   },
   isArray(value) {
@@ -3224,6 +3275,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
+  --field-margin-bottom: 10px;
   padding: 0px;
   margin-top: 10px;
   color: var(--font-color);
@@ -3242,28 +3294,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .txt-right {
   text-align: right;
 }
-.dara-form.horizontal {
-  display: table;
-  width: 100%;
-}
-.dara-form.horizontal > .df-row {
-  display: table-row;
-}
-.dara-form.horizontal > .df-row > .df-label {
-  width: 10%;
-  display: table-cell;
-}
-.dara-form.horizontal > .df-row > .df-field-container {
-  display: table-cell;
-  padding-bottom: 10px;
-}
-.dara-form.vertical > .df-row > * {
-  display: block;
-}
 .dara-form .df-hidden {
   max-height: 0vh !important;
-  transition: all 0.1s ease-in;
+  width: 0px;
   visibility: collapse;
+  display: none !important;
   padding: 0px !important;
   margin: 0px !important;
 }
@@ -3273,15 +3308,20 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   background-color: #ebebeb;
   opacity: 0.8;
 }
-.dara-form .df-label,
-.dara-form .sub-label {
+.dara-form .df-label {
   position: relative;
   font-weight: 700;
   vertical-align: top;
-  padding: 5px 15px 0px 0px;
+  padding: 0px 15px 0px 0px;
 }
-.dara-form .df-label .df-tooltip,
-.dara-form .sub-label .df-tooltip {
+.dara-form .df-label .required {
+  color: var(--color-danger);
+}
+.dara-form .df-label .required::after {
+  content: "*";
+  vertical-align: middle;
+}
+.dara-form .df-label .df-tooltip {
   visibility: visible;
   color: #fff;
   background: #000;
@@ -3296,8 +3336,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   position: relative;
   display: inline-block;
 }
-.dara-form .df-label .df-tooltip .tooltip,
-.dara-form .sub-label .df-tooltip .tooltip {
+.dara-form .df-label .df-tooltip .tooltip {
   display: none;
   text-align: initial;
   background: var(--tooltip-background);
@@ -3311,172 +3350,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   text-shadow: none;
   cursor: default;
 }
-.dara-form .df-label .df-tooltip:hover .tooltip,
-.dara-form .sub-label .df-tooltip:hover .tooltip {
+.dara-form .df-label .df-tooltip:hover .tooltip {
   display: block;
-}
-.dara-form .df-field-container .df-field {
-  position: relative;
-}
-.dara-form .df-field-container .df-field .range-num {
-  clear: both;
-  display: block;
-  width: 100%;
-  text-align: left;
-}
-.dara-form .df-field-container .df-field .file-wrapper {
-  border: 1px solid var(--border-color);
-  text-align: center;
-  display: block;
-  width: 100%;
-  padding: 0.375rem 0.75rem;
-  font-weight: 400;
-  line-height: 1.5;
-  background-clip: padding-box;
-  border-radius: 4px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-.dara-form .df-field-container .sub-field-group {
-  padding: 0px;
-  margin: 0px;
-  list-style: none;
-  margin-bottom: -5px;
-}
-.dara-form .df-field-container .sub-field-group > .vertical {
-  display: block;
-}
-.dara-form .df-field-container .sub-field-group > .vertical > .sub-row {
-  padding-bottom: 5px;
-  max-height: 100vh;
-  transition: all 0.25s ease-in;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal-row {
-  display: table;
-  width: 100%;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row {
-  display: table-row;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row > .sub-label {
-  width: 150px;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal-row > .sub-row > * {
-  display: table-cell;
-  padding-bottom: 7px;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal {
-  display: table;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal .df-hidden {
-  width: 0px;
-  padding-right: 0px !important;
-  display: none !important;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row {
-  display: table-cell;
-  padding-right: 15px;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row .field-group {
-  position: relative;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row .field-group .help-icon {
-  margin-right: -16px;
-}
-.dara-form .df-field-container .sub-field-group > .horizontal > .sub-row > span {
-  display: table-cell;
-}
-.dara-form > .df-row {
-  width: 100%;
-  max-height: 100vh;
-}
-.dara-form > .df-row > .df-label {
-  vertical-align: top;
-  padding: 5px 10px 0px 0px;
-}
-.dara-form > .df-row > .df-label .required {
-  color: var(--color-danger);
-}
-.dara-form > .df-row > .df-label .required::after {
-  content: "*";
-  vertical-align: middle;
-}
-.dara-form > .df-row .help-message {
-  display: none;
-}
-.dara-form > .df-row .help-icon {
-  background-repeat: no-repeat;
-  background-position-y: center;
-}
-.dara-form > .df-row .help-icon.form-field {
-  background-position-x: calc(100% - 15px);
-}
-.dara-form > .df-row .help-icon.dara-icon {
-  display: none;
-  position: absolute;
-  z-index: 1;
-  top: 0px;
-  right: 0px;
-  height: 100%;
-  width: 20px;
-  margin-right: 15px;
-}
-.dara-form > .df-row .dara-file-list .file-icon {
-  width: 20px;
-  height: 20px;
-  display: inline-block;
-  vertical-align: middle;
-  cursor: pointer;
-}
-.dara-form > .df-row .dara-file-list .file-icon:hover {
-  background-color: var(--background-button-hover);
-}
-.dara-form > .df-row .dara-file-list .file-icon.download {
-  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___});
-}
-.dara-form > .df-row .dara-file-list .file-icon.remove {
-  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___});
-}
-.dara-form > .df-row .dara-file-list .file-name {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  word-wrap: normal;
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: middle;
-  width: calc(100% - 55px);
-}
-.dara-form > .df-row.invalid .form-field,
-.dara-form .sub-row.invalid .form-field {
-  border-color: var(--invalid-border-color);
-  outline-color: var(--invalid-border-color);
-}
-.dara-form > .df-row.invalid > .df-field-container.required > .df-field .help-icon,
-.dara-form .sub-row.invalid > .df-field-container.required > .df-field .help-icon {
-  display: block;
-  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___});
-}
-.dara-form > .df-row.invalid .help-message,
-.dara-form .sub-row.invalid .help-message {
-  display: block;
-  color: var(--invalid-font-color);
-}
-.dara-form > .df-row.valid > .df-field-container.required > .df-field .help-icon,
-.dara-form .sub-row.valid > .df-field-container.required > .df-field .help-icon {
-  display: block;
-  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___});
-}
-.dara-form .file-label {
-  border: 1px solid var(--border-color);
-  display: inline;
-  width: 100%;
-  padding: 3px 15px;
-  line-height: 1;
-  background-clip: padding-box;
-  border-radius: 4px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-.dara-form .file-label:hover {
-  background-color: var(--background-button-hover);
 }
 .dara-form .form-field {
   border: 1px solid var(--border-color);
@@ -3514,16 +3389,260 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .form-field.range {
   padding: 0px;
 }
-.dara-form .field-group .field.vertical {
+.dara-form .df-row {
+  box-sizing: border-box;
+  display: -ms-flexbox;
+  display: -webkit-box;
+  display: flex;
+  -ms-flex: 0 1 auto;
+  -webkit-box-flex: 0;
+  flex: 0 1 auto;
+  -ms-flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  flex-direction: row;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+.dara-form .df-row.vertical {
   display: block;
 }
-.dara-form .field-group .field.horizontal {
-  display: inline;
+.dara-form .df-row.horizontal {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 auto;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
 }
-.dara-form .field-group .field.horizontal > label {
+.dara-form .df-row.horizontal > .form-group > .empty {
+  display: none !important;
+}
+.dara-form .df-row.top {
+  flex-direction: column;
+}
+.dara-form .df-row.top > div {
+  max-width: 100% !important;
+}
+.dara-form .df-row.right {
+  -ms-flex-direction: row-reverse !important;
+  -webkit-box-orient: horizontal !important;
+  -webkit-box-direction: reverse !important;
+  flex-direction: row-reverse !important;
+}
+.dara-form .df-row.bottom {
+  flex-direction: column-reverse !important;
+}
+.dara-form .df-row.bottom > div {
+  max-width: 100% !important;
+}
+.dara-form .col-xs-1 {
+  flex-basis: 8.33333333%;
+  max-width: 8.33333333%;
+}
+.dara-form .col-xs-2 {
+  flex-basis: 16.66666667%;
+  max-width: 16.66666667%;
+}
+.dara-form .col-xs-3 {
+  flex-basis: 25%;
+  max-width: 25%;
+}
+.dara-form .col-xs-4 {
+  flex-basis: 33.33333333%;
+  max-width: 33.33333333%;
+}
+.dara-form .col-xs-5 {
+  flex-basis: 41.66666667%;
+  max-width: 41.66666667%;
+}
+.dara-form .col-xs-6 {
+  flex-basis: 50%;
+  max-width: 50%;
+}
+.dara-form .col-xs-7 {
+  flex-basis: 58.33333333%;
+  max-width: 58.33333333%;
+}
+.dara-form .col-xs-8 {
+  flex-basis: 66.66666667%;
+  max-width: 66.66666667%;
+}
+.dara-form .col-xs-9 {
+  flex-basis: 75%;
+  max-width: 75%;
+}
+.dara-form .col-xs-10 {
+  flex-basis: 83.33333333%;
+  max-width: 83.33333333%;
+}
+.dara-form .col-xs-11 {
+  flex-basis: 91.66666667%;
+  max-width: 91.66666667%;
+}
+.dara-form .col-xs-12 {
+  flex-basis: 100%;
+  max-width: 100%;
+}
+.dara-form .align-items-center {
+  -webkit-box-align: center !important;
+  -ms-flex-align: center !important;
+  align-items: center !important;
+}
+.dara-form .col-xs {
+  -webkit-flex-grow: 1;
+  -ms-flex-positive: 1;
+  -webkit-box-flex: 1;
+  flex-grow: 1;
+  -ms-flex-preferred-size: 0;
+  flex-basis: 0;
+  max-width: 100%;
+}
+.dara-form .col-auto {
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 auto;
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+}
+.dara-form .col-fix {
+  flex: none;
+}
+.dara-form .col-full {
+  flex: 1;
+  overflow: auto;
+}
+.dara-form .df-field-container .df-field {
+  position: relative;
+}
+.dara-form .df-field-container .df-field .range-num {
+  clear: both;
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.dara-form .df-field-container .df-field .file-wrapper {
+  border: 1px solid var(--border-color);
+  text-align: center;
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-weight: 400;
+  line-height: 1.5;
+  background-clip: padding-box;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.dara-form .dara-file-list .file-icon {
+  width: 20px;
+  height: 20px;
   display: inline-block;
-  margin-top: 3px;
-}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":[".dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  &.horizontal {\r\n    display: table;\r\n    width: 100%;\r\n\r\n    > .df-row {\r\n      display: table-row;\r\n\r\n      > .df-label {\r\n        width: 10%;\r\n        display: table-cell;\r\n      }\r\n\r\n      > .df-field-container {\r\n        display: table-cell;\r\n        padding-bottom: 10px;\r\n      }\r\n    }\r\n  }\r\n\r\n  &.vertical {\r\n    > .df-row > * {\r\n      display: block;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    transition: all 0.1s ease-in;\r\n    visibility: collapse;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label,\r\n  .sub-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 5px 15px 0px 0px;\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n\r\n    .sub-field-group {\r\n      padding: 0px;\r\n      margin: 0px;\r\n      list-style: none;\r\n      margin-bottom: -5px;\r\n\r\n      > .vertical {\r\n        display: block;\r\n\r\n        > .sub-row {\r\n          padding-bottom: 5px;\r\n          max-height: 100vh;\r\n          transition: all 0.25s ease-in;\r\n        }\r\n      }\r\n\r\n      > .horizontal-row {\r\n        display: table;\r\n        width: 100%;\r\n\r\n        > .sub-row {\r\n          display: table-row;\r\n\r\n          > .sub-label {\r\n            width: 150px;\r\n          }\r\n\r\n          > * {\r\n            display: table-cell;\r\n            padding-bottom: 7px;\r\n          }\r\n        }\r\n      }\r\n\r\n      > .horizontal {\r\n        display: table;\r\n\r\n        .df-hidden {\r\n          width: 0px;\r\n          padding-right: 0px !important;\r\n          display: none !important;\r\n        }\r\n\r\n        > .sub-row {\r\n          display: table-cell;\r\n          padding-right: 15px;\r\n\r\n          .field-group {\r\n            position: relative;\r\n\r\n            .help-icon {\r\n              margin-right: -16px;\r\n            }\r\n          }\r\n\r\n          > span {\r\n            display: table-cell;\r\n          }\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row {\r\n    width: 100%;\r\n    max-height: 100vh;\r\n\r\n    > .df-label {\r\n      vertical-align: top;\r\n      padding: 5px 10px 0px 0px;\r\n      .required {\r\n        &::after {\r\n          content: \"*\";\r\n          vertical-align: middle;\r\n        }\r\n\r\n        color: var(--color-danger);\r\n      }\r\n    }\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    .dara-file-list {\r\n      .file-icon {\r\n        width: 20px;\r\n        height: 20px;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        cursor: pointer;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n\r\n        &.download {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n        }\r\n\r\n        &.remove {\r\n          background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n        }\r\n      }\r\n\r\n      .file-name {\r\n        text-overflow: ellipsis;\r\n        white-space: nowrap;\r\n        word-wrap: normal;\r\n        overflow: hidden;\r\n        display: inline-block;\r\n        vertical-align: middle;\r\n        width: calc(100% - 55px);\r\n      }\r\n    }\r\n  }\r\n\r\n  > .df-row,\r\n  .sub-row {\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  .file-label {\r\n    border: 1px solid var(--border-color);\r\n    display: inline;\r\n    width: 100%;\r\n    padding: 3px 15px;\r\n    line-height: 1;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &:hover {\r\n      background-color: var(--background-button-hover);\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field {\r\n      &.vertical {\r\n        display: block;\r\n      }\r\n\r\n      &.horizontal {\r\n        display: inline;\r\n\r\n        > label {\r\n          display: inline-block;\r\n          margin-top: 3px;\r\n        }\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
+  vertical-align: middle;
+  cursor: pointer;
+}
+.dara-form .dara-file-list .file-icon:hover {
+  background-color: var(--background-button-hover);
+}
+.dara-form .dara-file-list .file-icon.download {
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_0___});
+}
+.dara-form .dara-file-list .file-icon.remove {
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_1___});
+}
+.dara-form .dara-file-list .file-name {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-wrap: normal;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
+  width: calc(100% - 55px);
+}
+.dara-form .field-group .field.vertical > * {
+  display: block;
+}
+.dara-form .form-group {
+  box-sizing: border-box;
+  display: -ms-flexbox;
+  display: -webkit-box;
+  display: flex;
+  -ms-flex: 0 1 auto;
+  -webkit-box-flex: 0;
+  flex: 0 1 auto;
+  -ms-flex-direction: row;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  flex-direction: row;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-bottom: var(--field-margin-bottom);
+}
+.dara-form .form-group.top {
+  flex-direction: column;
+}
+.dara-form .form-group.top > div {
+  max-width: 100% !important;
+}
+.dara-form .form-group.right {
+  -ms-flex-direction: row-reverse !important;
+  -webkit-box-orient: horizontal !important;
+  -webkit-box-direction: reverse !important;
+  flex-direction: row-reverse !important;
+}
+.dara-form .form-group.bottom {
+  flex-direction: column-reverse !important;
+}
+.dara-form .form-group.bottom > div {
+  max-width: 100% !important;
+}
+.dara-form .form-group .help-message {
+  display: none;
+}
+.dara-form .form-group .help-icon {
+  background-repeat: no-repeat;
+  background-position-y: center;
+}
+.dara-form .form-group .help-icon.form-field {
+  background-position-x: calc(100% - 15px);
+}
+.dara-form .form-group .help-icon.dara-icon {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  top: 0px;
+  right: 0px;
+  height: 100%;
+  width: 20px;
+  margin-right: 15px;
+}
+.dara-form .form-group.invalid .form-field {
+  border-color: var(--invalid-border-color);
+  outline-color: var(--invalid-border-color);
+}
+.dara-form .form-group.invalid > .df-field-container.required > .df-field .help-icon {
+  display: block;
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_2___});
+}
+.dara-form .form-group.invalid .help-message {
+  display: block;
+  color: var(--invalid-font-color);
+}
+.dara-form .form-group.valid > .df-field-container.required > .df-field .help-icon {
+  display: block;
+  background-image: url(${___CSS_LOADER_URL_REPLACEMENT_3___});
+}
+.dara-form .form-group .file-label {
+  border: 1px solid var(--border-color);
+  display: inline;
+  width: 100%;
+  padding: 3px 15px;
+  line-height: 1;
+  background-clip: padding-box;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.dara-form .form-group .file-label:hover {
+  background-color: var(--background-button-hover);
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":["$sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;\r\n\r\n@mixin rowFlex() {\r\n  &.top {\r\n    flex-direction: column;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n\r\n  &.right {\r\n    -ms-flex-direction: row-reverse !important;\r\n    -webkit-box-orient: horizontal !important;\r\n    -webkit-box-direction: reverse !important;\r\n    flex-direction: row-reverse !important;\r\n  }\r\n\r\n  &.bottom {\r\n    flex-direction: column-reverse !important;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n}\r\n\r\n.dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n  --field-margin-bottom: 10px;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    width: 0px;\r\n    visibility: collapse;\r\n    display: none !important;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 0px 15px 0px 0px;\r\n\r\n    .required {\r\n      &::after {\r\n        content: \"*\";\r\n        vertical-align: middle;\r\n      }\r\n\r\n      color: var(--color-danger);\r\n    }\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .df-row {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n\r\n    &.vertical {\r\n      display: block;\r\n    }\r\n\r\n    &.horizontal {\r\n      -webkit-box-flex: 0;\r\n      -ms-flex: 0 0 auto;\r\n      flex: 0 0 auto;\r\n      width: auto;\r\n      max-width: none;\r\n\r\n      > .form-group > .empty {\r\n        display: none !important;\r\n      }\r\n    }\r\n\r\n    @include rowFlex();\r\n  }\r\n\r\n  @each $size in $sizes {\r\n    $i: index($sizes, $size);\r\n    $className: \".col-xs-#{$i}\";\r\n    #{$className} {\r\n      flex-basis: $size;\r\n      max-width: $size;\r\n    }\r\n  }\r\n\r\n  .align-items-center {\r\n    -webkit-box-align: center !important;\r\n    -ms-flex-align: center !important;\r\n    align-items: center !important;\r\n  }\r\n\r\n  .col-xs {\r\n    -webkit-flex-grow: 1;\r\n    -ms-flex-positive: 1;\r\n    -webkit-box-flex: 1;\r\n    flex-grow: 1;\r\n    -ms-flex-preferred-size: 0;\r\n    flex-basis: 0;\r\n    max-width: 100%;\r\n  }\r\n\r\n  .col-auto {\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 auto;\r\n    flex: 0 0 auto;\r\n    width: auto;\r\n    max-width: none;\r\n  }\r\n\r\n  .col-fix {\r\n    flex: none;\r\n  }\r\n\r\n  .col-full {\r\n    flex: 1;\r\n    overflow: auto;\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n  }\r\n\r\n  .dara-file-list {\r\n    .file-icon {\r\n      width: 20px;\r\n      height: 20px;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      cursor: pointer;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n\r\n      &.download {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n      }\r\n\r\n      &.remove {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n      }\r\n    }\r\n\r\n    .file-name {\r\n      text-overflow: ellipsis;\r\n      white-space: nowrap;\r\n      word-wrap: normal;\r\n      overflow: hidden;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      width: calc(100% - 55px);\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field.vertical {\r\n      > * {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-group {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin-bottom: var(--field-margin-bottom);\r\n\r\n    @include rowFlex();\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n\r\n    .file-label {\r\n      border: 1px solid var(--border-color);\r\n      display: inline;\r\n      width: 100%;\r\n      padding: 3px 15px;\r\n      line-height: 1;\r\n      background-clip: padding-box;\r\n      border-radius: 4px;\r\n      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

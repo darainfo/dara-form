@@ -1,5 +1,5 @@
 import { FormOptions } from "@t/FormOptions";
-import { FormField } from "@t/FormField";
+import { FieldStyle, FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { Message } from "@t/Message";
 /**
@@ -10,7 +10,6 @@ import { Message } from "@t/Message";
  */
 export default class DaraForm {
     private readonly options;
-    private isHorizontal;
     private formElement;
     private fieldInfoMap;
     private formValue;
@@ -24,7 +23,6 @@ export default class DaraForm {
      * @param field
      */
     addRow(field: FormField): void;
-    rowTemplate(field: FormField): string;
     getLabelTemplate(field: FormField): string;
     /**
      * 그룹 템플릿
@@ -32,15 +30,15 @@ export default class DaraForm {
      * @param {FormField} field
      * @returns {*}
      */
-    groupTemplate(field: FormField): string;
+    rowTemplate(field: FormField): string;
+    childTemplate(field: FormField, parentFieldStyle: FieldStyle): string;
     /**
-     * text aling style
+     * label 숨김 여부
      *
-     * @param {FormField} filed
-     * @param {(FormField | null)} parentField
-     * @returns {string} style class
+     * @param field formfield
+     * @returns
      */
-    private getTextAlignStyle;
+    private isLabelHide;
     /**
      * field tempalte 구하기
      *

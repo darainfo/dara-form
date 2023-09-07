@@ -66,7 +66,7 @@ export default class RadioRender extends Render {
       const radioVal = val[valueKey];
 
       templates.push(
-        `<span class="field ${field.viewMode == "vertical" ? "vertical" : "horizontal"}">
+        `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
                 <label>
                     <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
                     ${this.valuesLabelValue(labelKey, val)}
