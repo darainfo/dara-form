@@ -10,6 +10,7 @@ import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
 import { TEXT_ALIGN } from "./constants";
 import styleUtils from "./util/styleUtils";
+import FormTemplate from "./FormTemplate";
 
 const defaultOptions = {
   style: {
@@ -37,16 +38,17 @@ interface FieldMap {
 export default class DaraForm {
   private readonly options;
 
-  private formElement;
-
   private fieldInfoMap;
 
   private formValue: any = {};
 
   private addRowFields: string[] = [];
 
+  private formTemplate: FormTemplate;
+
   constructor(selector: string, options: FormOptions, message: Message) {
-    this.options = Object.assign({}, defaultOptions, options);
+    this.options = {} as FormOptions;
+    Object.assign(this.options, defaultOptions, options);
 
     daraFormIdx += 1;
 
@@ -58,13 +60,12 @@ export default class DaraForm {
     if (formElement) {
       formElement.className = `dara-form df-${daraFormIdx}`;
 
-      console.log(this.options.style.width);
-
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);
       }
 
-      this.formElement = formElement;
+      this.formTemplate = new FormTemplate(this, formElement, this.fieldInfoMap);
+
       this.createForm(this.options.fields);
     } else {
       throw new Error(`${selector} form selector not found`);
@@ -77,172 +78,9 @@ export default class DaraForm {
 
   public createForm(fields: FormField[]) {
     fields.forEach((field) => {
-      this.addRow(field);
+      this.formTemplate.addRow(field);
     });
     this.conditionCheck();
-  }
-
-  /**
-   * field row 추가.
-   *
-   * @param field
-   */
-  public addRow(field: FormField) {
-    if (this.checkHiddenField(field)) {
-      return;
-    }
-
-    this.addRowFields = [];
-
-    let rednerTemplate = this.rowTemplate(field);
-
-    //console.log(rednerTemplate);
-
-    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate); // Append the element
-
-    this.addRowFields.forEach((fieldSeq) => {
-      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-      fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
-
-      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
-      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldRowElement, this);
-      fieldRowElement?.removeAttribute("id");
-    });
-  }
-
-  public getLabelTemplate(field: FormField) {
-    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
-    const tooltipTemplate = utils.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-
-    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
-  }
-
-  /**
-   * 그룹 템플릿
-   *
-   * @param {FormField} field
-   * @returns {*}
-   */
-  public rowTemplate(field: FormField) {
-    let fieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, field);
-
-    const template = [];
-
-    let fieldTemplate = "";
-
-    if (field.children) {
-      if (!utils.isUndefined(field.name)) {
-        fieldTemplate = this.getFieldTempate(field);
-      }
-      fieldTemplate += this.childTemplate(field, fieldStyle);
-    } else {
-      fieldTemplate = this.getFieldTempate(field);
-    }
-
-    let labelHideFlag = this.isLabelHide(field);
-
-    template.push(`
-        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
-          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
-
-          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
-              ${fieldTemplate}
-          </div>
-        </div>
-    `);
-
-    return template.join("");
-  }
-  public childTemplate(field: FormField, parentFieldStyle: FieldStyle) {
-    const template = [];
-
-    let beforeField: FormField = null as any;
-    let firstFlag = true;
-    let isEmptyLabel = false;
-    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
-    for (const childField of field.children) {
-      childField.$parent = field;
-
-      if (this.checkHiddenField(childField)) {
-        continue;
-      }
-
-      let childTempate = "";
-
-      if (childField.children) {
-        childTempate = this.rowTemplate(childField);
-      } else {
-        childTempate = this.getFieldTempate(childField);
-      }
-
-      let childFieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, childField, beforeField);
-
-      if (firstFlag) {
-        beforeField = childField;
-      }
-
-      let labelHideFlag = this.isLabelHide(childField);
-
-      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
-        ${
-          labelHideFlag
-            ? isEmptyLabel
-              ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>`
-              : ""
-            : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`
-        }
-        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}">${childTempate}</span>
-      </div>`);
-
-      if (!labelHideFlag) {
-        isEmptyLabel = true;
-      }
-
-      firstFlag = false;
-    }
-
-    template.push("</div>");
-
-    return template.join("");
-  }
-
-  /**
-   * label 숨김 여부
-   *
-   * @param field formfield
-   * @returns
-   */
-  private isLabelHide(field: FormField): boolean {
-    return field.style?.labelHide || utils.isUndefined(field.label);
-  }
-
-  /**
-   * field tempalte 구하기
-   *
-   * @param {FormField} field
-   * @returns {string}
-   */
-  public getFieldTempate(field: FormField): string {
-    if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
-      throw new Error(`Duplicate field name "${field.name}"`);
-    }
-
-    this.addRowFieldInfo(field);
-
-    return (field.$renderer as any).template(field);
-  }
-
-  public checkHiddenField(field: FormField) {
-    const isHidden = utils.isHiddenField(field);
-
-    if (isHidden) {
-      this.fieldInfoMap.addField(field);
-      field.$renderer = new (field.$renderer as any)(field, null, this);
-
-      return true;
-    }
-
-    return false;
   }
 
   /**
@@ -371,7 +209,7 @@ export default class DaraForm {
    */
   public addField = (field: FormField) => {
     this.options.fields.push(field);
-    this.addRow(field);
+    this.formTemplate.addRow(field);
     this.conditionCheck();
   };
 

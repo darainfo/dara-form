@@ -67,15 +67,42 @@
         tooltip: "아이디를 넣어주세요.",
         description: "설명설명설명",
         placeholder: "아이디를 넣어주세요.",
-        style: {
-          position: 'left-right'
-        },
-        //required: true,
-        rule: {
-          minLength: 3,
-          maxLength: 100,
-        },
-        validator: (param) => { },
+        renderType: "tab",
+        children: [
+          {
+            label: 'tab1'
+            , children: [
+              {
+                name: "uname222",
+                label: "tab-이름",
+                rule: {
+                  minLength: 2,
+                  maxLength: 100,
+                },
+                onChange: (arg) => {
+                  console.log(arg);
+                },
+              }
+            ]
+          }
+          , {
+            label: 'tab2'
+            , children: [
+              {
+                name: "uname333",
+                label: "tab-222",
+
+                rule: {
+                  minLength: 2,
+                  maxLength: 100,
+                },
+                onChange: (arg) => {
+                  console.log(arg);
+                },
+              }
+            ]
+          }
+        ]
       },
       {
         name: "uname",
@@ -153,7 +180,7 @@
         required: true,
         renderType: "checkbox",
         listItem: {
-          list: [{ label: "Password Change", value: "Y", selected: true }],
+          list: [{ label: "Password Change", value: "Y", selected: false }],
         },
         onChange: (arg) => {
           console.log(arg);
@@ -166,7 +193,7 @@
             style: {
               labelHide: false,
               position: 'left',
-              labelWidth: '120px'
+              labelWidth: '120px',
             },
             required: true,
             rule: {
@@ -199,7 +226,7 @@
             style: {
               //width: '200px',
               labelHide: false,
-              position: 'left-right'
+              position: 'left'
             },
             required: true,
             rule: {

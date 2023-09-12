@@ -12,6 +12,7 @@ import HiddenRender from "./renderer/HiddenRender";
 import ButtonRender from "./renderer/ButtonRender";
 import RangeRender from "./renderer/RangeRender";
 import DateRender from "./renderer/DateRender";
+import TabRender from "./renderer/TabRender";
 
 export const RULES = {
   NAN: "nan",
@@ -47,6 +48,7 @@ export const RENDER_TEMPLATE: any = {
   button: ButtonRender,
   range: RangeRender,
   date: DateRender,
+  tab: TabRender,
 };
 
 export const TEXT_ALIGN = {

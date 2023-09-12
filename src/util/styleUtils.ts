@@ -13,8 +13,8 @@ export default {
    * @returns FieldStyle
    */
   fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null): FieldStyle {
-    let fieldStyle: FieldStyle = {
-      rowStyleClass: "",
+    const fieldStyle = {
+      rowStyleClass: field.orientation === "horizontal" ? "horizontal" : "vertical",
       fieldClass: "",
       fieldStyle: "",
       labelClass: "",
@@ -24,61 +24,46 @@ export default {
       valueStyle: "",
     };
 
-    if (field.orientation === "horizontal") {
-      fieldStyle.rowStyleClass = "horizontal";
-    } else {
-      fieldStyle.rowStyleClass = "vertical";
-    }
+    const defaultLabelWidth = beforeField?.style?.labelWidth || formOptions.style.labelWidth || "3";
+    const defaultValueWidth = beforeField?.style?.valueWidth || formOptions.style.valueWidth || "9";
+    const position = beforeField?.style?.position || formOptions.style.position;
 
-    let defaultLabelWidth = formOptions.style.labelWidth || "3";
-    let defaultValueWidth = formOptions.style.valueWidth || "9";
-    let boforePostion = formOptions.style.position;
-    if (beforeField) {
-      defaultLabelWidth = beforeField.style?.labelWidth || defaultLabelWidth;
-      defaultValueWidth = beforeField.style?.valueWidth || defaultValueWidth;
-      boforePostion = beforeField.style?.position || boforePostion;
-    }
+    const width = field.style?.width;
+    const positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[position] || FIELD_POSITION_STYLE.top;
 
-    let width = field.style?.width;
-
-    let positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[boforePostion] || FIELD_POSITION_STYLE["top"];
-
-    fieldStyle.fieldClass = positionArr[0] + " " + (field.style?.customClass || "");
+    fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
     if (width) {
-      if (utils.isNumber(width)) {
-        fieldStyle.fieldClass += " col-xs-" + width;
-      } else {
-        fieldStyle.fieldStyle = `width:${width};`;
-      }
+      fieldStyle.fieldClass += utils.isNumber(width) ? ` col-xs-${width}` : "";
+      fieldStyle.fieldStyle = utils.isNumber(width) ? "" : `width:${width};`;
     }
 
-    let labelWidth = field.style?.labelWidth || defaultLabelWidth;
+    const labelWidth = field.style?.labelWidth || defaultLabelWidth;
     fieldStyle.labelAlignClass = positionArr[1];
 
-    if (labelWidth) {
+    if (labelWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils.isNumber(labelWidth)) {
-        labelWidth = +labelWidth;
-        defaultValueWidth = 12 - labelWidth + ""; // grid 12에서 value를 label 나머지 값으로  처리.
-        fieldStyle.labelClass += " col-xs-" + labelWidth;
+        const labelWidthValue = +labelWidth;
+        fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${12 - labelWidthValue}`;
       } else {
         fieldStyle.labelStyle = `width:${labelWidth};`;
       }
     }
 
-    let valueWidth = field.style?.valueWidth || defaultValueWidth;
-
-    if (valueWidth) {
+    const valueWidth = field.style?.valueWidth || defaultValueWidth;
+    if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils.isNumber(valueWidth)) {
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
       } else {
         fieldStyle.valueStyle = `width:${valueWidth};`;
       }
     } else {
       fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
     }
+
     fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
-    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
-    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass);
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass);
 
     return fieldStyle;
   },
