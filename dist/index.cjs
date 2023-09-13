@@ -654,7 +654,7 @@ var CheckboxRender = class _CheckboxRender extends Render {
       });
     }
     this.initEvent();
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
   initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
@@ -680,7 +680,7 @@ var CheckboxRender = class _CheckboxRender extends Render {
       templates.push(`
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
-                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} />
                   ${this.valuesLabelValue(labelKey, val)}
               </label>
           </span>
@@ -2488,6 +2488,160 @@ var DateRender = class extends Render {
   }
 };
 
+// src/util/styleUtils.ts
+var styleUtils_default = {
+  /**
+   * field style 처리
+   *
+   * @param formOptions FormOptions
+   * @param field FormField
+   * @param beforeField FormField
+   * @returns FieldStyle
+   */
+  fieldStyle(formOptions, field, beforeField) {
+    const fieldStyle = {
+      rowStyleClass: field.orientation === "horizontal" ? "horizontal" : "vertical",
+      fieldClass: "",
+      fieldStyle: "",
+      labelClass: "",
+      labelStyle: "",
+      labelAlignClass: "",
+      valueClass: "",
+      valueStyle: "",
+      tabAlignClass: ""
+    };
+    const defaultLabelWidth = beforeField?.style?.labelWidth || formOptions.style.labelWidth || "3";
+    const defaultValueWidth = beforeField?.style?.valueWidth || formOptions.style.valueWidth || "9";
+    const position = beforeField?.style?.position || formOptions.style.position;
+    const width = field.style?.width;
+    const positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[position] || FIELD_POSITION_STYLE.top;
+    fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
+    if (width) {
+      fieldStyle.fieldClass += utils_default.isNumber(width) ? ` col-xs-${width}` : "";
+      fieldStyle.fieldStyle = utils_default.isNumber(width) ? "" : `width:${width};`;
+    }
+    fieldStyle.tabAlignClass = "tab-al-" + (["right", "center"].includes(field.style?.tabAlign) ? field.style.tabAlign : "left");
+    const labelWidth = field.style?.labelWidth || defaultLabelWidth;
+    fieldStyle.labelAlignClass = positionArr[1];
+    if (labelWidth && !["top", "bottom"].includes(positionArr[0])) {
+      if (utils_default.isNumber(labelWidth)) {
+        const labelWidthValue = +labelWidth;
+        fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${12 - labelWidthValue}`;
+      } else {
+        fieldStyle.labelStyle = `width:${labelWidth};`;
+      }
+    }
+    const valueWidth = field.style?.valueWidth || defaultValueWidth;
+    if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
+      if (utils_default.isNumber(valueWidth)) {
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
+      } else {
+        fieldStyle.valueStyle = `width:${valueWidth};`;
+      }
+    } else {
+      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+    }
+    fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass);
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass);
+    return fieldStyle;
+  }
+};
+function spaceReplace(str) {
+  return str.replace(/\s+/g, " ").trim();
+}
+
+// src/renderer/TabRender.ts
+var TabRender = class extends Render {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, field, rowElement);
+    this.tabContainerElement = rowElement.querySelector(".df-field-container");
+    this.initEvent();
+  }
+  initEvent() {
+    this.tabContainerElement.querySelectorAll(".tab-item").forEach((tabItem) => {
+      tabItem.addEventListener("click", (e) => {
+        this.clickEventHandler(tabItem, e);
+      });
+    });
+  }
+  /**
+   * tab item click
+   *
+   * @param {Element} tabItem
+   * @param {*} evt
+   */
+  clickEventHandler(tabItem, evt) {
+    const tabId = tabItem.getAttribute("data-tab-id");
+    if (!tabItem.classList.contains("active")) {
+      for (let item of tabItem?.parentElement?.children ?? []) {
+        item.classList.remove("active");
+      }
+      tabItem.classList.add("active");
+    }
+    const tabPanel = this.rowElement.querySelector(`[tab-panel-id="${tabId}"]`);
+    if (!tabPanel?.classList.contains("active")) {
+      for (let item of tabPanel?.parentElement?.children ?? []) {
+        item.classList.remove("active");
+      }
+      tabPanel?.classList.add("active");
+    }
+  }
+  /**
+   * tab template
+   *
+   * @param {FormField} field
+   * @param {FormTemplate} formTemplate
+   * @param {FormOptions} options
+   * @returns {string} template string
+   */
+  static template(field, formTemplate, options) {
+    let tabTemplate = [];
+    let tabChildTemplate = [];
+    let fieldStyle = styleUtils_default.fieldStyle(options, field);
+    if (field.children) {
+      let firstFlag = true;
+      for (const childField of field.children) {
+        formTemplate.addRowFieldInfo(childField);
+        let id = childField.$key;
+        tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
+        if (childField.children) {
+          tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
+        }
+        tabChildTemplate.push(`</div>`);
+        firstFlag = false;
+      }
+    }
+    return `
+     <div class="df-field ">
+      <div class="tab-header ${fieldStyle.tabAlignClass}">
+      ${tabTemplate.join("")}
+      </div>
+     </div>
+     <div class="df-tab-body">
+      ${tabChildTemplate.join("")}
+     </div>
+     `;
+  }
+  getValue() {
+    return "";
+  }
+  setValue(value) {
+  }
+  reset() {
+  }
+  getElement() {
+    return this.rowElement;
+  }
+  valid() {
+    const validResult = stringValidator(this.getValue(), this.field);
+    invalidMessage(this.field, this.rowElement, validResult);
+    return validResult;
+  }
+};
+
 // src/constants.ts
 var RULES = {
   NAN: "nan",
@@ -2520,7 +2674,8 @@ var RENDER_TEMPLATE = {
   hidden: HiddenRender,
   button: ButtonRender,
   range: RangeRender,
-  date: DateRender
+  date: DateRender,
+  tab: TabRender
 };
 var FIELD_POSITION_STYLE = {
   "top-left": ["top", "txt-left"],
@@ -2873,80 +3028,174 @@ function addFieldFormData(formData, fieldInfo, fieldValue) {
   }
 }
 
-// src/util/styleUtils.ts
-var styleUtils_default = {
+// src/FormTemplate.ts
+var FormTemplate = class {
+  constructor(daraform, formElement, fieldInfoMap) {
+    this.addRowFields = [];
+    this.daraform = daraform;
+    this.options = daraform.getOptions();
+    this.formElement = formElement;
+    this.fieldInfoMap = fieldInfoMap;
+  }
   /**
-   * field style 처리
+   * field row 추가.
    *
-   * @param formOptions FormOptions
-   * @param field FormField
-   * @param beforeField FormField
-   * @returns FieldStyle
+   * @param field
    */
-  fieldStyle(formOptions, field, beforeField) {
-    let fieldStyle = {
-      rowStyleClass: "",
-      fieldClass: "",
-      fieldStyle: "",
-      labelClass: "",
-      labelStyle: "",
-      labelAlignClass: "",
-      valueClass: "",
-      valueStyle: ""
-    };
-    if (field.orientation === "horizontal") {
-      fieldStyle.rowStyleClass = "horizontal";
+  addRow(field) {
+    if (this.checkHiddenField(field)) {
+      return;
+    }
+    this.addRowFields = [];
+    this.formElement.insertAdjacentHTML("beforeend", this.rowTemplate(field));
+    this.addRowFields.forEach((fieldSeq) => {
+      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
+      fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
+      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this.daraform);
+      fieldRowElement?.removeAttribute("id");
+    });
+  }
+  /**
+   * 그룹 템플릿
+   *
+   * @param {FormField} field
+   * @returns {string} row template
+   */
+  rowTemplate(field) {
+    let fieldStyle = styleUtils_default.fieldStyle(this.options, field);
+    let fieldTemplate = "";
+    if (this.isTabType(field)) {
+      fieldTemplate = this.tabTemplate(field);
+    } else if (field.children) {
+      if (!utils_default.isUndefined(field.name)) {
+        fieldTemplate = this.getFieldTempate(field);
+      } else {
+        this.addRowFieldInfo(field);
+      }
+      fieldTemplate += this.childTemplate(field, fieldStyle);
     } else {
-      fieldStyle.rowStyleClass = "vertical";
+      fieldTemplate = this.getFieldTempate(field);
     }
-    let defaultLabelWidth = formOptions.style.labelWidth || "3";
-    let defaultValueWidth = formOptions.style.valueWidth || "9";
-    let boforePostion = formOptions.style.position;
-    if (beforeField) {
-      defaultLabelWidth = beforeField.style?.labelWidth || defaultLabelWidth;
-      defaultValueWidth = beforeField.style?.valueWidth || defaultValueWidth;
-      boforePostion = beforeField.style?.position || boforePostion;
-    }
-    let width = field.style?.width;
-    let positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[boforePostion] || FIELD_POSITION_STYLE["top"];
-    fieldStyle.fieldClass = positionArr[0] + " " + (field.style?.customClass || "");
-    if (width) {
-      if (utils_default.isNumber(width)) {
-        fieldStyle.fieldClass += " col-xs-" + width;
-      } else {
-        fieldStyle.fieldStyle = `width:${width};`;
+    let labelHideFlag = this.isLabelHide(field);
+    return `
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}">
+              ${fieldTemplate}
+          </div>
+        </div>
+    `;
+  }
+  childTemplate(field, parentFieldStyle) {
+    const template = [];
+    let beforeField = null;
+    let firstFlag = true;
+    let isEmptyLabel = false;
+    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
+    for (const childField of field.children) {
+      childField.$parent = field;
+      if (this.checkHiddenField(childField)) {
+        continue;
       }
-    }
-    let labelWidth = field.style?.labelWidth || defaultLabelWidth;
-    fieldStyle.labelAlignClass = positionArr[1];
-    if (labelWidth) {
-      if (utils_default.isNumber(labelWidth)) {
-        labelWidth = +labelWidth;
-        defaultValueWidth = 12 - labelWidth + "";
-        fieldStyle.labelClass += " col-xs-" + labelWidth;
+      let childFieldTempate = "";
+      if (this.isTabType(childField)) {
+        childFieldTempate = this.tabTemplate(childField);
+      } else if (childField.children) {
+        childFieldTempate = this.rowTemplate(childField);
       } else {
-        fieldStyle.labelStyle = `width:${labelWidth};`;
+        childFieldTempate = this.getFieldTempate(childField);
       }
-    }
-    let valueWidth = field.style?.valueWidth || defaultValueWidth;
-    if (valueWidth) {
-      if (utils_default.isNumber(valueWidth)) {
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
+      let childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField);
+      if (firstFlag) {
+        beforeField = childField;
+      }
+      let labelHideFlag = this.isLabelHide(childField);
+      let labelTemplate = "";
+      if (labelHideFlag) {
+        labelTemplate = isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "";
       } else {
-        fieldStyle.valueStyle = `width:${valueWidth};`;
+        labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
       }
-    } else {
-      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
+        ${labelTemplate}
+        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
+      </div>`);
+      if (!labelHideFlag) {
+        isEmptyLabel = true;
+      }
+      firstFlag = false;
     }
-    fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
-    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
-    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
-    return fieldStyle;
+    template.push("</div>");
+    return template.join("");
+  }
+  /**
+   * label template
+   *
+   * @param {FormField} field form field
+   * @returns {string} template string
+   */
+  getLabelTemplate(field) {
+    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
+    const tooltipTemplate = utils_default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
+  }
+  /**
+   * tab render type check
+   *
+   * @param {FormField} field
+   * @returns {boolean} tab type 인지 여부
+   */
+  isTabType(field) {
+    return field.renderType === "tab";
+  }
+  tabTemplate(field) {
+    this.addRowFieldInfo(field);
+    return TabRender.template(field, this, this.options);
+  }
+  /**
+   * label 숨김 여부
+   *
+   * @param field formfield
+   * @returns
+   */
+  isLabelHide(field) {
+    return field.style?.labelHide || utils_default.isUndefined(field.label);
+  }
+  /**
+   * field tempalte 구하기
+   *
+   * @param {FormField} field
+   * @returns {string}
+   */
+  getFieldTempate(field) {
+    if (!utils_default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
+      throw new Error(`Duplicate field name "${field.name}"`);
+    }
+    this.addRowFieldInfo(field);
+    return field.$renderer.template(field);
+  }
+  checkHiddenField(field) {
+    const isHidden = utils_default.isHiddenField(field);
+    if (isHidden) {
+      this.fieldInfoMap.addField(field);
+      field.$renderer = new field.$renderer(field, null, this.daraform);
+      return true;
+    }
+    return false;
+  }
+  /**
+   * add row file map
+   *
+   * @param {FormField} field
+   */
+  addRowFieldInfo(field) {
+    utils_default.replaceXssField(field);
+    this.fieldInfoMap.addField(field);
+    this.addRowFields.push(field.$key);
   }
 };
-function spaceReplace(str) {
-  return str.replace(/\s+/g, " ").trim();
-}
 
 // src/DaraForm.ts
 var defaultOptions = {
@@ -3039,7 +3288,7 @@ var DaraForm = class {
      */
     this.addField = (field) => {
       this.options.fields.push(field);
-      this.addRow(field);
+      this.formTemplate.addRow(field);
       this.conditionCheck();
     };
     /**
@@ -3100,18 +3349,18 @@ var DaraForm = class {
     this.getOptions = () => {
       return this.options;
     };
-    this.options = Object.assign({}, defaultOptions, options);
+    this.options = {};
+    Object.assign(this.options, defaultOptions, options);
     daraFormIdx += 1;
     Lanauage_default.set(message2);
     this.fieldInfoMap = new FieldInfoMap(selector);
     const formElement = document.querySelector(selector);
     if (formElement) {
       formElement.className = `dara-form df-${daraFormIdx}`;
-      console.log(this.options.style.width);
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);
       }
-      this.formElement = formElement;
+      this.formTemplate = new FormTemplate(this, formElement, this.fieldInfoMap);
       this.createForm(this.options.fields);
     } else {
       throw new Error(`${selector} form selector not found`);
@@ -3122,139 +3371,9 @@ var DaraForm = class {
   }
   createForm(fields) {
     fields.forEach((field) => {
-      this.addRow(field);
+      this.formTemplate.addRow(field);
     });
     this.conditionCheck();
-  }
-  /**
-   * field row 추가.
-   *
-   * @param field
-   */
-  addRow(field) {
-    if (this.checkHiddenField(field)) {
-      return;
-    }
-    this.addRowFields = [];
-    let rednerTemplate = this.rowTemplate(field);
-    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate);
-    this.addRowFields.forEach((fieldSeq) => {
-      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-      fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
-      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
-      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
-      fieldRowElement?.removeAttribute("id");
-    });
-  }
-  getLabelTemplate(field) {
-    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
-    const tooltipTemplate = utils_default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
-  }
-  /**
-   * 그룹 템플릿
-   *
-   * @param {FormField} field
-   * @returns {*}
-   */
-  rowTemplate(field) {
-    let fieldStyle = styleUtils_default.fieldStyle(this.options, field);
-    const template = [];
-    let fieldTemplate = "";
-    if (field.children) {
-      if (!utils_default.isUndefined(field.name)) {
-        fieldTemplate = this.getFieldTempate(field);
-      }
-      fieldTemplate += this.childTemplate(field, fieldStyle);
-    } else {
-      fieldTemplate = this.getFieldTempate(field);
-    }
-    let labelHideFlag = this.isLabelHide(field);
-    template.push(`
-        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
-          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
-
-          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
-              ${fieldTemplate}
-          </div>
-        </div>
-    `);
-    return template.join("");
-  }
-  childTemplate(field, parentFieldStyle) {
-    const template = [];
-    let beforeField = null;
-    let firstFlag = true;
-    let isEmptyLabel = false;
-    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
-    for (const childField of field.children) {
-      childField.$parent = field;
-      if (this.checkHiddenField(childField)) {
-        continue;
-      }
-      let childTempate = "";
-      if (childField.children) {
-        childTempate = this.rowTemplate(childField);
-      } else {
-        childTempate = this.getFieldTempate(childField);
-      }
-      let childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField);
-      if (firstFlag) {
-        beforeField = childField;
-      }
-      let labelHideFlag = this.isLabelHide(childField);
-      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
-        ${labelHideFlag ? isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "" : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`}
-        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}">${childTempate}</span>
-      </div>`);
-      if (!labelHideFlag) {
-        isEmptyLabel = true;
-      }
-      firstFlag = false;
-    }
-    template.push("</div>");
-    return template.join("");
-  }
-  /**
-   * label 숨김 여부
-   *
-   * @param field formfield
-   * @returns
-   */
-  isLabelHide(field) {
-    return field.style?.labelHide || utils_default.isUndefined(field.label);
-  }
-  /**
-   * field tempalte 구하기
-   *
-   * @param {FormField} field
-   * @returns {string}
-   */
-  getFieldTempate(field) {
-    if (!utils_default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
-      throw new Error(`Duplicate field name "${field.name}"`);
-    }
-    this.addRowFieldInfo(field);
-    return field.$renderer.template(field);
-  }
-  checkHiddenField(field) {
-    const isHidden = utils_default.isHiddenField(field);
-    if (isHidden) {
-      this.fieldInfoMap.addField(field);
-      field.$renderer = new field.$renderer(field, null, this);
-      return true;
-    }
-    return false;
-  }
-  /**
-   * add row file map
-   *
-   * @param {FormField} field
-   */
-  addRowFieldInfo(field) {
-    utils_default.replaceXssField(field);
-    this.fieldInfoMap.addField(field);
-    this.addRowFields.push(field.$key);
   }
   /**
    * 필드 element 얻기

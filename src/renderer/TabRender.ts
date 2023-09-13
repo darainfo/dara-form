@@ -8,40 +8,85 @@ import styleUtils from "src/util/styleUtils";
 import { FormOptions } from "@t/FormOptions";
 
 export default class TabRender extends Render {
+  private tabContainerElement: HTMLElement;
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
+
+    this.tabContainerElement = rowElement.querySelector(".df-field-container") as HTMLElement;
     this.initEvent();
   }
 
-  initEvent() {}
+  initEvent() {
+    this.tabContainerElement.querySelectorAll(".tab-item").forEach((tabItem) => {
+      tabItem.addEventListener("click", (e: any) => {
+        this.clickEventHandler(tabItem, e);
+      });
+    });
+  }
 
+  /**
+   * tab item click
+   *
+   * @param {Element} tabItem
+   * @param {*} evt
+   */
+  private clickEventHandler(tabItem: Element, evt: any) {
+    const tabId = tabItem.getAttribute("data-tab-id");
+
+    if (!tabItem.classList.contains("active")) {
+      for (let item of tabItem?.parentElement?.children ?? []) {
+        item.classList.remove("active");
+      }
+      tabItem.classList.add("active");
+    }
+
+    const tabPanel = this.rowElement.querySelector(`[tab-panel-id="${tabId}"]`);
+
+    if (!tabPanel?.classList.contains("active")) {
+      for (let item of tabPanel?.parentElement?.children ?? []) {
+        item.classList.remove("active");
+      }
+
+      tabPanel?.classList.add("active");
+    }
+  }
+
+  /**
+   * tab template
+   *
+   * @param {FormField} field
+   * @param {FormTemplate} formTemplate
+   * @param {FormOptions} options
+   * @returns {string} template string
+   */
   static template(field: FormField, formTemplate: FormTemplate, options: FormOptions): string {
     let tabTemplate = [];
     let tabChildTemplate = [];
 
     //tab 이벤트 처리 할것.
+    let fieldStyle = styleUtils.fieldStyle(options, field);
 
     if (field.children) {
-      let fieldStyle = styleUtils.fieldStyle(options, field);
-
+      let firstFlag = true;
       for (const childField of field.children) {
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
-        tabTemplate.push(`<li class="tab-item" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></li>`);
+        tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
 
-        tabChildTemplate.push(`<div class="tab-panel" tab-panel-id="${id}">`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
         if (childField.children) {
           tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
         }
         tabChildTemplate.push(`</div>`);
+        firstFlag = false;
       }
     }
 
     return `
-     <div class="df-field">
-      <ul class="tab-header">
+     <div class="df-field ">
+      <div class="tab-header ${fieldStyle.tabAlignClass}">
       ${tabTemplate.join("")}
-      </ul>
+      </div>
      </div>
      <div class="df-tab-body">
       ${tabChildTemplate.join("")}

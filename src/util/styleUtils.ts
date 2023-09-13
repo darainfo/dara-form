@@ -1,6 +1,6 @@
 import { FieldStyle, FormField } from "@t/FormField";
 import utils from "./utils";
-import { FIELD_POSITION_STYLE, TEXT_ALIGN } from "src/constants";
+import { FIELD_POSITION_STYLE, ALIGN } from "src/constants";
 import { FormOptions } from "@t/FormOptions";
 
 export default {
@@ -12,7 +12,7 @@ export default {
    * @param beforeField FormField
    * @returns FieldStyle
    */
-  fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null): FieldStyle {
+  fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null, isLabelHide?: boolean): FieldStyle {
     const fieldStyle = {
       rowStyleClass: field.orientation === "horizontal" ? "horizontal" : "vertical",
       fieldClass: "",
@@ -22,20 +22,23 @@ export default {
       labelAlignClass: "",
       valueClass: "",
       valueStyle: "",
+      tabAlignClass: "",
     };
 
-    const defaultLabelWidth = beforeField?.style?.labelWidth || formOptions.style.labelWidth || "3";
-    const defaultValueWidth = beforeField?.style?.valueWidth || formOptions.style.valueWidth || "9";
-    const position = beforeField?.style?.position || formOptions.style.position;
+    const defaultLabelWidth = beforeField?.style?.labelWidth ?? formOptions.style.labelWidth ?? "3";
+    const defaultValueWidth = beforeField?.style?.valueWidth ?? formOptions.style.valueWidth ?? "9";
+    const position = beforeField?.style?.position ?? formOptions.style.position;
 
     const width = field.style?.width;
-    const positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[position] || FIELD_POSITION_STYLE.top;
+    const positionArr = FIELD_POSITION_STYLE[field.style?.position] ?? FIELD_POSITION_STYLE[position] ?? FIELD_POSITION_STYLE.top;
 
     fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
     if (width) {
       fieldStyle.fieldClass += utils.isNumber(width) ? ` col-xs-${width}` : "";
       fieldStyle.fieldStyle = utils.isNumber(width) ? "" : `width:${width};`;
     }
+
+    fieldStyle.tabAlignClass = "tab-al-" + (["right", "center"].includes(field.style?.tabAlign) ? field.style.tabAlign : "left");
 
     const labelWidth = field.style?.labelWidth || defaultLabelWidth;
     fieldStyle.labelAlignClass = positionArr[1];
@@ -51,14 +54,18 @@ export default {
     }
 
     const valueWidth = field.style?.valueWidth || defaultValueWidth;
-    if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
-      if (utils.isNumber(valueWidth)) {
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
-      } else {
-        fieldStyle.valueStyle = `width:${valueWidth};`;
-      }
+    if (isLabelHide) {
+      fieldStyle.valueClass = "col-full";
     } else {
-      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+      if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
+        if (utils.isNumber(valueWidth)) {
+          fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
+        } else {
+          fieldStyle.valueStyle = `width:${valueWidth};`;
+        }
+      } else {
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+      }
     }
 
     fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);

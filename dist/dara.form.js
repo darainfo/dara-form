@@ -30,7 +30,7 @@ const stringValidator_1 = __webpack_require__(/*! ./rule/stringValidator */ "./s
 const numberValidator_1 = __webpack_require__(/*! ./rule/numberValidator */ "./src/rule/numberValidator.ts");
 const regexpValidator_1 = __webpack_require__(/*! ./rule/regexpValidator */ "./src/rule/regexpValidator.ts");
 const FieldInfoMap_1 = tslib_1.__importDefault(__webpack_require__(/*! src/FieldInfoMap */ "./src/FieldInfoMap.ts"));
-const styleUtils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/styleUtils */ "./src/util/styleUtils.ts"));
+const FormTemplate_1 = tslib_1.__importDefault(__webpack_require__(/*! ./FormTemplate */ "./src/FormTemplate.ts"));
 const defaultOptions = {
   style: {
     width: "100%",
@@ -127,7 +127,7 @@ class DaraForm {
      */
     this.addField = field => {
       this.options.fields.push(field);
-      this.addRow(field);
+      this.formTemplate.addRow(field);
       this.conditionCheck();
     };
     /**
@@ -189,18 +189,18 @@ class DaraForm {
     this.getOptions = () => {
       return this.options;
     };
-    this.options = Object.assign({}, defaultOptions, options);
+    this.options = {};
+    Object.assign(this.options, defaultOptions, options);
     daraFormIdx += 1;
     Lanauage_1.default.set(message);
     this.fieldInfoMap = new FieldInfoMap_1.default(selector);
     const formElement = document.querySelector(selector);
     if (formElement) {
       formElement.className = `dara-form df-${daraFormIdx}`;
-      console.log(this.options.style.width);
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);
       }
-      this.formElement = formElement;
+      this.formTemplate = new FormTemplate_1.default(this, formElement, this.fieldInfoMap);
       this.createForm(this.options.fields);
     } else {
       throw new Error(`${selector} form selector not found`);
@@ -211,141 +211,9 @@ class DaraForm {
   }
   createForm(fields) {
     fields.forEach(field => {
-      this.addRow(field);
+      this.formTemplate.addRow(field);
     });
     this.conditionCheck();
-  }
-  /**
-   * field row 추가.
-   *
-   * @param field
-   */
-  addRow(field) {
-    if (this.checkHiddenField(field)) {
-      return;
-    }
-    this.addRowFields = [];
-    let rednerTemplate = this.rowTemplate(field);
-    //console.log(rednerTemplate);
-    this.formElement.insertAdjacentHTML("beforeend", rednerTemplate); // Append the element
-    this.addRowFields.forEach(fieldSeq => {
-      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-      fileldInfo.$xssName = utils_1.default.unFieldName(fileldInfo.name);
-      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
-      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this);
-      fieldRowElement === null || fieldRowElement === void 0 ? void 0 : fieldRowElement.removeAttribute("id");
-    });
-  }
-  getLabelTemplate(field) {
-    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
-    const tooltipTemplate = utils_1.default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
-  }
-  /**
-   * 그룹 템플릿
-   *
-   * @param {FormField} field
-   * @returns {*}
-   */
-  rowTemplate(field) {
-    let fieldStyle = styleUtils_1.default.fieldStyle(this.options, field);
-    const template = [];
-    let fieldTemplate = "";
-    if (field.children) {
-      if (!utils_1.default.isUndefined(field.name)) {
-        fieldTemplate = this.getFieldTempate(field);
-      }
-      fieldTemplate += this.childTemplate(field, fieldStyle);
-    } else {
-      fieldTemplate = this.getFieldTempate(field);
-    }
-    let labelHideFlag = this.isLabelHide(field);
-    template.push(`
-        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
-          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
-
-          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}">
-              ${fieldTemplate}
-          </div>
-        </div>
-    `);
-    return template.join("");
-  }
-  childTemplate(field, parentFieldStyle) {
-    const template = [];
-    let beforeField = null;
-    let firstFlag = true;
-    let isEmptyLabel = false;
-    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
-    for (const childField of field.children) {
-      childField.$parent = field;
-      if (this.checkHiddenField(childField)) {
-        continue;
-      }
-      let childTempate = "";
-      if (childField.children) {
-        childTempate = this.rowTemplate(childField);
-      } else {
-        childTempate = this.getFieldTempate(childField);
-      }
-      let childFieldStyle = styleUtils_1.default.fieldStyle(this.options, childField, beforeField);
-      if (firstFlag) {
-        beforeField = childField;
-      }
-      let labelHideFlag = this.isLabelHide(childField);
-      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
-        ${labelHideFlag ? isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "" : `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`}
-        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}">${childTempate}</span>
-      </div>`);
-      if (!labelHideFlag) {
-        isEmptyLabel = true;
-      }
-      firstFlag = false;
-    }
-    template.push("</div>");
-    return template.join("");
-  }
-  /**
-   * label 숨김 여부
-   *
-   * @param field formfield
-   * @returns
-   */
-  isLabelHide(field) {
-    var _a;
-    return ((_a = field.style) === null || _a === void 0 ? void 0 : _a.labelHide) || utils_1.default.isUndefined(field.label);
-  }
-  /**
-   * field tempalte 구하기
-   *
-   * @param {FormField} field
-   * @returns {string}
-   */
-  getFieldTempate(field) {
-    if (!utils_1.default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
-      throw new Error(`Duplicate field name "${field.name}"`);
-    }
-    this.addRowFieldInfo(field);
-    return field.$renderer.template(field);
-  }
-  checkHiddenField(field) {
-    const isHidden = utils_1.default.isHiddenField(field);
-    if (isHidden) {
-      this.fieldInfoMap.addField(field);
-      field.$renderer = new field.$renderer(field, null, this);
-      return true;
-    }
-    return false;
-  }
-  /**
-   * add row file map
-   *
-   * @param {FormField} field
-   */
-  addRowFieldInfo(field) {
-    utils_1.default.replaceXssField(field);
-    this.fieldInfoMap.addField(field);
-    this.addRowFields.push(field.$key);
   }
   /**
    * 필드 element 얻기
@@ -642,6 +510,199 @@ function addFieldFormData(formData, fieldInfo, fieldValue) {
 
 /***/ }),
 
+/***/ "./src/FormTemplate.ts":
+/*!*****************************!*\
+  !*** ./src/FormTemplate.ts ***!
+  \*****************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
+const styleUtils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/styleUtils */ "./src/util/styleUtils.ts"));
+const TabRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/TabRender */ "./src/renderer/TabRender.ts"));
+/**
+ * form template
+ *
+ * @class FormTemplate
+ * @typedef {FormTemplate}
+ */
+class FormTemplate {
+  constructor(daraform, formElement, fieldInfoMap) {
+    this.addRowFields = [];
+    this.daraform = daraform;
+    this.options = daraform.getOptions();
+    this.formElement = formElement;
+    this.fieldInfoMap = fieldInfoMap;
+  }
+  /**
+   * field row 추가.
+   *
+   * @param field
+   */
+  addRow(field) {
+    if (this.checkHiddenField(field)) {
+      return;
+    }
+    this.addRowFields = [];
+    this.formElement.insertAdjacentHTML("beforeend", this.rowTemplate(field)); // Append the element
+    this.addRowFields.forEach(fieldSeq => {
+      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
+      fileldInfo.$xssName = utils_1.default.unFieldName(fileldInfo.name);
+      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      fileldInfo.$renderer = new fileldInfo.$renderer(fileldInfo, fieldRowElement, this.daraform);
+      fieldRowElement === null || fieldRowElement === void 0 ? void 0 : fieldRowElement.removeAttribute("id");
+    });
+  }
+  /**
+   * 그룹 템플릿
+   *
+   * @param {FormField} field
+   * @returns {string} row template
+   */
+  rowTemplate(field) {
+    let fieldStyle = styleUtils_1.default.fieldStyle(this.options, field);
+    let fieldTemplate = "";
+    if (this.isTabType(field)) {
+      fieldTemplate = this.tabTemplate(field);
+    } else if (field.children) {
+      if (!utils_1.default.isUndefined(field.name)) {
+        fieldTemplate = this.getFieldTempate(field);
+      } else {
+        this.addRowFieldInfo(field);
+      }
+      fieldTemplate += this.childTemplate(field, fieldStyle);
+    } else {
+      fieldTemplate = this.getFieldTempate(field);
+    }
+    let labelHideFlag = this.isLabelHide(field);
+    return `
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}">
+              ${fieldTemplate}
+          </div>
+        </div>
+    `;
+  }
+  childTemplate(field, parentFieldStyle) {
+    const template = [];
+    let beforeField = null;
+    let firstFlag = true;
+    let isEmptyLabel = false;
+    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
+    for (const childField of field.children) {
+      childField.$parent = field;
+      if (this.checkHiddenField(childField)) {
+        continue;
+      }
+      let childFieldTempate = "";
+      if (this.isTabType(childField)) {
+        childFieldTempate = this.tabTemplate(childField);
+      } else if (childField.children) {
+        childFieldTempate = this.rowTemplate(childField);
+      } else {
+        childFieldTempate = this.getFieldTempate(childField);
+      }
+      let childFieldStyle = styleUtils_1.default.fieldStyle(this.options, childField, beforeField);
+      if (firstFlag) {
+        beforeField = childField;
+      }
+      let labelHideFlag = this.isLabelHide(childField);
+      let labelTemplate = "";
+      if (labelHideFlag) {
+        labelTemplate = isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "";
+      } else {
+        labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
+      }
+      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
+        ${labelTemplate}
+        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
+      </div>`);
+      if (!labelHideFlag) {
+        isEmptyLabel = true;
+      }
+      firstFlag = false;
+    }
+    template.push("</div>");
+    return template.join("");
+  }
+  /**
+   * label template
+   *
+   * @param {FormField} field form field
+   * @returns {string} template string
+   */
+  getLabelTemplate(field) {
+    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
+    const tooltipTemplate = utils_1.default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
+  }
+  /**
+   * tab render type check
+   *
+   * @param {FormField} field
+   * @returns {boolean} tab type 인지 여부
+   */
+  isTabType(field) {
+    return field.renderType === "tab";
+  }
+  tabTemplate(field) {
+    this.addRowFieldInfo(field);
+    return TabRender_1.default.template(field, this, this.options);
+  }
+  /**
+   * label 숨김 여부
+   *
+   * @param field formfield
+   * @returns
+   */
+  isLabelHide(field) {
+    var _a;
+    return ((_a = field.style) === null || _a === void 0 ? void 0 : _a.labelHide) || utils_1.default.isUndefined(field.label);
+  }
+  /**
+   * field tempalte 구하기
+   *
+   * @param {FormField} field
+   * @returns {string}
+   */
+  getFieldTempate(field) {
+    if (!utils_1.default.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
+      throw new Error(`Duplicate field name "${field.name}"`);
+    }
+    this.addRowFieldInfo(field);
+    return field.$renderer.template(field);
+  }
+  checkHiddenField(field) {
+    const isHidden = utils_1.default.isHiddenField(field);
+    if (isHidden) {
+      this.fieldInfoMap.addField(field);
+      field.$renderer = new field.$renderer(field, null, this.daraform);
+      return true;
+    }
+    return false;
+  }
+  /**
+   * add row file map
+   *
+   * @param {FormField} field
+   */
+  addRowFieldInfo(field) {
+    utils_1.default.replaceXssField(field);
+    this.fieldInfoMap.addField(field);
+    this.addRowFields.push(field.$key);
+  }
+}
+exports["default"] = FormTemplate;
+
+/***/ }),
+
 /***/ "./src/constants.ts":
 /*!**************************!*\
   !*** ./src/constants.ts ***!
@@ -653,7 +714,7 @@ function addFieldFormData(formData, fieldInfo, fieldValue) {
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-exports.FIELD_POSITION_STYLE = exports.TEXT_ALIGN = exports.RENDER_TEMPLATE = exports.FIELD_PREFIX = exports.RULES = void 0;
+exports.FIELD_POSITION_STYLE = exports.ALIGN = exports.RENDER_TEMPLATE = exports.FIELD_PREFIX = exports.RULES = void 0;
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const NumberRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/NumberRender */ "./src/renderer/NumberRender.ts"));
 const TextAreaRender_1 = tslib_1.__importDefault(__webpack_require__(/*! src/renderer/TextAreaRender */ "./src/renderer/TextAreaRender.ts"));
@@ -669,6 +730,7 @@ const HiddenRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./rendere
 const ButtonRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/ButtonRender */ "./src/renderer/ButtonRender.ts"));
 const RangeRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/RangeRender */ "./src/renderer/RangeRender.ts"));
 const DateRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/DateRender */ "./src/renderer/DateRender.ts"));
+const TabRender_1 = tslib_1.__importDefault(__webpack_require__(/*! ./renderer/TabRender */ "./src/renderer/TabRender.ts"));
 exports.RULES = {
   NAN: "nan",
   MIN: "minimum",
@@ -700,9 +762,10 @@ exports.RENDER_TEMPLATE = {
   hidden: HiddenRender_1.default,
   button: ButtonRender_1.default,
   range: RangeRender_1.default,
-  date: DateRender_1.default
+  date: DateRender_1.default,
+  tab: TabRender_1.default
 };
-exports.TEXT_ALIGN = {
+exports.ALIGN = {
   left: "left",
   center: "center",
   right: "right"
@@ -885,7 +948,7 @@ class CheckboxRender extends Render_1.default {
       });
     }
     this.initEvent();
-    this.setDefaultInfo();
+    this.setValue(this.defaultCheckValue);
   }
   initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
@@ -912,7 +975,7 @@ class CheckboxRender extends Render_1.default {
       templates.push(`
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
-                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""}/>
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} />
                   ${this.valuesLabelValue(labelKey, val)}
               </label>
           </span>
@@ -1997,6 +2060,114 @@ exports["default"] = Render;
 
 /***/ }),
 
+/***/ "./src/renderer/TabRender.ts":
+/*!***********************************!*\
+  !*** ./src/renderer/TabRender.ts ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
+const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
+const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ "./src/rule/stringValidator.ts");
+const styleUtils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/styleUtils */ "./src/util/styleUtils.ts"));
+class TabRender extends Render_1.default {
+  constructor(field, rowElement, daraForm) {
+    super(daraForm, field, rowElement);
+    this.tabContainerElement = rowElement.querySelector(".df-field-container");
+    this.initEvent();
+  }
+  initEvent() {
+    this.tabContainerElement.querySelectorAll(".tab-item").forEach(tabItem => {
+      tabItem.addEventListener("click", e => {
+        this.clickEventHandler(tabItem, e);
+      });
+    });
+  }
+  /**
+   * tab item click
+   *
+   * @param {Element} tabItem
+   * @param {*} evt
+   */
+  clickEventHandler(tabItem, evt) {
+    var _a, _b, _c, _d;
+    const tabId = tabItem.getAttribute("data-tab-id");
+    if (!tabItem.classList.contains("active")) {
+      for (let item of (_b = (_a = tabItem === null || tabItem === void 0 ? void 0 : tabItem.parentElement) === null || _a === void 0 ? void 0 : _a.children) !== null && _b !== void 0 ? _b : []) {
+        item.classList.remove("active");
+      }
+      tabItem.classList.add("active");
+    }
+    const tabPanel = this.rowElement.querySelector(`[tab-panel-id="${tabId}"]`);
+    if (!(tabPanel === null || tabPanel === void 0 ? void 0 : tabPanel.classList.contains("active"))) {
+      for (let item of (_d = (_c = tabPanel === null || tabPanel === void 0 ? void 0 : tabPanel.parentElement) === null || _c === void 0 ? void 0 : _c.children) !== null && _d !== void 0 ? _d : []) {
+        item.classList.remove("active");
+      }
+      tabPanel === null || tabPanel === void 0 ? void 0 : tabPanel.classList.add("active");
+    }
+  }
+  /**
+   * tab template
+   *
+   * @param {FormField} field
+   * @param {FormTemplate} formTemplate
+   * @param {FormOptions} options
+   * @returns {string} template string
+   */
+  static template(field, formTemplate, options) {
+    let tabTemplate = [];
+    let tabChildTemplate = [];
+    //tab 이벤트 처리 할것.
+    let fieldStyle = styleUtils_1.default.fieldStyle(options, field);
+    if (field.children) {
+      let firstFlag = true;
+      for (const childField of field.children) {
+        formTemplate.addRowFieldInfo(childField);
+        let id = childField.$key;
+        tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
+        if (childField.children) {
+          tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
+        }
+        tabChildTemplate.push(`</div>`);
+        firstFlag = false;
+      }
+    }
+    return `
+     <div class="df-field ">
+      <div class="tab-header ${fieldStyle.tabAlignClass}">
+      ${tabTemplate.join("")}
+      </div>
+     </div>
+     <div class="df-tab-body">
+      ${tabChildTemplate.join("")}
+     </div>
+     `;
+  }
+  getValue() {
+    return "";
+  }
+  setValue(value) {}
+  reset() {}
+  getElement() {
+    return this.rowElement;
+  }
+  valid() {
+    const validResult = (0, stringValidator_1.stringValidator)(this.getValue(), this.field);
+    (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
+    return validResult;
+  }
+}
+exports["default"] = TabRender;
+
+/***/ }),
+
 /***/ "./src/renderer/TextAreaRender.ts":
 /*!****************************************!*\
   !*** ./src/renderer/TextAreaRender.ts ***!
@@ -2616,55 +2787,44 @@ exports["default"] = {
    * @returns FieldStyle
    */
   fieldStyle(formOptions, field, beforeField) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    let fieldStyle = {
-      rowStyleClass: "",
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+    const fieldStyle = {
+      rowStyleClass: field.orientation === "horizontal" ? "horizontal" : "vertical",
       fieldClass: "",
       fieldStyle: "",
       labelClass: "",
       labelStyle: "",
       labelAlignClass: "",
       valueClass: "",
-      valueStyle: ""
+      valueStyle: "",
+      tabAlignClass: ""
     };
-    if (field.orientation === "horizontal") {
-      fieldStyle.rowStyleClass = "horizontal";
-    } else {
-      fieldStyle.rowStyleClass = "vertical";
-    }
-    let defaultLabelWidth = formOptions.style.labelWidth || "3";
-    let defaultValueWidth = formOptions.style.valueWidth || "9";
-    let boforePostion = formOptions.style.position;
-    if (beforeField) {
-      defaultLabelWidth = ((_a = beforeField.style) === null || _a === void 0 ? void 0 : _a.labelWidth) || defaultLabelWidth;
-      defaultValueWidth = ((_b = beforeField.style) === null || _b === void 0 ? void 0 : _b.valueWidth) || defaultValueWidth;
-      boforePostion = ((_c = beforeField.style) === null || _c === void 0 ? void 0 : _c.position) || boforePostion;
-    }
-    let width = (_d = field.style) === null || _d === void 0 ? void 0 : _d.width;
-    let positionArr = constants_1.FIELD_POSITION_STYLE[(_e = field.style) === null || _e === void 0 ? void 0 : _e.position] || constants_1.FIELD_POSITION_STYLE[boforePostion] || constants_1.FIELD_POSITION_STYLE["top"];
-    fieldStyle.fieldClass = positionArr[0] + " " + (((_f = field.style) === null || _f === void 0 ? void 0 : _f.customClass) || "");
+    const defaultLabelWidth = ((_a = beforeField === null || beforeField === void 0 ? void 0 : beforeField.style) === null || _a === void 0 ? void 0 : _a.labelWidth) || formOptions.style.labelWidth || "3";
+    const defaultValueWidth = ((_b = beforeField === null || beforeField === void 0 ? void 0 : beforeField.style) === null || _b === void 0 ? void 0 : _b.valueWidth) || formOptions.style.valueWidth || "9";
+    const position = ((_c = beforeField === null || beforeField === void 0 ? void 0 : beforeField.style) === null || _c === void 0 ? void 0 : _c.position) || formOptions.style.position;
+    const width = (_d = field.style) === null || _d === void 0 ? void 0 : _d.width;
+    const positionArr = constants_1.FIELD_POSITION_STYLE[(_e = field.style) === null || _e === void 0 ? void 0 : _e.position] || constants_1.FIELD_POSITION_STYLE[position] || constants_1.FIELD_POSITION_STYLE.top;
+    fieldStyle.fieldClass = `${positionArr[0]} ${((_f = field.style) === null || _f === void 0 ? void 0 : _f.customClass) || ""}`;
     if (width) {
-      if (utils_1.default.isNumber(width)) {
-        fieldStyle.fieldClass += " col-xs-" + width;
-      } else {
-        fieldStyle.fieldStyle = `width:${width};`;
-      }
+      fieldStyle.fieldClass += utils_1.default.isNumber(width) ? ` col-xs-${width}` : "";
+      fieldStyle.fieldStyle = utils_1.default.isNumber(width) ? "" : `width:${width};`;
     }
-    let labelWidth = ((_g = field.style) === null || _g === void 0 ? void 0 : _g.labelWidth) || defaultLabelWidth;
+    fieldStyle.tabAlignClass = "tab-al-" + (["right", "center"].includes((_g = field.style) === null || _g === void 0 ? void 0 : _g.tabAlign) ? field.style.tabAlign : "left");
+    const labelWidth = ((_h = field.style) === null || _h === void 0 ? void 0 : _h.labelWidth) || defaultLabelWidth;
     fieldStyle.labelAlignClass = positionArr[1];
-    if (labelWidth) {
+    if (labelWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils_1.default.isNumber(labelWidth)) {
-        labelWidth = +labelWidth;
-        defaultValueWidth = 12 - labelWidth + ""; // grid 12에서 value를 label 나머지 값으로  처리.
-        fieldStyle.labelClass += " col-xs-" + labelWidth;
+        const labelWidthValue = +labelWidth;
+        fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${12 - labelWidthValue}`;
       } else {
         fieldStyle.labelStyle = `width:${labelWidth};`;
       }
     }
-    let valueWidth = ((_h = field.style) === null || _h === void 0 ? void 0 : _h.valueWidth) || defaultValueWidth;
-    if (valueWidth) {
+    const valueWidth = ((_j = field.style) === null || _j === void 0 ? void 0 : _j.valueWidth) || defaultValueWidth;
+    if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils_1.default.isNumber(valueWidth)) {
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "col-xs-" + valueWidth;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
       } else {
         fieldStyle.valueStyle = `width:${valueWidth};`;
       }
@@ -2672,8 +2832,8 @@ exports["default"] = {
       fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
     }
     fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
-    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass || "");
-    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass || "");
+    fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass);
+    fieldStyle.valueClass = spaceReplace(fieldStyle.valueClass);
     return fieldStyle;
   }
 };
@@ -3272,6 +3432,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
   --invalid-background-color: #fdd;
+  --background-button: #f6f6f6;
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
@@ -3560,6 +3721,60 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 .dara-form .field-group .field.vertical > * {
   display: block;
 }
+.dara-form .tab-header {
+  list-style: none;
+  margin: 0px;
+  padding: 0px;
+  display: flex;
+  line-height: 1.3;
+  width: 100%;
+  border-bottom: 1px solid var(--border-color);
+}
+.dara-form .tab-header.tab-al-left {
+  justify-content: left;
+}
+.dara-form .tab-header.tab-al-right {
+  justify-content: right;
+}
+.dara-form .tab-header.tab-al-center {
+  justify-content: center;
+}
+.dara-form .tab-header > .tab-item {
+  list-style: none;
+  float: left;
+  position: relative;
+  top: 0;
+  margin: 1px 0.4em 0 0;
+  padding: 0;
+  white-space: nowrap;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  border: 1px solid var(--border-color);
+  border-bottom-width: 0;
+}
+.dara-form .tab-header > .tab-item.active a {
+  background-color: var(--background-button-hover);
+}
+.dara-form .tab-header > .tab-item a {
+  float: left;
+  padding: 0.5em 1em;
+  text-decoration: none;
+  background: var(--background-button);
+  color: var(--font-color);
+  height: 30px;
+}
+.dara-form .tab-header > .tab-item a:hover {
+  background-color: var(--background-button-hover);
+}
+.dara-form .df-tab-body {
+  padding-top: 10px;
+}
+.dara-form .df-tab-body .tab-panel {
+  display: none;
+}
+.dara-form .df-tab-body .tab-panel.active {
+  display: block;
+}
 .dara-form .form-group {
   box-sizing: border-box;
   display: -ms-flexbox;
@@ -3642,7 +3857,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .form-group .file-label:hover {
   background-color: var(--background-button-hover);
-}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":["$sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;\r\n\r\n@mixin rowFlex() {\r\n  &.top {\r\n    flex-direction: column;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n\r\n  &.right {\r\n    -ms-flex-direction: row-reverse !important;\r\n    -webkit-box-orient: horizontal !important;\r\n    -webkit-box-direction: reverse !important;\r\n    flex-direction: row-reverse !important;\r\n  }\r\n\r\n  &.bottom {\r\n    flex-direction: column-reverse !important;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n}\r\n\r\n.dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n  --field-margin-bottom: 10px;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    width: 0px;\r\n    visibility: collapse;\r\n    display: none !important;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 0px 15px 0px 0px;\r\n\r\n    .required {\r\n      &::after {\r\n        content: \"*\";\r\n        vertical-align: middle;\r\n      }\r\n\r\n      color: var(--color-danger);\r\n    }\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .df-row {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n\r\n    &.vertical {\r\n      display: block;\r\n    }\r\n\r\n    &.horizontal {\r\n      -webkit-box-flex: 0;\r\n      -ms-flex: 0 0 auto;\r\n      flex: 0 0 auto;\r\n      width: auto;\r\n      max-width: none;\r\n\r\n      > .form-group > .empty {\r\n        display: none !important;\r\n      }\r\n    }\r\n\r\n    @include rowFlex();\r\n  }\r\n\r\n  @each $size in $sizes {\r\n    $i: index($sizes, $size);\r\n    $className: \".col-xs-#{$i}\";\r\n    #{$className} {\r\n      flex-basis: $size;\r\n      max-width: $size;\r\n    }\r\n  }\r\n\r\n  .align-items-center {\r\n    -webkit-box-align: center !important;\r\n    -ms-flex-align: center !important;\r\n    align-items: center !important;\r\n  }\r\n\r\n  .col-xs {\r\n    -webkit-flex-grow: 1;\r\n    -ms-flex-positive: 1;\r\n    -webkit-box-flex: 1;\r\n    flex-grow: 1;\r\n    -ms-flex-preferred-size: 0;\r\n    flex-basis: 0;\r\n    max-width: 100%;\r\n  }\r\n\r\n  .col-auto {\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 auto;\r\n    flex: 0 0 auto;\r\n    width: auto;\r\n    max-width: none;\r\n  }\r\n\r\n  .col-fix {\r\n    flex: none;\r\n  }\r\n\r\n  .col-full {\r\n    flex: 1;\r\n    overflow: auto;\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n  }\r\n\r\n  .dara-file-list {\r\n    .file-icon {\r\n      width: 20px;\r\n      height: 20px;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      cursor: pointer;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n\r\n      &.download {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n      }\r\n\r\n      &.remove {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n      }\r\n    }\r\n\r\n    .file-name {\r\n      text-overflow: ellipsis;\r\n      white-space: nowrap;\r\n      word-wrap: normal;\r\n      overflow: hidden;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      width: calc(100% - 55px);\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field.vertical {\r\n      > * {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-group {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin-bottom: var(--field-margin-bottom);\r\n\r\n    @include rowFlex();\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n\r\n    .file-label {\r\n      border: 1px solid var(--border-color);\r\n      display: inline;\r\n      width: 100%;\r\n      padding: 3px 15px;\r\n      line-height: 1;\r\n      background-clip: padding-box;\r\n      border-radius: 4px;\r\n      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":["$sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;\r\n\r\n@mixin rowFlex() {\r\n  &.top {\r\n    flex-direction: column;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n\r\n  &.right {\r\n    -ms-flex-direction: row-reverse !important;\r\n    -webkit-box-orient: horizontal !important;\r\n    -webkit-box-direction: reverse !important;\r\n    flex-direction: row-reverse !important;\r\n  }\r\n\r\n  &.bottom {\r\n    flex-direction: column-reverse !important;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n}\r\n\r\n.dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button: #f6f6f6;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n  --field-margin-bottom: 10px;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    width: 0px;\r\n    visibility: collapse;\r\n    display: none !important;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 0px 15px 0px 0px;\r\n\r\n    .required {\r\n      &::after {\r\n        content: \"*\";\r\n        vertical-align: middle;\r\n      }\r\n\r\n      color: var(--color-danger);\r\n    }\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .df-row {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n\r\n    &.vertical {\r\n      display: block;\r\n    }\r\n\r\n    &.horizontal {\r\n      -webkit-box-flex: 0;\r\n      -ms-flex: 0 0 auto;\r\n      flex: 0 0 auto;\r\n      width: auto;\r\n      max-width: none;\r\n\r\n      > .form-group > .empty {\r\n        display: none !important;\r\n      }\r\n    }\r\n\r\n    @include rowFlex();\r\n  }\r\n\r\n  @each $size in $sizes {\r\n    $i: index($sizes, $size);\r\n    $className: \".col-xs-#{$i}\";\r\n    #{$className} {\r\n      flex-basis: $size;\r\n      max-width: $size;\r\n    }\r\n  }\r\n\r\n  .align-items-center {\r\n    -webkit-box-align: center !important;\r\n    -ms-flex-align: center !important;\r\n    align-items: center !important;\r\n  }\r\n\r\n  .col-xs {\r\n    -webkit-flex-grow: 1;\r\n    -ms-flex-positive: 1;\r\n    -webkit-box-flex: 1;\r\n    flex-grow: 1;\r\n    -ms-flex-preferred-size: 0;\r\n    flex-basis: 0;\r\n    max-width: 100%;\r\n  }\r\n\r\n  .col-auto {\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 auto;\r\n    flex: 0 0 auto;\r\n    width: auto;\r\n    max-width: none;\r\n  }\r\n\r\n  .col-fix {\r\n    flex: none;\r\n  }\r\n\r\n  .col-full {\r\n    flex: 1;\r\n    overflow: auto;\r\n  }\r\n\r\n  .df-field-container {\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n  }\r\n\r\n  .dara-file-list {\r\n    .file-icon {\r\n      width: 20px;\r\n      height: 20px;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      cursor: pointer;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n\r\n      &.download {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n      }\r\n\r\n      &.remove {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n      }\r\n    }\r\n\r\n    .file-name {\r\n      text-overflow: ellipsis;\r\n      white-space: nowrap;\r\n      word-wrap: normal;\r\n      overflow: hidden;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      width: calc(100% - 55px);\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field.vertical {\r\n      > * {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .tab-header {\r\n    list-style: none;\r\n    margin: 0px;\r\n    padding: 0px;\r\n\r\n    display: flex;\r\n    line-height: 1.3;\r\n    width: 100%;\r\n    border-bottom: 1px solid var(--border-color);\r\n\r\n    &.tab-al {\r\n      &-left {\r\n        justify-content: left;\r\n      }\r\n      &-right {\r\n        justify-content: right;\r\n      }\r\n      &-center {\r\n        justify-content: center;\r\n      }\r\n    }\r\n\r\n    > .tab-item {\r\n      list-style: none;\r\n      float: left;\r\n      position: relative;\r\n      top: 0;\r\n      margin: 1px 0.4em 0 0;\r\n      padding: 0;\r\n      white-space: nowrap;\r\n      border-top-left-radius: 3px;\r\n      border-top-right-radius: 3px;\r\n      border: 1px solid var(--border-color);\r\n      border-bottom-width: 0;\r\n\r\n      &.active {\r\n        a {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n\r\n      a {\r\n        float: left;\r\n        padding: 0.5em 1em;\r\n        text-decoration: none;\r\n        background: var(--background-button);\r\n        color: var(--font-color);\r\n        height: 30px;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-tab-body {\r\n    padding-top: 10px;\r\n    .tab-panel {\r\n      display: none;\r\n\r\n      &.active {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-group {\r\n    box-sizing: border-box;\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin-bottom: var(--field-margin-bottom);\r\n\r\n    @include rowFlex();\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n\r\n    .file-label {\r\n      border: 1px solid var(--border-color);\r\n      display: inline;\r\n      width: 100%;\r\n      padding: 3px 15px;\r\n      line-height: 1;\r\n      background-clip: padding-box;\r\n      border-radius: 4px;\r\n      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

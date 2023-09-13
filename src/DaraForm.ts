@@ -8,7 +8,7 @@ import { stringValidator } from "./rule/stringValidator";
 import { numberValidator } from "./rule/numberValidator";
 import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
-import { TEXT_ALIGN } from "./constants";
+import { ALIGN } from "./constants";
 import styleUtils from "./util/styleUtils";
 import FormTemplate from "./FormTemplate";
 
@@ -81,17 +81,6 @@ export default class DaraForm {
       this.formTemplate.addRow(field);
     });
     this.conditionCheck();
-  }
-
-  /**
-   * add row file map
-   *
-   * @param {FormField} field
-   */
-  public addRowFieldInfo(field: FormField) {
-    utils.replaceXssField(field);
-    this.fieldInfoMap.addField(field);
-    this.addRowFields.push(field.$key);
   }
 
   /**

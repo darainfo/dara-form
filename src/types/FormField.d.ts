@@ -50,6 +50,7 @@ export interface FieldStyle {
   labelAlignClass?: string;
   valueClass?: string;
   valueStyle?: string;
+  tabAlignClass?: string;
 }
 
 /**
@@ -72,6 +73,7 @@ export interface FormField {
     customClass: string;
     valueWidth: stirng | number;
     position: string;
+    tabAlign: string;
   };
   tooltip: string; // 툴팁 문구
   disabled?: boolean; // disabled

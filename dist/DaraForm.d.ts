@@ -1,5 +1,5 @@
 import { FormOptions } from "@t/FormOptions";
-import { FieldStyle, FormField } from "@t/FormField";
+import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { Message } from "@t/Message";
 /**
@@ -10,49 +10,13 @@ import { Message } from "@t/Message";
  */
 export default class DaraForm {
     private readonly options;
-    private formElement;
     private fieldInfoMap;
     private formValue;
     private addRowFields;
+    private formTemplate;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;
     createForm(fields: FormField[]): void;
-    /**
-     * field row 추가.
-     *
-     * @param field
-     */
-    addRow(field: FormField): void;
-    getLabelTemplate(field: FormField): string;
-    /**
-     * 그룹 템플릿
-     *
-     * @param {FormField} field
-     * @returns {*}
-     */
-    rowTemplate(field: FormField): string;
-    childTemplate(field: FormField, parentFieldStyle: FieldStyle): string;
-    /**
-     * label 숨김 여부
-     *
-     * @param field formfield
-     * @returns
-     */
-    private isLabelHide;
-    /**
-     * field tempalte 구하기
-     *
-     * @param {FormField} field
-     * @returns {string}
-     */
-    getFieldTempate(field: FormField): string;
-    checkHiddenField(field: FormField): boolean;
-    /**
-     * add row file map
-     *
-     * @param {FormField} field
-     */
-    addRowFieldInfo(field: FormField): void;
     /**
      * 폼 데이터 reset
      */

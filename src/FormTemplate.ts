@@ -56,26 +56,15 @@ export default class FormTemplate {
   }
 
   /**
-   * label template
-   *
-   * @param {FormField} field form field
-   * @returns {string} template string
-   */
-  public getLabelTemplate(field: FormField) {
-    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
-    const tooltipTemplate = utils.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-
-    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
-  }
-
-  /**
    * 그룹 템플릿
    *
    * @param {FormField} field
    * @returns {string} row template
    */
   public rowTemplate(field: FormField): string {
-    let fieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, field);
+    let labelHideFlag = this.isLabelHide(field);
+
+    let fieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, field, null, labelHideFlag);
 
     let fieldTemplate = "";
 
@@ -84,13 +73,13 @@ export default class FormTemplate {
     } else if (field.children) {
       if (!utils.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
+      } else {
+        this.addRowFieldInfo(field);
       }
       fieldTemplate += this.childTemplate(field, fieldStyle);
     } else {
       fieldTemplate = this.getFieldTempate(field);
     }
-
-    let labelHideFlag = this.isLabelHide(field);
 
     return `
         <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
@@ -126,24 +115,26 @@ export default class FormTemplate {
         childFieldTempate = this.getFieldTempate(childField);
       }
 
-      let childFieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, childField, beforeField);
-
       if (firstFlag) {
         beforeField = childField;
       }
 
       let labelHideFlag = this.isLabelHide(childField);
 
+      let childFieldStyle;
+
       let labelTemplate = "";
       if (labelHideFlag) {
+        childFieldStyle = styleUtils.fieldStyle(this.options, childField, beforeField, !isEmptyLabel);
         labelTemplate = isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "";
       } else {
+        childFieldStyle = styleUtils.fieldStyle(this.options, childField, beforeField, false);
         labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
       }
 
       template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
         ${labelTemplate}
-        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
+        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
       </div>`);
 
       if (!labelHideFlag) {
@@ -158,6 +149,25 @@ export default class FormTemplate {
     return template.join("");
   }
 
+  /**
+   * label template
+   *
+   * @param {FormField} field form field
+   * @returns {string} template string
+   */
+  public getLabelTemplate(field: FormField) {
+    const requiredTemplate = field.required ? `<span class="required"></span>` : "";
+    const tooltipTemplate = utils.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
+
+    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
+  }
+
+  /**
+   * tab render type check
+   *
+   * @param {FormField} field
+   * @returns {boolean} tab type 인지 여부
+   */
   private isTabType(field: FormField) {
     return field.renderType === "tab";
   }

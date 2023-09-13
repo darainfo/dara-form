@@ -67,15 +67,104 @@
         tooltip: "아이디를 넣어주세요.",
         description: "설명설명설명",
         placeholder: "아이디를 넣어주세요.",
-        style: {
-          position: 'left-right'
-        },
-        //required: true,
-        rule: {
-          minLength: 3,
-          maxLength: 100,
-        },
-        validator: (param) => { },
+        renderType: "tab",
+        children: [
+          {
+            label: 'tab1'
+            , description: 'tabl 설명'
+            , children: [
+              {
+                name: "uname222",
+                label: "tab-이름",
+                style: {
+                  customClass: 'custom-class',
+                  position: 'left',
+                  labelWidth: '120px',
+                  labelHide: false,
+                }
+                , rule: {
+                  minLength: 2,
+                  maxLength: 100,
+                },
+                onChange: (arg) => {
+                  console.log(arg);
+                },
+              }
+              , {
+                name: "uname222333",
+                label: "tab11-이름",
+                rule: {
+                  minLength: 2,
+                  maxLength: 100,
+                },
+                onChange: (arg) => {
+                  console.log(arg);
+                },
+              }
+
+              , {
+                label: "child tab",
+                renderType: "tab",
+                style: {
+                  //labelHide: true
+                  position: 'top-center'
+                }
+                , children: [
+                  {
+                    label: 'child-tab1'
+                    , description: 'tabl 설명'
+                    , children: [
+                      {
+                        name: "child-uname222",
+                        label: "tab-이름",
+                        style: {
+                          customClass: 'custom-class',
+                          position: 'left',
+                          labelWidth: '120px',
+                          labelHide: false,
+                        }
+                      }
+                    ]
+                  }
+                  , {
+                    label: 'child-uname2-tab2'
+                    , children: [
+                      {
+                        name: "child-uname333",
+                        label: "tab-222",
+
+                        rule: {
+                          minLength: 2,
+                          maxLength: 100,
+                        },
+                        onChange: (arg) => {
+                          console.log(arg);
+                        },
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          , {
+            label: 'tab2'
+            , children: [
+              {
+                name: "uname333",
+                label: "tab-222",
+
+                rule: {
+                  minLength: 2,
+                  maxLength: 100,
+                },
+                onChange: (arg) => {
+                  console.log(arg);
+                },
+              }
+            ]
+          }
+        ]
       },
       {
         name: "uname",
@@ -90,6 +179,45 @@
         },
       },
       {
+        label: '비밀번호'
+        , orientation: 'vertical'
+        , conditional: {
+          show: true,
+          custom: function () {
+
+            return false;
+          }
+        }
+        , children: [{
+          name: 'upw'
+          , label: '비밀번호'
+          , style: {
+            labelHide: true
+          }
+          , renderType: 'password'
+          , regexpType: 'number-char'
+          , rule: {
+            minLength: 3
+          }
+          , different: {
+            field: 'uid',
+            message: '아이디와 달라야 합니다.'
+          }
+        }
+          , {
+          name: 'confirmUpw'
+          , label: '확인 비밀번호'
+          , style: {
+            labelHide: true
+          }
+          , renderType: 'password'
+          , identical: {
+            field: 'upw',
+            message: '비밀번호가 같아야합니다.'
+          }
+        }]
+      }
+      , {
         name: "age",
         label: "나이",
         required: true,
@@ -141,24 +269,12 @@
       }
       , {
         label: "주소",
-        orientation: "horizontal", // 'vertical , horizontal'
-        name: "newAddress",
-        // label: "신규주소여부",
-        style: {
-          customClass: 'custom-class',
-          // position: 'left-center',
-          labelHide: false,
-        }
-        ,
-        required: true,
-        renderType: "checkbox",
-        listItem: {
-          list: [{ label: "Password Change", value: "Y", selected: true }],
+        conditional: {
+          show: true,
+          custom: function () {
+            return false;
+          },
         },
-        onChange: (arg) => {
-          console.log(arg);
-        },
-
         children: [
           {
             name: "address32",
@@ -166,7 +282,7 @@
             style: {
               labelHide: false,
               position: 'left',
-              labelWidth: '120px'
+              labelWidth: '120px',
             },
             required: true,
             rule: {
@@ -199,7 +315,7 @@
             style: {
               //width: '200px',
               labelHide: false,
-              position: 'left-right'
+              position: 'left'
             },
             required: true,
             rule: {

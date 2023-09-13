@@ -51,13 +51,13 @@ export const RENDER_TEMPLATE: any = {
   tab: TabRender,
 };
 
-export const TEXT_ALIGN = {
+export const ALIGN = {
   left: "left",
   center: "center",
   right: "right",
 } as const;
 
-export type TEXT_ALIGN_TYPE = (typeof TEXT_ALIGN)[keyof typeof TEXT_ALIGN];
+export type TEXT_ALIGN_TYPE = (typeof ALIGN)[keyof typeof ALIGN];
 
 export type FORM_FIELD_TYPE = "number" | "string" | "array";
 

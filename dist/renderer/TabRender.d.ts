@@ -1,14 +1,31 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
 import DaraForm from "src/DaraForm";
+import FormTemplate from "src/FormTemplate";
+import { FormOptions } from "@t/FormOptions";
 export default class TabRender extends Render {
-    private element;
+    private tabContainerElement;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
-    static template(field: FormField): string;
+    /**
+     * tab item click
+     *
+     * @param {Element} tabItem
+     * @param {*} evt
+     */
+    private clickEventHandler;
+    /**
+     * tab template
+     *
+     * @param {FormField} field
+     * @param {FormTemplate} formTemplate
+     * @param {FormOptions} options
+     * @returns {string} template string
+     */
+    static template(field: FormField, formTemplate: FormTemplate, options: FormOptions): string;
     getValue(): string;
     setValue(value: any): void;
     reset(): void;
-    getElement(): HTMLInputElement;
+    getElement(): Element;
     valid(): any;
 }
