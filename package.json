@@ -116,7 +116,7 @@
   },
   "scripts": {
     "prepack": "yarn build",
-    "build": "yarn build:prod && yarn copy-dts && yarn build:tsc && yarn build:js",
+    "build": "yarn build:prod && yarn copy-dts && yarn build:tsc && yarn build:js && yarn copy-app",
     "build:tsc": "npx tsc --emitDeclarationOnly",
     "build:js": "node build.js",
     "build:dev": "webpack --config webpack.dev.js",
@@ -124,6 +124,7 @@
     "dts:gen": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
     "test": "jest",
     "start": "webpack-dev-server --open --config ./webpack.dev.server.js",
-    "copy-dts": "copyfiles -u 1 \"src/**/*.d.ts\" dist"
+    "copy-dts": "copyfiles -u 1 \"src/**/*.d.ts\" dist",
+    "copy-app": "copyfiles -u 1 \"dist/dara.form.*\" D:/03.opensources/vpi-console/vpi-console-web/src/main/webapp/webstatic/js/dara/form"
   }
 }

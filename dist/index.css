@@ -341,7 +341,9 @@
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
-  --field-margin-bottom: 10px;
+  --field-margin-top: 10px;
+  --field-background: #fff;
+  --field-color: #212529;
   padding: 0px;
   margin-top: 10px;
   color: var(--font-color);
@@ -378,7 +380,11 @@
   position: relative;
   font-weight: 700;
   vertical-align: top;
-  padding: 0px 15px 0px 0px;
+  padding: 5px 15px 0px 0px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: break-all;
 }
 .dara-form .df-label .required {
   color: var(--color-danger);
@@ -429,6 +435,8 @@
   background-clip: padding-box;
   border-radius: 4px;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  background: var(--field-background);
+  color: var(--field-color);
 }
 .dara-form .form-field[type=radio],
 .dara-form .form-field[type=checkbox] {
@@ -457,7 +465,6 @@
   padding: 0px;
 }
 .dara-form .df-row {
-  box-sizing: border-box;
   display: -ms-flexbox;
   display: -webkit-box;
   display: flex;
@@ -578,6 +585,12 @@
   flex: 1;
   overflow: auto;
 }
+.dara-form .df-field-container {
+  overflow: initial;
+}
+.dara-form .df-field-container > .df-row {
+  margin-top: -10px;
+}
 .dara-form .df-field-container .df-field {
   position: relative;
 }
@@ -672,9 +685,6 @@
 .dara-form .tab-header > .tab-item a:hover {
   background-color: var(--background-button-hover);
 }
-.dara-form .df-tab-body {
-  padding-top: 10px;
-}
 .dara-form .df-tab-body .tab-panel {
   display: none;
 }
@@ -682,7 +692,6 @@
   display: block;
 }
 .dara-form .form-group {
-  box-sizing: border-box;
   display: -ms-flexbox;
   display: -webkit-box;
   display: flex;
@@ -695,7 +704,11 @@
   flex-direction: row;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  margin-bottom: var(--field-margin-bottom);
+  margin-top: var(--field-margin-top);
+  margin-bottom: 0px;
+}
+.dara-form .form-group:last-child {
+  margin-bottom: 0px;
 }
 .dara-form .form-group.top {
   flex-direction: column;

@@ -27,6 +27,7 @@ export default class FormTemplate {
      * @returns {string} row template
      */
     rowTemplate(field: FormField): string;
+    private getTemplate;
     childTemplate(field: FormField, parentFieldStyle: FieldStyle): string;
     /**
      * label template

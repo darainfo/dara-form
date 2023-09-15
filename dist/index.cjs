@@ -716,7 +716,8 @@ var CheckboxRender = class _CheckboxRender extends Render {
       return checkValue;
     } else {
       const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`);
-      if (checkElement.checked) {
+      console.log(this.field.$xssName, this.rowElement);
+      if (checkElement?.checked) {
         return checkElement.value ? checkElement.value : true;
       }
       return checkElement.value ? "" : false;
@@ -2498,7 +2499,7 @@ var styleUtils_default = {
    * @param beforeField FormField
    * @returns FieldStyle
    */
-  fieldStyle(formOptions, field, beforeField) {
+  fieldStyle(formOptions, field, beforeField, isLabelHide) {
     const fieldStyle = {
       rowStyleClass: field.orientation === "horizontal" ? "horizontal" : "vertical",
       fieldClass: "",
@@ -2510,11 +2511,11 @@ var styleUtils_default = {
       valueStyle: "",
       tabAlignClass: ""
     };
-    const defaultLabelWidth = beforeField?.style?.labelWidth || formOptions.style.labelWidth || "3";
-    const defaultValueWidth = beforeField?.style?.valueWidth || formOptions.style.valueWidth || "9";
-    const position = beforeField?.style?.position || formOptions.style.position;
+    const defaultLabelWidth = beforeField?.style?.labelWidth ?? formOptions.style.labelWidth ?? "3";
+    const defaultValueWidth = beforeField?.style?.valueWidth ?? formOptions.style.valueWidth ?? "9";
+    const position = beforeField?.style?.position ?? formOptions.style.position;
     const width = field.style?.width;
-    const positionArr = FIELD_POSITION_STYLE[field.style?.position] || FIELD_POSITION_STYLE[position] || FIELD_POSITION_STYLE.top;
+    const positionArr = FIELD_POSITION_STYLE[field.style?.position] ?? FIELD_POSITION_STYLE[position] ?? FIELD_POSITION_STYLE.top;
     fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
     if (width) {
       fieldStyle.fieldClass += utils_default.isNumber(width) ? ` col-xs-${width}` : "";
@@ -2523,7 +2524,7 @@ var styleUtils_default = {
     fieldStyle.tabAlignClass = "tab-al-" + (["right", "center"].includes(field.style?.tabAlign) ? field.style.tabAlign : "left");
     const labelWidth = field.style?.labelWidth || defaultLabelWidth;
     fieldStyle.labelAlignClass = positionArr[1];
-    if (labelWidth && !["top", "bottom"].includes(positionArr[0])) {
+    if (!isLabelHide && labelWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils_default.isNumber(labelWidth)) {
         const labelWidthValue = +labelWidth;
         fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
@@ -2533,14 +2534,18 @@ var styleUtils_default = {
       }
     }
     const valueWidth = field.style?.valueWidth || defaultValueWidth;
-    if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
-      if (utils_default.isNumber(valueWidth)) {
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
-      } else {
-        fieldStyle.valueStyle = `width:${valueWidth};`;
-      }
+    if (isLabelHide && !["left", "right"].includes(positionArr[0])) {
+      fieldStyle.valueClass = "col-full";
     } else {
-      fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+      if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
+        if (utils_default.isNumber(valueWidth)) {
+          fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${valueWidth}`;
+        } else {
+          fieldStyle.valueStyle = `width:${valueWidth};`;
+        }
+      } else {
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : "";
+      }
     }
     fieldStyle.fieldClass = spaceReplace(fieldStyle.fieldClass);
     fieldStyle.labelClass = spaceReplace(fieldStyle.labelClass);
@@ -3047,7 +3052,8 @@ var FormTemplate = class {
       return;
     }
     this.addRowFields = [];
-    this.formElement.insertAdjacentHTML("beforeend", this.rowTemplate(field));
+    let template = this.rowTemplate(field);
+    this.formElement.insertAdjacentHTML("beforeend", template);
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       fileldInfo.$xssName = utils_default.unFieldName(fileldInfo.name);
@@ -3063,13 +3069,27 @@ var FormTemplate = class {
    * @returns {string} row template
    */
   rowTemplate(field) {
-    let fieldStyle = styleUtils_default.fieldStyle(this.options, field);
+    let labelHideFlag = this.isLabelHide(field);
+    let fieldStyle = styleUtils_default.fieldStyle(this.options, field, null, labelHideFlag);
+    let fieldTemplate = this.getTemplate(field, fieldStyle);
+    return `
+        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
+          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" title="${field.label ?? ""}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
+
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}">
+              ${fieldTemplate}
+          </div>
+        </div>
+    `;
+  }
+  getTemplate(field, fieldStyle) {
     let fieldTemplate = "";
     if (this.isTabType(field)) {
       fieldTemplate = this.tabTemplate(field);
     } else if (field.children) {
       if (!utils_default.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
+        console.log(fieldTemplate);
       } else {
         this.addRowFieldInfo(field);
       }
@@ -3077,16 +3097,7 @@ var FormTemplate = class {
     } else {
       fieldTemplate = this.getFieldTempate(field);
     }
-    let labelHideFlag = this.isLabelHide(field);
-    return `
-        <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
-          ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
-
-          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}">
-              ${fieldTemplate}
-          </div>
-        </div>
-    `;
+    return fieldTemplate;
   }
   childTemplate(field, parentFieldStyle) {
     const template = [];
@@ -3099,28 +3110,28 @@ var FormTemplate = class {
       if (this.checkHiddenField(childField)) {
         continue;
       }
-      let childFieldTempate = "";
-      if (this.isTabType(childField)) {
-        childFieldTempate = this.tabTemplate(childField);
-      } else if (childField.children) {
-        childFieldTempate = this.rowTemplate(childField);
-      } else {
-        childFieldTempate = this.getFieldTempate(childField);
-      }
-      let childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField);
       if (firstFlag) {
         beforeField = childField;
       }
       let labelHideFlag = this.isLabelHide(childField);
+      let childFieldStyle;
       let labelTemplate = "";
       if (labelHideFlag) {
+        childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField, !isEmptyLabel);
         labelTemplate = isEmptyLabel ? `<span class="df-label empty ${childFieldStyle.labelClass}" style="${childFieldStyle.labelStyle}"></span>` : "";
       } else {
-        labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
+        childFieldStyle = styleUtils_default.fieldStyle(this.options, childField, beforeField, false);
+        labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" title="${childField.label ?? ""}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
+      }
+      let childFieldTempate = "";
+      if (childField.children) {
+        childFieldTempate = this.getTemplate(childField, childFieldStyle);
+      } else {
+        childFieldTempate = this.getTemplate(childField, parentFieldStyle);
       }
       template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
         ${labelTemplate}
-        <span class="df-field-container ${childFieldStyle.valueClass}" ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
+        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
       </div>`);
       if (!labelHideFlag) {
         isEmptyLabel = true;
@@ -3139,7 +3150,7 @@ var FormTemplate = class {
   getLabelTemplate(field) {
     const requiredTemplate = field.required ? `<span class="required"></span>` : "";
     const tooltipTemplate = utils_default.isBlank(field.tooltip) ? "" : `<span class="df-tooltip">?<span class="tooltip">${field.tooltip}</span></span>`;
-    return `${field.label || ""} ${tooltipTemplate} ${requiredTemplate}`;
+    return `${field.label ?? ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
   /**
    * tab render type check

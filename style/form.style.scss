@@ -35,7 +35,9 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   --background-button-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
-  --field-margin-bottom: 10px;
+  --field-margin-top: 10px;
+  --field-background: #fff;
+  --field-color: #212529;
 
   padding: 0px;
   margin-top: 10px;
@@ -84,6 +86,10 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     font-weight: 700;
     vertical-align: top;
     padding: 5px 15px 0px 0px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    word-break: break-all;
 
     .required {
       &::after {
@@ -140,6 +146,8 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     background-clip: padding-box;
     border-radius: 4px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    background: var(--field-background);
+    color: var(--field-color);
 
     &[type="radio"],
     &[type="checkbox"] {
@@ -175,7 +183,6 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   }
 
   .df-row {
-    box-sizing: border-box;
     display: -ms-flexbox;
     display: -webkit-box;
     display: flex;
@@ -251,6 +258,14 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   }
 
   .df-field-container {
+    overflow: initial;
+    > .df-row {
+      margin-top: -10px;
+    }
+
+    > div + .df-row {
+      margin-top: 0px;
+    }
     .df-field {
       position: relative;
 
@@ -373,7 +388,6 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   }
 
   .df-tab-body {
-    padding-top: 10px;
     .tab-panel {
       display: none;
 
@@ -384,7 +398,6 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   }
 
   .form-group {
-    box-sizing: border-box;
     display: -ms-flexbox;
     display: -webkit-box;
     display: flex;
@@ -397,7 +410,12 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     flex-direction: row;
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
-    margin-bottom: var(--field-margin-bottom);
+    margin-top: var(--field-margin-top);
+    margin-bottom: 0px;
+
+    &:last-child {
+      margin-bottom: 0px;
+    }
 
     @include rowFlex();
 

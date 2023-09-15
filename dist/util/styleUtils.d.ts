@@ -9,6 +9,6 @@ declare const _default: {
      * @param beforeField FormField
      * @returns FieldStyle
      */
-    fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null): FieldStyle;
+    fieldStyle(formOptions: FormOptions, field: FormField, beforeField?: FormField | null, isLabelHide?: boolean): FieldStyle;
 };
 export default _default;

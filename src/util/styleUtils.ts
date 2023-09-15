@@ -43,7 +43,7 @@ export default {
     const labelWidth = field.style?.labelWidth || defaultLabelWidth;
     fieldStyle.labelAlignClass = positionArr[1];
 
-    if (labelWidth && !["top", "bottom"].includes(positionArr[0])) {
+    if (!isLabelHide && labelWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils.isNumber(labelWidth)) {
         const labelWidthValue = +labelWidth;
         fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
@@ -54,7 +54,7 @@ export default {
     }
 
     const valueWidth = field.style?.valueWidth || defaultValueWidth;
-    if (isLabelHide) {
+    if (isLabelHide && !["left", "right"].includes(positionArr[0])) {
       fieldStyle.valueClass = "col-full";
     } else {
       if (valueWidth && !["top", "bottom"].includes(positionArr[0])) {
