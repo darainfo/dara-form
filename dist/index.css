@@ -591,6 +591,9 @@
 .dara-form .df-field-container > .df-row {
   margin-top: -10px;
 }
+.dara-form .df-field-container > div + .df-row {
+  margin-top: 0px;
+}
 .dara-form .df-field-container .df-field {
   position: relative;
 }
