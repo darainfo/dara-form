@@ -68,6 +68,10 @@
         description: "설명설명설명",
         placeholder: "아이디를 넣어주세요.",
         renderType: "tab",
+        style: {
+          labelHide: false,
+          position: 'top-left'
+        },
         children: [
           {
             label: 'tab1'
@@ -131,7 +135,7 @@
                     , children: [
                       {
                         name: "child-uname333",
-                        label: "tab-222",
+                        label: "tab",
 
                         rule: {
                           minLength: 2,
@@ -152,7 +156,7 @@
             , children: [
               {
                 name: "uname333",
-                label: "tab-222",
+                label: "tab-22222222222222222222222222222222",
 
                 rule: {
                   minLength: 2,
@@ -185,7 +189,7 @@
           show: true,
           custom: function () {
 
-            return false;
+            return true;
           }
         }
         , children: [{
@@ -246,7 +250,7 @@
           valueField: "credId",
           list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
         },
-        description: "",
+        description: "awefawfeawefawef",
       },
       {
         label: "checkbox",
@@ -268,17 +272,29 @@
         },
       }
       , {
-        label: "주소",
-        conditional: {
+        label: "라벨주소",
+        name: 'newAddress',
+        renderType: 'checkbox',
+        listItem: {
+          orientation: "horizontal", // 'vertical , horizontal'
+          list: [
+            { label: "추가주소", value: "Y", selected: true }
+          ],
+        }
+        , description: `<div><a href="asdf">111111111111111</a></div>`
+        , orientation: "horizontal" // 'vertical , horizontal'
+        , conditional: {
           show: true,
           custom: function () {
-            return false;
+            return true;
           },
         },
         children: [
+
           {
             name: "address32",
             label: "주소",
+            orientation: 'vertical',
             style: {
               labelHide: false,
               position: 'left',
@@ -289,6 +305,12 @@
               minLength: 2,
               maxLength: 100,
             },
+            conditional: {
+              show: false,
+              field: "newAddress",
+              eq: "N",
+              //custom?: OptionCallback
+            }
           },
           {
             name: "address",
@@ -323,7 +345,7 @@
               maxLength: 100,
             },
             conditional: {
-              show: false,
+              show: true,
               field: "newAddress",
               eq: "Y",
               //custom?: OptionCallback
@@ -334,8 +356,9 @@
             label: "주소 하위1",
             //childLabelWidth: "",
             orientation: "horizontal", // 'vertical , horizontal, horizontal-row'
-            labelStyle: {
-              width: "200px",
+            style: {
+              labelWidth: "200px",
+              labelHide: false
             },
             conditional: {
               show: true,
