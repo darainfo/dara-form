@@ -27,7 +27,21 @@ export default class FormTemplate {
      * @returns {string} row template
      */
     rowTemplate(field: FormField): string;
+    /**
+     * template 얻기
+     *
+     * @param {FormField} field
+     * @param {FieldStyle} fieldStyle
+     * @returns {string}
+     */
     private getTemplate;
+    /**
+     * child template
+     *
+     * @param {FormField} field
+     * @param {FieldStyle} parentFieldStyle
+     * @returns {*}
+     */
     childTemplate(field: FormField, parentFieldStyle: FieldStyle): string;
     /**
      * label template

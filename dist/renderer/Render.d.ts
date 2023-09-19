@@ -7,6 +7,7 @@ export default abstract class Render {
     protected field: FormField;
     constructor(form: DaraForm, field: FormField, rowElement: HTMLElement);
     setDefaultInfo(): void;
+    static isDataRender(): boolean;
     getForm(): DaraForm;
     abstract initEvent(): void;
     abstract getValue(): any;
@@ -19,6 +20,7 @@ export default abstract class Render {
     focus(): void;
     show(): void;
     hide(): void;
+    setActive(id: string): void;
     setDisabled(flag: boolean): void;
     commonValidator(): void;
     static valuesValueKey(field: FormField): string;

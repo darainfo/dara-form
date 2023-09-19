@@ -31,7 +31,13 @@ export default class TabRender extends Render {
    * @param {*} evt
    */
   private clickEventHandler(tabItem: Element, evt: any) {
-    const tabId = tabItem.getAttribute("data-tab-id");
+    this.setActive(tabItem.getAttribute("data-tab-id") ?? "");
+  }
+
+  public setActive(tabId: string): void {
+    const tabItem = this.tabContainerElement.querySelector(`[data-tab-id="${tabId}"]`);
+
+    if (!tabItem) return;
 
     if (!tabItem.classList.contains("active")) {
       for (let item of tabItem?.parentElement?.children ?? []) {
@@ -49,6 +55,10 @@ export default class TabRender extends Render {
 
       tabPanel?.classList.add("active");
     }
+  }
+
+  static isDataRender(): boolean {
+    return false;
   }
 
   /**
@@ -69,6 +79,7 @@ export default class TabRender extends Render {
     if (field.children) {
       let firstFlag = true;
       for (const childField of field.children) {
+        childField.$parent = field;
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);

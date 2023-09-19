@@ -5,6 +5,7 @@ export default class CustomRender extends Render {
     private customFunction;
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
+    static isDataRender(): boolean;
     static template(field: FormField): string;
     getValue(): any;
     setValue(value: any): void;

@@ -83,7 +83,7 @@ export default {
       hash = (hash << 5) - hash + tmpChar;
       hash = hash & hash;
     }
-    return hash;
+    return String(hash).replaceAll(/-/g, "_");
   },
 
   isHiddenField(field: FormField): boolean {

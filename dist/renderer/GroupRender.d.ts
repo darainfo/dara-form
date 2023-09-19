@@ -4,6 +4,7 @@ import DaraForm from "src/DaraForm";
 export default class GroupRender extends Render {
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
+    static isDataRender(): boolean;
     static template(field: FormField): string;
     getValue(): null;
     setValue(value: any): void;

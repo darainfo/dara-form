@@ -31,6 +31,10 @@ export default abstract class Render {
     }
   }
 
+  static isDataRender(): boolean {
+    return true;
+  }
+
   public getForm(): DaraForm {
     return this.daraForm;
   }
@@ -93,6 +97,10 @@ export default abstract class Render {
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
     }
+  }
+
+  public setActive(id: string): void {
+    //console.log("parent");
   }
 
   public setDisabled(flag: boolean) {

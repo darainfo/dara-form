@@ -107,8 +107,6 @@ export default class CheckboxRender extends Render {
     } else {
       const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement;
 
-      console.log(this.field.$xssName, this.rowElement);
-
       if (checkElement?.checked) {
         return checkElement.value ? checkElement.value : true;
       }

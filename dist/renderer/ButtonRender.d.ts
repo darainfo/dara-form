@@ -4,6 +4,7 @@ import DaraForm from "src/DaraForm";
 export default class ButtonRender extends Render {
     constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm);
     initEvent(): void;
+    static isDataRender(): boolean;
     static template(field: FormField): string;
     getValue(): string;
     setValue(value: any): void;

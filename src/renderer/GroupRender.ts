@@ -3,36 +3,33 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class GroupRender extends Render {
+  constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
+    super(daraForm, field, rowElement);
+  }
 
-    constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
-        super(daraForm, field, rowElement);
-    }
+  public initEvent() {}
 
-    public initEvent() { }
+  static isDataRender(): boolean {
+    return false;
+  }
 
-    static template(field: FormField): string {
-        return '';
-    }
+  static template(field: FormField): string {
+    return "";
+  }
 
-    getValue() {
-        return null;
-    }
+  getValue() {
+    return null;
+  }
 
-    setValue(value: any): void {
+  setValue(value: any): void {}
 
-    }
+  reset() {}
 
-    reset() {
+  getElement(): HTMLElement {
+    return this.rowElement;
+  }
 
-    }
-
-    getElement(): HTMLElement {
-        return this.rowElement;
-    }
-
-    valid(): any {
-        return true;
-    }
-
-
+  valid(): any {
+    return true;
+  }
 }

@@ -16,6 +16,10 @@ export default class ButtonRender extends Render {
     });
   }
 
+  static isDataRender(): boolean {
+    return false;
+  }
+
   static template(field: FormField): string {
     const desc = field.description ? `<div>${field.description}</div>` : "";
 

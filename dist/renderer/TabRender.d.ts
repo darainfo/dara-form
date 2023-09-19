@@ -14,6 +14,8 @@ export default class TabRender extends Render {
      * @param {*} evt
      */
     private clickEventHandler;
+    setActive(tabId: string): void;
+    static isDataRender(): boolean;
     /**
      * tab template
      *

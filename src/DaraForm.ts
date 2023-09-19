@@ -1,5 +1,5 @@
 import { FormOptions } from "@t/FormOptions";
-import { FieldStyle, FormField } from "@t/FormField";
+import { FormField } from "@t/FormField";
 import utils from "./util/utils";
 import { ValidResult } from "@t/ValidResult";
 import { Message } from "@t/Message";
@@ -8,9 +8,8 @@ import { stringValidator } from "./rule/stringValidator";
 import { numberValidator } from "./rule/numberValidator";
 import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
-import { ALIGN } from "./constants";
-import styleUtils from "./util/styleUtils";
 import FormTemplate from "./FormTemplate";
+import TabRender from "./renderer/TabRender";
 
 const defaultOptions = {
   style: {
@@ -89,8 +88,8 @@ export default class DaraForm {
   public resetForm = () => {
     const fieldMap = this.fieldInfoMap.getAllFieldInfo();
     for (const seq in fieldMap) {
-      const filedInfo = fieldMap[seq];
-      const renderInfo = filedInfo.$renderer;
+      const fieldInfo = fieldMap[seq];
+      const renderInfo = fieldInfo.$renderer;
 
       if (renderInfo && typeof renderInfo.reset === "function") {
         renderInfo.reset();
@@ -176,10 +175,10 @@ export default class DaraForm {
 
   private _setFieldValue(fieldName: string, value: any) {
     this.formValue[fieldName] = value;
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
 
-    if (filedInfo) {
-      filedInfo.$renderer.setValue(value);
+    if (fieldInfo) {
+      fieldInfo.$renderer.setValue(value);
     }
   }
 
@@ -234,18 +233,23 @@ export default class DaraForm {
    */
   public validForm = (): any[] => {
     let validResult = [] as any;
-    let firstFlag = this.options.autoFocus !== false;
+    let autoFocusFlag = this.options.autoFocus !== false;
+    let firstFlag = true;
 
     const fieldMap = this.fieldInfoMap.getAllFieldInfo();
     for (const fieldKey in fieldMap) {
-      const filedInfo = fieldMap[fieldKey];
-      const renderInfo = filedInfo.$renderer;
+      const fieldInfo = fieldMap[fieldKey];
+      const renderInfo = fieldInfo.$renderer;
 
       let fieldValid = renderInfo.valid();
 
       if (fieldValid !== true) {
-        if (firstFlag) {
+        if (autoFocusFlag) {
           renderInfo.focus();
+          autoFocusFlag = false;
+        }
+        if (firstFlag) {
+          this.validTabCheck(fieldInfo);
           firstFlag = false;
         }
         validResult.push(fieldValid);
@@ -255,14 +259,23 @@ export default class DaraForm {
     return validResult;
   };
 
-  public isValidField = (fieldName: string): boolean => {
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
+  private validTabCheck(fieldInfo: FormField) {
+    if (fieldInfo.$parent) {
+      if (fieldInfo.$parent.renderType == "tab") {
+        fieldInfo.$parent.$renderer.setActive(fieldInfo.$key);
+      }
+      this.validTabCheck(fieldInfo.$parent);
+    }
+  }
 
-    if (utils.isUndefined(filedInfo)) {
+  public isValidField = (fieldName: string): boolean => {
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+
+    if (utils.isUndefined(fieldInfo)) {
       throw new Error(`Field name [${fieldName}] not found`);
     }
 
-    const renderInfo = filedInfo.$renderer;
+    const renderInfo = fieldInfo.$renderer;
     if (renderInfo) {
       return renderInfo.valid() === true;
     }
@@ -279,8 +292,8 @@ export default class DaraForm {
   }
 
   public setFieldDisabled(fieldName: string, flag: boolean) {
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-    filedInfo.$renderer.setDisabled(flag);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    fieldInfo.$renderer.setDisabled(flag);
   }
 
   /*

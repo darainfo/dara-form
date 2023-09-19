@@ -5,15 +5,24 @@ import { RENDER_TEMPLATE } from "../constants";
 import utils from "./utils";
 
 export const getRenderer = (field: FormField): Render => {
-  let renderType = field.renderType || "text";
-
-  if (utils.isUndefined(field.name) && field.children) {
-    return RENDER_TEMPLATE["group"];
+  let render;
+  if (field.renderType) {
+    render = RENDER_TEMPLATE[field.renderType];
   }
 
-  let render = RENDER_TEMPLATE[renderType];
+  if (render && (render.isDataRender() === false || !utils.isUndefined(field.name))) {
+    return render;
+  }
 
-  return render ? render : RENDER_TEMPLATE["text"];
+  if (utils.isUndefined(field.name)) {
+    if (field.children) {
+      return RENDER_TEMPLATE["group"];
+    } else {
+      return RENDER_TEMPLATE["hidden"];
+    }
+  }
+
+  return RENDER_TEMPLATE["text"];
 };
 
 export const getRenderTemplate = (field: FormField): string => {

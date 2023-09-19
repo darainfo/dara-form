@@ -10,7 +10,7 @@ declare const _default: {
     isNumber(value: any): value is number;
     isArray(value: any): value is any[];
     replaceXssField(field: FormField): FormField;
-    getHashCode(str: string): number;
+    getHashCode(str: string): string | number;
     isHiddenField(field: FormField): boolean;
 };
 export default _default;

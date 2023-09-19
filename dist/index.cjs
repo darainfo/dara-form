@@ -77,7 +77,7 @@ var utils_default = {
       hash = (hash << 5) - hash + tmpChar;
       hash = hash & hash;
     }
-    return hash;
+    return String(hash).replaceAll(/-/g, "_");
   },
   isHiddenField(field) {
     if (field.renderType === "hidden") {
@@ -108,6 +108,9 @@ var Render = class _Render {
         ele.setAttribute("placeholder", this.field.placeholder);
       }
     }
+  }
+  static isDataRender() {
+    return true;
   }
   getForm() {
     return this.daraForm;
@@ -154,6 +157,8 @@ var Render = class _Render {
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
     }
+  }
+  setActive(id) {
   }
   setDisabled(flag) {
     const ele = this.getElement();
@@ -716,7 +721,6 @@ var CheckboxRender = class _CheckboxRender extends Render {
       return checkValue;
     } else {
       const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`);
-      console.log(this.field.$xssName, this.rowElement);
       if (checkElement?.checked) {
         return checkElement.value ? checkElement.value : true;
       }
@@ -1142,6 +1146,9 @@ var CustomRender = class extends Render {
       this.customFunction.initEvent.call(this, this.field, this.rowElement);
     }
   }
+  static isDataRender() {
+    return false;
+  }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
     if (field.renderer.template) {
@@ -1187,6 +1194,9 @@ var GroupRender = class extends Render {
     super(daraForm, field, rowElement);
   }
   initEvent() {
+  }
+  static isDataRender() {
+    return false;
   }
   static template(field) {
     return "";
@@ -1246,6 +1256,9 @@ var ButtonRender = class extends Render {
         this.field.onClick.call(null, this.field);
       }
     });
+  }
+  static isDataRender() {
+    return false;
   }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
@@ -2578,7 +2591,12 @@ var TabRender = class extends Render {
    * @param {*} evt
    */
   clickEventHandler(tabItem, evt) {
-    const tabId = tabItem.getAttribute("data-tab-id");
+    this.setActive(tabItem.getAttribute("data-tab-id") ?? "");
+  }
+  setActive(tabId) {
+    const tabItem = this.tabContainerElement.querySelector(`[data-tab-id="${tabId}"]`);
+    if (!tabItem)
+      return;
     if (!tabItem.classList.contains("active")) {
       for (let item of tabItem?.parentElement?.children ?? []) {
         item.classList.remove("active");
@@ -2592,6 +2610,9 @@ var TabRender = class extends Render {
       }
       tabPanel?.classList.add("active");
     }
+  }
+  static isDataRender() {
+    return false;
   }
   /**
    * tab template
@@ -2608,6 +2629,7 @@ var TabRender = class extends Render {
     if (field.children) {
       let firstFlag = true;
       for (const childField of field.children) {
+        childField.$parent = field;
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
@@ -2808,12 +2830,21 @@ var Lanauage_default = new Language2();
 
 // src/util/renderFactory.ts
 var getRenderer = (field) => {
-  let renderType = field.renderType || "text";
-  if (utils_default.isUndefined(field.name) && field.children) {
-    return RENDER_TEMPLATE["group"];
+  let render;
+  if (field.renderType) {
+    render = RENDER_TEMPLATE[field.renderType];
   }
-  let render = RENDER_TEMPLATE[renderType];
-  return render ? render : RENDER_TEMPLATE["text"];
+  if (render && (render.isDataRender() === false || !utils_default.isUndefined(field.name))) {
+    return render;
+  }
+  if (utils_default.isUndefined(field.name)) {
+    if (field.children) {
+      return RENDER_TEMPLATE["group"];
+    } else {
+      return RENDER_TEMPLATE["hidden"];
+    }
+  }
+  return RENDER_TEMPLATE["text"];
 };
 
 // src/FieldInfoMap.ts
@@ -2823,7 +2854,7 @@ var FieldInfoMap = class {
     this.allFieldInfo = {};
     this.keyNameMap = {};
     this.conditionFields = [];
-    this.fieldPrefix = `${FIELD_PREFIX}-${utils_default.getHashCode(selector)}`;
+    this.fieldPrefix = `${FIELD_PREFIX}_${utils_default.getHashCode(selector)}`;
   }
   /**
    * add Field 정보
@@ -2833,7 +2864,7 @@ var FieldInfoMap = class {
    */
   addField(field) {
     this.fieldIdx += 1;
-    field.$key = `${this.fieldPrefix}-${this.fieldIdx}`;
+    field.$key = `${this.fieldPrefix}_${this.fieldIdx}`;
     this.keyNameMap[field.name] = field.$key;
     this.allFieldInfo[field.$key] = field;
     field.$renderer = getRenderer(field);
@@ -2901,8 +2932,8 @@ var FieldInfoMap = class {
    */
   getAllFieldValue(formValue, isValid) {
     if (isValid !== true) {
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        formValue[filedInfo.name] = filedInfo.$renderer.getValue();
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
       }
       return formValue;
     }
@@ -2933,8 +2964,8 @@ var FieldInfoMap = class {
       for (let [key, value] of Object.entries(formValue)) {
         reval.set(key, value);
       }
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        addFieldFormData(reval, fieldInfo, fieldInfo.$renderer.getValue());
       }
       return reval;
     }
@@ -3011,12 +3042,12 @@ var FieldInfoMap = class {
    */
   conditionCheck() {
     this.conditionFields.forEach((fieldKey) => {
-      const filedInfo = this.allFieldInfo[fieldKey];
-      let condFlag = this.isConditionField(filedInfo);
+      const fieldInfo = this.allFieldInfo[fieldKey];
+      let condFlag = this.isConditionField(fieldInfo);
       if (condFlag) {
-        filedInfo.$renderer.show();
+        fieldInfo.$renderer.show();
       } else {
-        filedInfo.$renderer.hide();
+        fieldInfo.$renderer.hide();
       }
     });
   }
@@ -3082,6 +3113,13 @@ var FormTemplate = class {
         </div>
     `;
   }
+  /**
+   * template 얻기
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} fieldStyle
+   * @returns {string}
+   */
   getTemplate(field, fieldStyle) {
     let fieldTemplate = "";
     if (this.isTabType(field)) {
@@ -3089,7 +3127,6 @@ var FormTemplate = class {
     } else if (field.children) {
       if (!utils_default.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
-        console.log(fieldTemplate);
       } else {
         this.addRowFieldInfo(field);
       }
@@ -3099,6 +3136,13 @@ var FormTemplate = class {
     }
     return fieldTemplate;
   }
+  /**
+   * child template
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} parentFieldStyle
+   * @returns {*}
+   */
   childTemplate(field, parentFieldStyle) {
     const template = [];
     let beforeField = null;
@@ -3230,8 +3274,8 @@ var DaraForm = class {
     this.resetForm = () => {
       const fieldMap = this.fieldInfoMap.getAllFieldInfo();
       for (const seq in fieldMap) {
-        const filedInfo = fieldMap[seq];
-        const renderInfo = filedInfo.$renderer;
+        const fieldInfo = fieldMap[seq];
+        const renderInfo = fieldInfo.$renderer;
         if (renderInfo && typeof renderInfo.reset === "function") {
           renderInfo.reset();
         }
@@ -3330,15 +3374,20 @@ var DaraForm = class {
      */
     this.validForm = () => {
       let validResult = [];
-      let firstFlag = this.options.autoFocus !== false;
+      let autoFocusFlag = this.options.autoFocus !== false;
+      let firstFlag = true;
       const fieldMap = this.fieldInfoMap.getAllFieldInfo();
       for (const fieldKey in fieldMap) {
-        const filedInfo = fieldMap[fieldKey];
-        const renderInfo = filedInfo.$renderer;
+        const fieldInfo = fieldMap[fieldKey];
+        const renderInfo = fieldInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
-          if (firstFlag) {
+          if (autoFocusFlag) {
             renderInfo.focus();
+            autoFocusFlag = false;
+          }
+          if (firstFlag) {
+            this.validTabCheck(fieldInfo);
             firstFlag = false;
           }
           validResult.push(fieldValid);
@@ -3347,11 +3396,11 @@ var DaraForm = class {
       return validResult;
     };
     this.isValidField = (fieldName) => {
-      const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-      if (utils_default.isUndefined(filedInfo)) {
+      const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+      if (utils_default.isUndefined(fieldInfo)) {
         throw new Error(`Field name [${fieldName}] not found`);
       }
-      const renderInfo = filedInfo.$renderer;
+      const renderInfo = fieldInfo.$renderer;
       if (renderInfo) {
         return renderInfo.valid() === true;
       }
@@ -3404,17 +3453,25 @@ var DaraForm = class {
   }
   _setFieldValue(fieldName, value) {
     this.formValue[fieldName] = value;
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-    if (filedInfo) {
-      filedInfo.$renderer.setValue(value);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    if (fieldInfo) {
+      fieldInfo.$renderer.setValue(value);
+    }
+  }
+  validTabCheck(fieldInfo) {
+    if (fieldInfo.$parent) {
+      if (fieldInfo.$parent.renderType == "tab") {
+        fieldInfo.$parent.$renderer.setActive(fieldInfo.$key);
+      }
+      this.validTabCheck(fieldInfo.$parent);
     }
   }
   conditionCheck() {
     this.fieldInfoMap.conditionCheck();
   }
   setFieldDisabled(fieldName, flag) {
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-    filedInfo.$renderer.setDisabled(flag);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    fieldInfo.$renderer.setDisabled(flag);
   }
   static {
     /*

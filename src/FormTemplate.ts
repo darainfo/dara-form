@@ -52,6 +52,7 @@ export default class FormTemplate {
       fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
 
       const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+
       fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldRowElement, this.daraform);
       fieldRowElement?.removeAttribute("id");
     });
@@ -80,6 +81,14 @@ export default class FormTemplate {
         </div>
     `;
   }
+
+  /**
+   * template 얻기
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} fieldStyle
+   * @returns {string}
+   */
   private getTemplate(field: FormField, fieldStyle: FieldStyle): string {
     let fieldTemplate = "";
     if (this.isTabType(field)) {
@@ -87,7 +96,6 @@ export default class FormTemplate {
     } else if (field.children) {
       if (!utils.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
-        console.log(fieldTemplate);
       } else {
         this.addRowFieldInfo(field);
       }
@@ -98,6 +106,13 @@ export default class FormTemplate {
     return fieldTemplate;
   }
 
+  /**
+   * child template
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} parentFieldStyle
+   * @returns {*}
+   */
   public childTemplate(field: FormField, parentFieldStyle: FieldStyle) {
     const template = [];
 

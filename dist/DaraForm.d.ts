@@ -80,6 +80,7 @@ export default class DaraForm {
      * @returns {any[]}
      */
     validForm: () => any[];
+    private validTabCheck;
     isValidField: (fieldName: string) => boolean;
     getOptions: () => FormOptions;
     conditionCheck(): void;

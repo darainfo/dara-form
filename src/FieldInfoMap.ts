@@ -1,10 +1,7 @@
 import { FIELD_PREFIX } from "src/constants";
 import { FormField } from "./types/FormField";
 import { ValidResult } from "./types/ValidResult";
-import util from "./util/utils";
 import { getRenderer } from "./util/renderFactory";
-import { reject } from "lodash";
-import { resolve } from "path";
 import Lanauage from "./util/Lanauage";
 import utils from "./util/utils";
 
@@ -28,7 +25,7 @@ export default class FieldInfoMap {
   private fieldPrefix;
 
   constructor(selector: string) {
-    this.fieldPrefix = `${FIELD_PREFIX}-${util.getHashCode(selector)}`;
+    this.fieldPrefix = `${FIELD_PREFIX}_${utils.getHashCode(selector)}`;
   }
 
   /**
@@ -39,7 +36,7 @@ export default class FieldInfoMap {
    */
   public addField(field: FormField) {
     this.fieldIdx += 1;
-    field.$key = `${this.fieldPrefix}-${this.fieldIdx}`;
+    field.$key = `${this.fieldPrefix}_${this.fieldIdx}`;
     this.keyNameMap[field.name] = field.$key;
     this.allFieldInfo[field.$key] = field;
     field.$renderer = getRenderer(field);
@@ -115,8 +112,8 @@ export default class FieldInfoMap {
    */
   public getAllFieldValue(formValue: any, isValid: boolean) {
     if (isValid !== true) {
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        formValue[filedInfo.name] = filedInfo.$renderer.getValue();
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
       }
       return formValue;
     }
@@ -156,8 +153,8 @@ export default class FieldInfoMap {
         reval.set(key, value as any);
       }
 
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        addFieldFormData(reval, fieldInfo, fieldInfo.$renderer.getValue());
       }
 
       return reval;
@@ -252,14 +249,14 @@ export default class FieldInfoMap {
    */
   public conditionCheck() {
     this.conditionFields.forEach((fieldKey) => {
-      const filedInfo = this.allFieldInfo[fieldKey];
+      const fieldInfo = this.allFieldInfo[fieldKey];
 
-      let condFlag = this.isConditionField(filedInfo);
+      let condFlag = this.isConditionField(fieldInfo);
 
       if (condFlag) {
-        filedInfo.$renderer.show();
+        fieldInfo.$renderer.show();
       } else {
-        filedInfo.$renderer.hide();
+        fieldInfo.$renderer.hide();
       }
     });
   }

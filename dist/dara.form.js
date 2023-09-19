@@ -58,8 +58,8 @@ class DaraForm {
     this.resetForm = () => {
       const fieldMap = this.fieldInfoMap.getAllFieldInfo();
       for (const seq in fieldMap) {
-        const filedInfo = fieldMap[seq];
-        const renderInfo = filedInfo.$renderer;
+        const fieldInfo = fieldMap[seq];
+        const renderInfo = fieldInfo.$renderer;
         if (renderInfo && typeof renderInfo.reset === "function") {
           renderInfo.reset();
         }
@@ -159,15 +159,20 @@ class DaraForm {
      */
     this.validForm = () => {
       let validResult = [];
-      let firstFlag = this.options.autoFocus !== false;
+      let autoFocusFlag = this.options.autoFocus !== false;
+      let firstFlag = true;
       const fieldMap = this.fieldInfoMap.getAllFieldInfo();
       for (const fieldKey in fieldMap) {
-        const filedInfo = fieldMap[fieldKey];
-        const renderInfo = filedInfo.$renderer;
+        const fieldInfo = fieldMap[fieldKey];
+        const renderInfo = fieldInfo.$renderer;
         let fieldValid = renderInfo.valid();
         if (fieldValid !== true) {
-          if (firstFlag) {
+          if (autoFocusFlag) {
             renderInfo.focus();
+            autoFocusFlag = false;
+          }
+          if (firstFlag) {
+            this.validTabCheck(fieldInfo);
             firstFlag = false;
           }
           validResult.push(fieldValid);
@@ -176,11 +181,11 @@ class DaraForm {
       return validResult;
     };
     this.isValidField = fieldName => {
-      const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-      if (utils_1.default.isUndefined(filedInfo)) {
+      const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+      if (utils_1.default.isUndefined(fieldInfo)) {
         throw new Error(`Field name [${fieldName}] not found`);
       }
-      const renderInfo = filedInfo.$renderer;
+      const renderInfo = fieldInfo.$renderer;
       if (renderInfo) {
         return renderInfo.valid() === true;
       }
@@ -233,17 +238,25 @@ class DaraForm {
   }
   _setFieldValue(fieldName, value) {
     this.formValue[fieldName] = value;
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-    if (filedInfo) {
-      filedInfo.$renderer.setValue(value);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    if (fieldInfo) {
+      fieldInfo.$renderer.setValue(value);
+    }
+  }
+  validTabCheck(fieldInfo) {
+    if (fieldInfo.$parent) {
+      if (fieldInfo.$parent.renderType == "tab") {
+        fieldInfo.$parent.$renderer.setActive(fieldInfo.$key);
+      }
+      this.validTabCheck(fieldInfo.$parent);
     }
   }
   conditionCheck() {
     this.fieldInfoMap.conditionCheck();
   }
   setFieldDisabled(fieldName, flag) {
-    const filedInfo = this.fieldInfoMap.getFieldName(fieldName);
-    filedInfo.$renderer.setDisabled(flag);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    fieldInfo.$renderer.setDisabled(flag);
   }
 }
 /*
@@ -283,17 +296,16 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
-const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
 const renderFactory_1 = __webpack_require__(/*! ./util/renderFactory */ "./src/util/renderFactory.ts");
 const Lanauage_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/Lanauage */ "./src/util/Lanauage.ts"));
-const utils_2 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./util/utils */ "./src/util/utils.ts"));
 class FieldInfoMap {
   constructor(selector) {
     this.fieldIdx = 0;
     this.allFieldInfo = {};
     this.keyNameMap = {};
     this.conditionFields = [];
-    this.fieldPrefix = `${constants_1.FIELD_PREFIX}-${utils_1.default.getHashCode(selector)}`;
+    this.fieldPrefix = `${constants_1.FIELD_PREFIX}_${utils_1.default.getHashCode(selector)}`;
   }
   /**
    * add Field 정보
@@ -303,7 +315,7 @@ class FieldInfoMap {
    */
   addField(field) {
     this.fieldIdx += 1;
-    field.$key = `${this.fieldPrefix}-${this.fieldIdx}`;
+    field.$key = `${this.fieldPrefix}_${this.fieldIdx}`;
     this.keyNameMap[field.name] = field.$key;
     this.allFieldInfo[field.$key] = field;
     field.$renderer = (0, renderFactory_1.getRenderer)(field);
@@ -371,8 +383,8 @@ class FieldInfoMap {
    */
   getAllFieldValue(formValue, isValid) {
     if (isValid !== true) {
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        formValue[filedInfo.name] = filedInfo.$renderer.getValue();
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
       }
       return formValue;
     }
@@ -386,7 +398,7 @@ class FieldInfoMap {
         if (fieldValid !== true) {
           renderInfo.focus();
           fieldValid = fieldValid;
-          if (utils_2.default.isUndefined(fieldValid.message)) {
+          if (utils_1.default.isUndefined(fieldValid.message)) {
             fieldValid.message = Lanauage_1.default.validMessage(fieldInfo, fieldValid)[0];
           }
           reject(new Error(fieldValid.message, {
@@ -405,8 +417,8 @@ class FieldInfoMap {
       for (let [key, value] of Object.entries(formValue)) {
         reval.set(key, value);
       }
-      for (let [key, filedInfo] of Object.entries(this.allFieldInfo)) {
-        addFieldFormData(reval, filedInfo, filedInfo.$renderer.getValue());
+      for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
+        addFieldFormData(reval, fieldInfo, fieldInfo.$renderer.getValue());
       }
       return reval;
     }
@@ -424,7 +436,7 @@ class FieldInfoMap {
         if (fieldValid !== true) {
           renderInfo.focus();
           fieldValid = fieldValid;
-          if (utils_2.default.isUndefined(fieldValid.message)) {
+          if (utils_1.default.isUndefined(fieldValid.message)) {
             fieldValid.message = Lanauage_1.default.validMessage(fieldInfo, fieldValid)[0];
           }
           reject(new Error(fieldValid.message, {
@@ -485,12 +497,12 @@ class FieldInfoMap {
    */
   conditionCheck() {
     this.conditionFields.forEach(fieldKey => {
-      const filedInfo = this.allFieldInfo[fieldKey];
-      let condFlag = this.isConditionField(filedInfo);
+      const fieldInfo = this.allFieldInfo[fieldKey];
+      let condFlag = this.isConditionField(fieldInfo);
       if (condFlag) {
-        filedInfo.$renderer.show();
+        fieldInfo.$renderer.show();
       } else {
-        filedInfo.$renderer.hide();
+        fieldInfo.$renderer.hide();
       }
     });
   }
@@ -580,6 +592,13 @@ class FormTemplate {
         </div>
     `;
   }
+  /**
+   * template 얻기
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} fieldStyle
+   * @returns {string}
+   */
   getTemplate(field, fieldStyle) {
     let fieldTemplate = "";
     if (this.isTabType(field)) {
@@ -587,7 +606,6 @@ class FormTemplate {
     } else if (field.children) {
       if (!utils_1.default.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
-        console.log(fieldTemplate);
       } else {
         this.addRowFieldInfo(field);
       }
@@ -597,6 +615,13 @@ class FormTemplate {
     }
     return fieldTemplate;
   }
+  /**
+   * child template
+   *
+   * @param {FormField} field
+   * @param {FieldStyle} parentFieldStyle
+   * @returns {*}
+   */
   childTemplate(field, parentFieldStyle) {
     var _a;
     const template = [];
@@ -895,6 +920,9 @@ class ButtonRender extends Render_1.default {
       }
     });
   }
+  static isDataRender() {
+    return false;
+  }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
@@ -1020,7 +1048,6 @@ class CheckboxRender extends Render_1.default {
       return checkValue;
     } else {
       const checkElement = this.rowElement.querySelector(`[name="${this.field.$xssName}"]`);
-      console.log(this.field.$xssName, this.rowElement);
       if (checkElement === null || checkElement === void 0 ? void 0 : checkElement.checked) {
         return checkElement.value ? checkElement.value : true;
       }
@@ -1110,6 +1137,9 @@ class CustomRender extends Render_1.default {
     if (this.customFunction.initEvent) {
       this.customFunction.initEvent.call(this, this.field, this.rowElement);
     }
+  }
+  static isDataRender() {
+    return false;
   }
   static template(field) {
     const desc = field.description ? `<div>${field.description}</div>` : "";
@@ -1561,8 +1591,11 @@ class GroupRender extends Render_1.default {
     super(daraForm, field, rowElement);
   }
   initEvent() {}
+  static isDataRender() {
+    return false;
+  }
   static template(field) {
-    return '';
+    return "";
   }
   getValue() {
     return null;
@@ -1987,6 +2020,9 @@ class Render {
       }
     }
   }
+  static isDataRender() {
+    return true;
+  }
   getForm() {
     return this.daraForm;
   }
@@ -2032,6 +2068,9 @@ class Render {
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
     }
+  }
+  setActive(id) {
+    //console.log("parent");
   }
   setDisabled(flag) {
     const ele = this.getElement();
@@ -2106,8 +2145,13 @@ class TabRender extends Render_1.default {
    * @param {*} evt
    */
   clickEventHandler(tabItem, evt) {
+    var _a;
+    this.setActive((_a = tabItem.getAttribute("data-tab-id")) !== null && _a !== void 0 ? _a : "");
+  }
+  setActive(tabId) {
     var _a, _b, _c, _d;
-    const tabId = tabItem.getAttribute("data-tab-id");
+    const tabItem = this.tabContainerElement.querySelector(`[data-tab-id="${tabId}"]`);
+    if (!tabItem) return;
     if (!tabItem.classList.contains("active")) {
       for (let item of (_b = (_a = tabItem === null || tabItem === void 0 ? void 0 : tabItem.parentElement) === null || _a === void 0 ? void 0 : _a.children) !== null && _b !== void 0 ? _b : []) {
         item.classList.remove("active");
@@ -2121,6 +2165,9 @@ class TabRender extends Render_1.default {
       }
       tabPanel === null || tabPanel === void 0 ? void 0 : tabPanel.classList.add("active");
     }
+  }
+  static isDataRender() {
+    return false;
   }
   /**
    * tab template
@@ -2138,6 +2185,7 @@ class TabRender extends Render_1.default {
     if (field.children) {
       let firstFlag = true;
       for (const childField of field.children) {
+        childField.$parent = field;
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
@@ -2757,12 +2805,21 @@ const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6
 const constants_1 = __webpack_require__(/*! ../constants */ "./src/constants.ts");
 const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! ./utils */ "./src/util/utils.ts"));
 const getRenderer = field => {
-  let renderType = field.renderType || "text";
-  if (utils_1.default.isUndefined(field.name) && field.children) {
-    return constants_1.RENDER_TEMPLATE["group"];
+  let render;
+  if (field.renderType) {
+    render = constants_1.RENDER_TEMPLATE[field.renderType];
   }
-  let render = constants_1.RENDER_TEMPLATE[renderType];
-  return render ? render : constants_1.RENDER_TEMPLATE["text"];
+  if (render && (render.isDataRender() === false || !utils_1.default.isUndefined(field.name))) {
+    return render;
+  }
+  if (utils_1.default.isUndefined(field.name)) {
+    if (field.children) {
+      return constants_1.RENDER_TEMPLATE["group"];
+    } else {
+      return constants_1.RENDER_TEMPLATE["hidden"];
+    }
+  }
+  return constants_1.RENDER_TEMPLATE["text"];
 };
 exports.getRenderer = getRenderer;
 const getRenderTemplate = field => {
@@ -2939,7 +2996,7 @@ exports["default"] = {
       hash = (hash << 5) - hash + tmpChar;
       hash = hash & hash;
     }
-    return hash;
+    return String(hash).replaceAll(/-/g, "_");
   },
   isHiddenField(field) {
     if (field.renderType === "hidden") {
