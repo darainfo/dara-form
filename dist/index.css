@@ -381,7 +381,7 @@
   font-weight: 700;
   vertical-align: top;
   padding: 5px 15px 0px 0px;
-  overflow: hidden;
+  overflow: initial;
   white-space: nowrap;
   text-overflow: ellipsis;
   word-break: break-all;

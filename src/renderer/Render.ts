@@ -48,6 +48,10 @@ export default abstract class Render {
 
   public setValueItems(value: any): void {}
 
+  public static getDescriptionTemplate(field: FormField): string {
+    return field.description ? `<div class="df-description">${field.description}</div>` : "";
+  }
+
   public changeEventCall(field: FormField, e: Event | null, rederInfo: Render) {
     if (field.onChange) {
       let fieldValue = rederInfo.getValue();
@@ -96,6 +100,30 @@ export default abstract class Render {
   public hide() {
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
+    }
+  }
+
+  /**
+   * 설명 추가
+   *
+   * @public
+   * @param {string} desc
+   */
+  public setDescription(desc: string) {
+    const descEle = this.rowElement.querySelector(".df-description");
+    if (descEle) {
+      descEle.innerHTML = desc;
+    } else {
+      const fieldEle = this.rowElement.querySelector(".df-field");
+      if (fieldEle) {
+        const parser = new DOMParser();
+        this.field.description = desc;
+        const descEle = parser.parseFromString(Render.getDescriptionTemplate(this.field), "text/html").querySelector(".df-description");
+
+        console.log(Render.getDescriptionTemplate(this.field), descEle);
+
+        if (descEle) fieldEle.parentNode?.insertBefore(descEle, fieldEle.nextSibling);
+      }
     }
   }
 

@@ -86,7 +86,8 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     font-weight: 700;
     vertical-align: top;
     padding: 5px 15px 0px 0px;
-    overflow: hidden;
+    overflow: initial;
+    // 확인할것.
     white-space: nowrap;
     text-overflow: ellipsis;
     word-break: break-all;

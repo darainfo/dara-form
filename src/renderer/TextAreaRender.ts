@@ -20,18 +20,16 @@ export default class TextAreaRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     let rows = field.customOptions?.rows;
     rows = +rows > 0 ? rows : 3;
 
     return `
-            <div class="df-field">
-                <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
-            </div> 
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
+        </div> 
+        ${Render.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
   }
 
   getValue() {

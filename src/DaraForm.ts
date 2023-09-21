@@ -296,6 +296,18 @@ export default class DaraForm {
     fieldInfo.$renderer.setDisabled(flag);
   }
 
+  /**
+   * 설명 추가
+   *
+   * @public
+   * @param {string} fieldName
+   * @param {string} desc
+   */
+  public setFieldDescription(fieldName: string, desc: string) {
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    fieldInfo.$renderer.setDescription(desc);
+  }
+
   /*
     destroy = () => {
         return this.options;

@@ -29,14 +29,12 @@ export default class RangeRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     return `
         <div class="df-field">
             <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
             <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
-        ${desc}
+        ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>
        `;
   }

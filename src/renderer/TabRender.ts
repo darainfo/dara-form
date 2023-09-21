@@ -82,9 +82,10 @@ export default class TabRender extends Render {
         childField.$parent = field;
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
+
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
 
-        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render.getDescriptionTemplate(childField)}</div>`);
         if (childField.children) {
           tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
         }

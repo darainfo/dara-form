@@ -20,15 +20,13 @@ export default class PasswordRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     return `
-            <div class="df-field">
-                <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
-            </div>
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
+        </div>
+        ${Render.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
   }
 
   getValue() {

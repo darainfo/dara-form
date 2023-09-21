@@ -16,10 +16,12 @@ export default abstract class Render {
     abstract getElement(): any;
     abstract valid(): ValidResult | boolean;
     setValueItems(value: any): void;
+    static getDescriptionTemplate(field: FormField): string;
     changeEventCall(field: FormField, e: Event | null, rederInfo: Render): void;
     focus(): void;
     show(): void;
     hide(): void;
+    setDescription(desc: string): void;
     setActive(id: string): void;
     setDisabled(flag: boolean): void;
     commonValidator(): void;

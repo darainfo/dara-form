@@ -85,6 +85,7 @@ export default class DaraForm {
     getOptions: () => FormOptions;
     conditionCheck(): void;
     setFieldDisabled(fieldName: string, flag: boolean): void;
+    setFieldDescription(fieldName: string, desc: string): void;
     static validator: {
         string: (value: string, field: FormField) => boolean | ValidResult;
         number: (value: string, field: FormField) => boolean | ValidResult;

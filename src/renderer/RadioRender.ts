@@ -55,8 +55,6 @@ export default class RadioRender extends Render {
     const templates: string[] = [];
     const fieldName = field.name;
 
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
 
@@ -67,18 +65,18 @@ export default class RadioRender extends Render {
 
       templates.push(
         `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
-                <label>
-                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
-                    ${this.valuesLabelValue(labelKey, val)}
-                </label>
-                </span>
+        <label>
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            ${this.valuesLabelValue(labelKey, val)}
+        </label>
+        </span>
                 `
       );
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div>
-        ${desc}
-        <div class="help-message"></div>
-         `);
+        ${Render.getDescriptionTemplate(field)}
+     <div class="help-message"></div>
+    `);
 
     return templates.join("");
   }

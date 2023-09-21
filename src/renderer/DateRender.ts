@@ -38,12 +38,11 @@ export default class DateRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
-     ${desc}
+     ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>
      `;
   }

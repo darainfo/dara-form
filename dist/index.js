@@ -134,6 +134,9 @@ var init_Render = __esm({
       }
       setValueItems(value) {
       }
+      static getDescriptionTemplate(field) {
+        return field.description ? `<div class="df-description">${field.description}</div>` : "";
+      }
       changeEventCall(field, e, rederInfo) {
         if (field.onChange) {
           let fieldValue = rederInfo.getValue();
@@ -173,6 +176,22 @@ var init_Render = __esm({
       hide() {
         if (!this.rowElement.classList.contains("df-hidden")) {
           this.rowElement.classList.add("df-hidden");
+        }
+      }
+      setDescription(desc) {
+        const descEle = this.rowElement.querySelector(".df-description");
+        if (descEle) {
+          descEle.innerHTML = desc;
+        } else {
+          const fieldEle = this.rowElement.querySelector(".df-field");
+          if (fieldEle) {
+            const parser = new DOMParser();
+            this.field.description = desc;
+            const descEle2 = parser.parseFromString(_Render.getDescriptionTemplate(this.field), "text/html").querySelector(".df-description");
+            console.log(_Render.getDescriptionTemplate(this.field), descEle2);
+            if (descEle2)
+              fieldEle.parentNode?.insertBefore(descEle2, fieldEle.nextSibling);
+          }
         }
       }
       setActive(id) {
@@ -454,12 +473,11 @@ var init_NumberRender = __esm({
         numberInputEvent(this.field, this.element, this);
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
         <div class="df-field">
             <input type="text" name="${field.name}" class="form-field number help-icon" />
         </div> 
-        ${desc}
+        ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>
        `;
       }
@@ -555,16 +573,15 @@ var init_TextAreaRender = __esm({
         inputEvent(this.field, this.element, this);
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         let rows = field.customOptions?.rows;
         rows = +rows > 0 ? rows : 3;
         return `
-            <div class="df-field">
-                <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
-            </div> 
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
+        </div> 
+        ${Render.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
       }
       getValue() {
         return this.element.value;
@@ -627,11 +644,10 @@ var init_DropdownRender = __esm({
         dropdownChangeEvent(this.field, this.element, this);
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
           ${_DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
-                ${desc}
+                ${Render.getDescriptionTemplate(field)}
       <div class="help-message"></div>
     `;
         return template;
@@ -710,12 +726,11 @@ var init_TextRender = __esm({
         inputEvent(this.field, this.element, this);
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
      <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
-     ${desc}
+     ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>
      `;
       }
@@ -790,7 +805,6 @@ var init_CheckboxRender = __esm({
       static template(field) {
         const templates = [];
         const fieldName = field.name;
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         const labelKey = this.valuesLabelKey(field);
         const valueKey = this.valuesValueKey(field);
         templates.push(` <div class="df-field"><div class="field-group">`);
@@ -805,7 +819,7 @@ var init_CheckboxRender = __esm({
           </span>
       `);
         });
-        templates.push(`<i class="dara-icon help-icon"></i></div></div> ${desc}<div class="help-message"></div>`);
+        templates.push(`<i class="dara-icon help-icon"></i></div></div> ${Render.getDescriptionTemplate(field)}<div class="help-message"></div>`);
         return templates.join("");
       }
       setValueItems(items) {
@@ -941,7 +955,6 @@ var init_RadioRender = __esm({
       static template(field) {
         const templates = [];
         const fieldName = field.name;
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         const labelKey = this.valuesLabelKey(field);
         const valueKey = this.valuesValueKey(field);
         templates.push(`<div class="df-field"><div class="field-group">`);
@@ -949,18 +962,18 @@ var init_RadioRender = __esm({
           const radioVal = val[valueKey];
           templates.push(
             `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
-                <label>
-                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
-                    ${this.valuesLabelValue(labelKey, val)}
-                </label>
-                </span>
+        <label>
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            ${this.valuesLabelValue(labelKey, val)}
+        </label>
+        </span>
                 `
           );
         });
         templates.push(`<i class="dara-icon help-icon"></i></div></div>
-        ${desc}
-        <div class="help-message"></div>
-         `);
+        ${Render.getDescriptionTemplate(field)}
+     <div class="help-message"></div>
+    `);
         return templates.join("");
       }
       setValueItems(items) {
@@ -1044,14 +1057,13 @@ var init_PasswordRender = __esm({
         inputEvent(this.field, this.element, this);
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
-            <div class="df-field">
-                <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
-            </div>
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
+        </div>
+        ${Render.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
       }
       getValue() {
         return this.element.value;
@@ -1236,7 +1248,6 @@ var init_FileRender = __esm({
         }
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
     <div class="df-field">
       <span class="file-wrapper">
@@ -1247,7 +1258,7 @@ var init_FileRender = __esm({
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
-    ${desc}
+    ${Render.getDescriptionTemplate(field)}
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;
@@ -1312,11 +1323,10 @@ var init_CustomRender = __esm({
         return false;
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         if (field.renderer.template) {
           return ` <div class="df-field">${field.renderer.template()}</div>
-      ${desc}
-        <div class="help-message"></div>`;
+          ${Render.getDescriptionTemplate(field)}
+      <div class="help-message"></div>`;
         }
         return "";
       }
@@ -1444,9 +1454,8 @@ var init_ButtonRender = __esm({
         return false;
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
-      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
+      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${Render.getDescriptionTemplate(field)}
      `;
       }
       getValue() {
@@ -1493,13 +1502,12 @@ var init_RangeRender = __esm({
         });
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
         <div class="df-field">
             <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
             <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
-        ${desc}
+        ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>
        `;
       }
@@ -2686,12 +2694,11 @@ var init_DateRender = __esm({
         this.dateObj = new DaraDateTimePicker(this.element, this.field.customOptions, {});
       }
       static template(field) {
-        const desc = field.description ? `<div>${field.description}</div>` : "";
         return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
-     ${desc}
+     ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>
      `;
       }
@@ -2866,7 +2873,7 @@ var init_TabRender = __esm({
             formTemplate.addRowFieldInfo(childField);
             let id = childField.$key;
             tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
-            tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
+            tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render.getDescriptionTemplate(childField)}</div>`);
             if (childField.children) {
               tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
             }
@@ -3773,6 +3780,10 @@ var init_DaraForm = __esm({
       setFieldDisabled(fieldName, flag) {
         const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
         fieldInfo.$renderer.setDisabled(flag);
+      }
+      setFieldDescription(fieldName, desc) {
+        const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+        fieldInfo.$renderer.setDescription(desc);
       }
       static {
         /*

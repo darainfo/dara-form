@@ -43,12 +43,10 @@ export default class DropdownRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
           ${DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
-                ${desc}
+                ${Render.getDescriptionTemplate(field)}
       <div class="help-message"></div>
     `;
     return template;

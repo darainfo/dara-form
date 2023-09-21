@@ -164,8 +164,6 @@ export default class FileRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     return `
     <div class="df-field">
       <span class="file-wrapper">
@@ -176,7 +174,7 @@ export default class FileRender extends Render {
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
-    ${desc}
+    ${Render.getDescriptionTemplate(field)}
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;

@@ -258,6 +258,10 @@ class DaraForm {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
     fieldInfo.$renderer.setDisabled(flag);
   }
+  setFieldDescription(fieldName, desc) {
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
+    fieldInfo.$renderer.setDescription(desc);
+  }
 }
 /*
   destroy = () => {
@@ -924,9 +928,8 @@ class ButtonRender extends Render_1.default {
     return false;
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
-      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
+      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${Render_1.default.getDescriptionTemplate(field)}
      `;
   }
   getValue() {
@@ -1003,7 +1006,6 @@ class CheckboxRender extends Render_1.default {
     var _a, _b;
     const templates = [];
     const fieldName = field.name;
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
     templates.push(` <div class="df-field"><div class="field-group">`);
@@ -1018,7 +1020,7 @@ class CheckboxRender extends Render_1.default {
           </span>
       `);
     });
-    templates.push(`<i class="dara-icon help-icon"></i></div></div> ${desc}<div class="help-message"></div>`);
+    templates.push(`<i class="dara-icon help-icon"></i></div></div> ${Render_1.default.getDescriptionTemplate(field)}<div class="help-message"></div>`);
     return templates.join("");
   }
   setValueItems(items) {
@@ -1142,11 +1144,10 @@ class CustomRender extends Render_1.default {
     return false;
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     if (field.renderer.template) {
       return ` <div class="df-field">${field.renderer.template()}</div>
-      ${desc}
-        <div class="help-message"></div>`;
+          ${Render_1.default.getDescriptionTemplate(field)}
+      <div class="help-message"></div>`;
     }
     return "";
   }
@@ -1222,12 +1223,11 @@ class DateRender extends Render_1.default {
     this.dateObj = new dara_datetimepicker_1.DaraDateTimePicker(this.element, this.field.customOptions, {});
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
-     ${desc}
+     ${Render_1.default.getDescriptionTemplate(field)}
      <div class="help-message"></div>
      `;
   }
@@ -1301,11 +1301,10 @@ class DropdownRender extends Render_1.default {
     (0, renderEvents_1.dropdownChangeEvent)(this.field, this.element, this);
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
           ${DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
-                ${desc}
+                ${Render_1.default.getDescriptionTemplate(field)}
       <div class="help-message"></div>
     `;
     return template;
@@ -1519,7 +1518,6 @@ class FileRender extends Render_1.default {
     }
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
     <div class="df-field">
       <span class="file-wrapper">
@@ -1530,7 +1528,7 @@ class FileRender extends Render_1.default {
         <i class="dara-icon help-icon"></i>
       </span>
     </div>
-    ${desc}
+    ${Render_1.default.getDescriptionTemplate(field)}
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;
@@ -1682,12 +1680,11 @@ class NumberRender extends Render_1.default {
     (0, renderEvents_1.numberInputEvent)(this.field, this.element, this);
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
         <div class="df-field">
             <input type="text" name="${field.name}" class="form-field number help-icon" />
         </div> 
-        ${desc}
+        ${Render_1.default.getDescriptionTemplate(field)}
         <div class="help-message"></div>
        `;
   }
@@ -1743,14 +1740,13 @@ class PasswordRender extends Render_1.default {
     (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
-            <div class="df-field">
-                <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
-            </div>
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
+        </div>
+        ${Render_1.default.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
   }
   getValue() {
     return this.element.value;
@@ -1832,24 +1828,23 @@ class RadioRender extends Render_1.default {
     var _a, _b;
     const templates = [];
     const fieldName = field.name;
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
     templates.push(`<div class="df-field"><div class="field-group">`);
     (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
       const radioVal = val[valueKey];
       templates.push(`<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
-                <label>
-                    <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
-                    ${this.valuesLabelValue(labelKey, val)}
-                </label>
-                </span>
+        <label>
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            ${this.valuesLabelValue(labelKey, val)}
+        </label>
+        </span>
                 `);
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div>
-        ${desc}
-        <div class="help-message"></div>
-         `);
+        ${Render_1.default.getDescriptionTemplate(field)}
+     <div class="help-message"></div>
+    `);
     return templates.join("");
   }
   setValueItems(items) {
@@ -1951,13 +1946,12 @@ class RangeRender extends Render_1.default {
     });
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
         <div class="df-field">
             <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
             <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
-        ${desc}
+        ${Render_1.default.getDescriptionTemplate(field)}
         <div class="help-message"></div>
        `;
   }
@@ -2027,6 +2021,9 @@ class Render {
     return this.daraForm;
   }
   setValueItems(value) {}
+  static getDescriptionTemplate(field) {
+    return field.description ? `<div class="df-description">${field.description}</div>` : "";
+  }
   changeEventCall(field, e, rederInfo) {
     var _a;
     if (field.onChange) {
@@ -2067,6 +2064,22 @@ class Render {
   hide() {
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
+    }
+  }
+  setDescription(desc) {
+    var _a;
+    const descEle = this.rowElement.querySelector(".df-description");
+    if (descEle) {
+      descEle.innerHTML = desc;
+    } else {
+      const fieldEle = this.rowElement.querySelector(".df-field");
+      if (fieldEle) {
+        const parser = new DOMParser();
+        this.field.description = desc;
+        const descEle = parser.parseFromString(Render.getDescriptionTemplate(this.field), "text/html").querySelector(".df-description");
+        console.log(Render.getDescriptionTemplate(this.field), descEle);
+        if (descEle) (_a = fieldEle.parentNode) === null || _a === void 0 ? void 0 : _a.insertBefore(descEle, fieldEle.nextSibling);
+      }
     }
   }
   setActive(id) {
@@ -2189,7 +2202,7 @@ class TabRender extends Render_1.default {
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
-        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}"> ${childField.description || ""}`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render_1.default.getDescriptionTemplate(childField)}</div>`);
         if (childField.children) {
           tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
         }
@@ -2254,16 +2267,15 @@ class TextAreaRender extends Render_1.default {
   }
   static template(field) {
     var _a;
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     let rows = (_a = field.customOptions) === null || _a === void 0 ? void 0 : _a.rows;
     rows = +rows > 0 ? rows : 3;
     return `
-            <div class="df-field">
-                <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
-            </div> 
-            ${desc}
-            <div class="help-message"></div>
-        `;
+        <div class="df-field">
+            <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
+        </div> 
+        ${Render_1.default.getDescriptionTemplate(field)}
+        <div class="help-message"></div>
+    `;
   }
   getValue() {
     return this.element.value;
@@ -2317,12 +2329,11 @@ class TextRender extends Render_1.default {
     (0, renderEvents_1.inputEvent)(this.field, this.element, this);
   }
   static template(field) {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
     return `
      <div class="df-field">
       <input type="text" name="${field.name}" class="form-field text help-icon" />
      </div>
-     ${desc}
+     ${Render_1.default.getDescriptionTemplate(field)}
      <div class="help-message"></div>
      `;
   }
@@ -3547,7 +3558,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
   font-weight: 700;
   vertical-align: top;
   padding: 5px 15px 0px 0px;
-  overflow: hidden;
+  overflow: initial;
   white-space: nowrap;
   text-overflow: ellipsis;
   word-break: break-all;
@@ -3944,7 +3955,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.dara-form {
 }
 .dara-form .form-group .file-label:hover {
   background-color: var(--background-button-hover);
-}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":["$sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;\r\n\r\n@mixin rowFlex() {\r\n  &.top {\r\n    flex-direction: column;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n\r\n  &.right {\r\n    -ms-flex-direction: row-reverse !important;\r\n    -webkit-box-orient: horizontal !important;\r\n    -webkit-box-direction: reverse !important;\r\n    flex-direction: row-reverse !important;\r\n  }\r\n\r\n  &.bottom {\r\n    flex-direction: column-reverse !important;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n}\r\n\r\n.dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button: #f6f6f6;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n  --field-margin-top: 10px;\r\n  --field-background: #fff;\r\n  --field-color: #212529;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    width: 0px;\r\n    visibility: collapse;\r\n    display: none !important;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 5px 15px 0px 0px;\r\n    overflow: hidden;\r\n    white-space: nowrap;\r\n    text-overflow: ellipsis;\r\n    word-break: break-all;\r\n\r\n    .required {\r\n      &::after {\r\n        content: \"*\";\r\n        vertical-align: middle;\r\n      }\r\n\r\n      color: var(--color-danger);\r\n    }\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n    background: var(--field-background);\r\n    color: var(--field-color);\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .df-row {\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n\r\n    &.vertical {\r\n      display: block;\r\n    }\r\n\r\n    &.horizontal {\r\n      -webkit-box-flex: 0;\r\n      -ms-flex: 0 0 auto;\r\n      flex: 0 0 auto;\r\n      width: auto;\r\n      max-width: none;\r\n\r\n      > .form-group > .empty {\r\n        display: none !important;\r\n      }\r\n    }\r\n\r\n    @include rowFlex();\r\n  }\r\n\r\n  @each $size in $sizes {\r\n    $i: index($sizes, $size);\r\n    $className: \".col-xs-#{$i}\";\r\n    #{$className} {\r\n      flex-basis: $size;\r\n      max-width: $size;\r\n    }\r\n  }\r\n\r\n  .align-items-center {\r\n    -webkit-box-align: center !important;\r\n    -ms-flex-align: center !important;\r\n    align-items: center !important;\r\n  }\r\n\r\n  .col-xs {\r\n    -webkit-flex-grow: 1;\r\n    -ms-flex-positive: 1;\r\n    -webkit-box-flex: 1;\r\n    flex-grow: 1;\r\n    -ms-flex-preferred-size: 0;\r\n    flex-basis: 0;\r\n    max-width: 100%;\r\n  }\r\n\r\n  .col-auto {\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 auto;\r\n    flex: 0 0 auto;\r\n    width: auto;\r\n    max-width: none;\r\n  }\r\n\r\n  .col-fix {\r\n    flex: none;\r\n  }\r\n\r\n  .col-full {\r\n    flex: 1;\r\n    overflow: auto;\r\n  }\r\n\r\n  .df-field-container {\r\n    overflow: initial;\r\n    > .df-row {\r\n      margin-top: -10px;\r\n    }\r\n\r\n    > div + .df-row {\r\n      margin-top: 0px;\r\n    }\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n  }\r\n\r\n  .dara-file-list {\r\n    .file-icon {\r\n      width: 20px;\r\n      height: 20px;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      cursor: pointer;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n\r\n      &.download {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n      }\r\n\r\n      &.remove {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n      }\r\n    }\r\n\r\n    .file-name {\r\n      text-overflow: ellipsis;\r\n      white-space: nowrap;\r\n      word-wrap: normal;\r\n      overflow: hidden;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      width: calc(100% - 55px);\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field.vertical {\r\n      > * {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .tab-header {\r\n    list-style: none;\r\n    margin: 0px;\r\n    padding: 0px;\r\n\r\n    display: flex;\r\n    line-height: 1.3;\r\n    width: 100%;\r\n    border-bottom: 1px solid var(--border-color);\r\n\r\n    &.tab-al {\r\n      &-left {\r\n        justify-content: left;\r\n      }\r\n      &-right {\r\n        justify-content: right;\r\n      }\r\n      &-center {\r\n        justify-content: center;\r\n      }\r\n    }\r\n\r\n    > .tab-item {\r\n      list-style: none;\r\n      float: left;\r\n      position: relative;\r\n      top: 0;\r\n      margin: 1px 0.4em 0 0;\r\n      padding: 0;\r\n      white-space: nowrap;\r\n      border-top-left-radius: 3px;\r\n      border-top-right-radius: 3px;\r\n      border: 1px solid var(--border-color);\r\n      border-bottom-width: 0;\r\n\r\n      &.active {\r\n        a {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n\r\n      a {\r\n        float: left;\r\n        padding: 0.5em 1em;\r\n        text-decoration: none;\r\n        background: var(--background-button);\r\n        color: var(--font-color);\r\n        height: 30px;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-tab-body {\r\n    .tab-panel {\r\n      display: none;\r\n\r\n      &.active {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-group {\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin-top: var(--field-margin-top);\r\n    margin-bottom: 0px;\r\n\r\n    &:last-child {\r\n      margin-bottom: 0px;\r\n    }\r\n\r\n    @include rowFlex();\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n\r\n    .file-label {\r\n      border: 1px solid var(--border-color);\r\n      display: inline;\r\n      width: 100%;\r\n      padding: 3px 15px;\r\n      line-height: 1;\r\n      background-clip: padding-box;\r\n      border-radius: 4px;\r\n      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
+}`, "",{"version":3,"sources":["webpack://./style/form.style.scss"],"names":[],"mappings":"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","sourcesContent":["$sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.33333333%, 66.66666667%, 75%, 83.33333333%, 91.66666667%, 100%;\r\n\r\n@mixin rowFlex() {\r\n  &.top {\r\n    flex-direction: column;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n\r\n  &.right {\r\n    -ms-flex-direction: row-reverse !important;\r\n    -webkit-box-orient: horizontal !important;\r\n    -webkit-box-direction: reverse !important;\r\n    flex-direction: row-reverse !important;\r\n  }\r\n\r\n  &.bottom {\r\n    flex-direction: column-reverse !important;\r\n    > div {\r\n      max-width: 100% !important;\r\n    }\r\n  }\r\n}\r\n\r\n.dara-form {\r\n  --border-color: #dfe1e5;\r\n  --color-danger: #d9534f;\r\n  --background-danger: #d9534f;\r\n  --font-color: #70757a;\r\n  --invalid-font-color: #ff4136;\r\n  --invalid-border-color: #ffb6b4;\r\n  --invalid-background-color: #fdd;\r\n  --background-button: #f6f6f6;\r\n  --background-button-hover: #ebebeb;\r\n  --tooltip-background: #3e3e3e;\r\n  --tooltip-color: #fff;\r\n  --field-margin-top: 10px;\r\n  --field-background: #fff;\r\n  --field-color: #212529;\r\n\r\n  padding: 0px;\r\n  margin-top: 10px;\r\n  color: var(--font-color);\r\n\r\n  *,\r\n  ::after,\r\n  ::before {\r\n    box-sizing: border-box;\r\n  }\r\n\r\n  .txt {\r\n    &-left {\r\n      text-align: left;\r\n    }\r\n\r\n    &-center {\r\n      text-align: center;\r\n    }\r\n\r\n    &-right {\r\n      text-align: right;\r\n    }\r\n  }\r\n\r\n  .df-hidden {\r\n    max-height: 0vh !important;\r\n    width: 0px;\r\n    visibility: collapse;\r\n    display: none !important;\r\n    padding: 0px !important;\r\n    margin: 0px !important;\r\n  }\r\n\r\n  input,\r\n  select,\r\n  textarea {\r\n    &[disabled] {\r\n      background-color: #ebebeb;\r\n      opacity: 0.8;\r\n    }\r\n  }\r\n\r\n  .df-label {\r\n    position: relative;\r\n    font-weight: 700;\r\n    vertical-align: top;\r\n    padding: 5px 15px 0px 0px;\r\n    overflow: initial;\r\n    // 확인할것.\r\n    white-space: nowrap;\r\n    text-overflow: ellipsis;\r\n    word-break: break-all;\r\n\r\n    .required {\r\n      &::after {\r\n        content: \"*\";\r\n        vertical-align: middle;\r\n      }\r\n\r\n      color: var(--color-danger);\r\n    }\r\n\r\n    .df-tooltip {\r\n      visibility: visible;\r\n      color: #fff;\r\n      background: #000;\r\n      width: 16px;\r\n      height: 16px;\r\n      border-radius: 8px;\r\n      text-align: center;\r\n      line-height: 16px;\r\n      margin: 0 5px;\r\n      font-size: 12px;\r\n      cursor: help;\r\n      position: relative;\r\n      display: inline-block;\r\n\r\n      .tooltip {\r\n        display: none;\r\n        text-align: initial;\r\n        background: var(--tooltip-background);\r\n        border-radius: 5px;\r\n        color: var(--tooltip-color);\r\n        padding: 10px 5px;\r\n        position: absolute;\r\n        z-index: 2;\r\n        left: -10px;\r\n        min-width: max-content;\r\n        text-shadow: none;\r\n        cursor: default;\r\n      }\r\n\r\n      &:hover .tooltip {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-field {\r\n    border: 1px solid var(--border-color);\r\n    display: block;\r\n    width: 100%;\r\n    padding: 0.375rem 0.75rem;\r\n    font-weight: 400;\r\n    line-height: 1.5;\r\n    background-clip: padding-box;\r\n    border-radius: 4px;\r\n    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n    background: var(--field-background);\r\n    color: var(--field-color);\r\n\r\n    &[type=\"radio\"],\r\n    &[type=\"checkbox\"] {\r\n      width: auto;\r\n      display: inline;\r\n      min-height: 0px;\r\n      padding: 0px;\r\n      margin: 0px;\r\n      vertical-align: middle;\r\n    }\r\n\r\n    &.dropdown {\r\n      appearance: none;\r\n      -webkit-appearance: none;\r\n      -moz-appearance: none;\r\n    }\r\n\r\n    &.textarea {\r\n      padding-right: 0px;\r\n    }\r\n\r\n    &[type=\"number\"] {\r\n      padding-right: 3px;\r\n    }\r\n\r\n    &.file {\r\n      display: none;\r\n    }\r\n\r\n    &.range {\r\n      padding: 0px;\r\n    }\r\n  }\r\n\r\n  .df-row {\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n\r\n    &.vertical {\r\n      display: block;\r\n    }\r\n\r\n    &.horizontal {\r\n      -webkit-box-flex: 0;\r\n      -ms-flex: 0 0 auto;\r\n      flex: 0 0 auto;\r\n      width: auto;\r\n      max-width: none;\r\n\r\n      > .form-group > .empty {\r\n        display: none !important;\r\n      }\r\n    }\r\n\r\n    @include rowFlex();\r\n  }\r\n\r\n  @each $size in $sizes {\r\n    $i: index($sizes, $size);\r\n    $className: \".col-xs-#{$i}\";\r\n    #{$className} {\r\n      flex-basis: $size;\r\n      max-width: $size;\r\n    }\r\n  }\r\n\r\n  .align-items-center {\r\n    -webkit-box-align: center !important;\r\n    -ms-flex-align: center !important;\r\n    align-items: center !important;\r\n  }\r\n\r\n  .col-xs {\r\n    -webkit-flex-grow: 1;\r\n    -ms-flex-positive: 1;\r\n    -webkit-box-flex: 1;\r\n    flex-grow: 1;\r\n    -ms-flex-preferred-size: 0;\r\n    flex-basis: 0;\r\n    max-width: 100%;\r\n  }\r\n\r\n  .col-auto {\r\n    -webkit-box-flex: 0;\r\n    -ms-flex: 0 0 auto;\r\n    flex: 0 0 auto;\r\n    width: auto;\r\n    max-width: none;\r\n  }\r\n\r\n  .col-fix {\r\n    flex: none;\r\n  }\r\n\r\n  .col-full {\r\n    flex: 1;\r\n    overflow: auto;\r\n  }\r\n\r\n  .df-field-container {\r\n    overflow: initial;\r\n    > .df-row {\r\n      margin-top: -10px;\r\n    }\r\n\r\n    > div + .df-row {\r\n      margin-top: 0px;\r\n    }\r\n    .df-field {\r\n      position: relative;\r\n\r\n      .range-num {\r\n        clear: both;\r\n        display: block;\r\n        width: 100%;\r\n        text-align: left;\r\n      }\r\n\r\n      .file-wrapper {\r\n        border: 1px solid var(--border-color);\r\n        text-align: center;\r\n        display: block;\r\n        width: 100%;\r\n        padding: 0.375rem 0.75rem;\r\n        font-weight: 400;\r\n        line-height: 1.5;\r\n        background-clip: padding-box;\r\n        border-radius: 4px;\r\n        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n      }\r\n    }\r\n  }\r\n\r\n  .dara-file-list {\r\n    .file-icon {\r\n      width: 20px;\r\n      height: 20px;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      cursor: pointer;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n\r\n      &.download {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgMCAwIDI0IDI0IiBoZWlnaHQ9IjIwcHgiIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjIwcHgiIGZpbGw9IiMwMDAwMDAiPjxnPjxyZWN0IGZpbGw9Im5vbmUiIGhlaWdodD0iMjQiIHdpZHRoPSIyNCIvPjwvZz48Zz48cGF0aCBkPSJNMTgsMTV2M0g2di0zSDR2M2MwLDEuMSwwLjksMiwyLDJoMTJjMS4xLDAsMi0wLjksMi0ydi0zSDE4eiBNMTcsMTFsLTEuNDEtMS40MUwxMywxMi4xN1Y0aC0ydjguMTdMOC40MSw5LjU5TDcsMTFsNSw1IEwxNywxMXoiLz48L2c+PC9zdmc+\");\r\n      }\r\n\r\n      &.remove {\r\n        background-image: url(\"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB3aWR0aD0iMjBweCIgZmlsbD0iIzAwMDAwMCI+PHBhdGggZD0iTTAgMGgyNHYyNEgwVjB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2IDl2MTBIOFY5aDhtLTEuNS02aC01bC0xIDFINXYyaDE0VjRoLTMuNWwtMS0xek0xOCA3SDZ2MTJjMCAxLjEuOSAyIDIgMmg4YzEuMSAwIDItLjkgMi0yVjd6Ii8+PC9zdmc+\");\r\n      }\r\n    }\r\n\r\n    .file-name {\r\n      text-overflow: ellipsis;\r\n      white-space: nowrap;\r\n      word-wrap: normal;\r\n      overflow: hidden;\r\n      display: inline-block;\r\n      vertical-align: middle;\r\n      width: calc(100% - 55px);\r\n    }\r\n  }\r\n\r\n  .field-group {\r\n    .field.vertical {\r\n      > * {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .tab-header {\r\n    list-style: none;\r\n    margin: 0px;\r\n    padding: 0px;\r\n\r\n    display: flex;\r\n    line-height: 1.3;\r\n    width: 100%;\r\n    border-bottom: 1px solid var(--border-color);\r\n\r\n    &.tab-al {\r\n      &-left {\r\n        justify-content: left;\r\n      }\r\n      &-right {\r\n        justify-content: right;\r\n      }\r\n      &-center {\r\n        justify-content: center;\r\n      }\r\n    }\r\n\r\n    > .tab-item {\r\n      list-style: none;\r\n      float: left;\r\n      position: relative;\r\n      top: 0;\r\n      margin: 1px 0.4em 0 0;\r\n      padding: 0;\r\n      white-space: nowrap;\r\n      border-top-left-radius: 3px;\r\n      border-top-right-radius: 3px;\r\n      border: 1px solid var(--border-color);\r\n      border-bottom-width: 0;\r\n\r\n      &.active {\r\n        a {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n\r\n      a {\r\n        float: left;\r\n        padding: 0.5em 1em;\r\n        text-decoration: none;\r\n        background: var(--background-button);\r\n        color: var(--font-color);\r\n        height: 30px;\r\n\r\n        &:hover {\r\n          background-color: var(--background-button-hover);\r\n        }\r\n      }\r\n    }\r\n  }\r\n\r\n  .df-tab-body {\r\n    .tab-panel {\r\n      display: none;\r\n\r\n      &.active {\r\n        display: block;\r\n      }\r\n    }\r\n  }\r\n\r\n  .form-group {\r\n    display: -ms-flexbox;\r\n    display: -webkit-box;\r\n    display: flex;\r\n    -ms-flex: 0 1 auto;\r\n    -webkit-box-flex: 0;\r\n    flex: 0 1 auto;\r\n    -ms-flex-direction: row;\r\n    -webkit-box-orient: horizontal;\r\n    -webkit-box-direction: normal;\r\n    flex-direction: row;\r\n    -ms-flex-wrap: wrap;\r\n    flex-wrap: wrap;\r\n    margin-top: var(--field-margin-top);\r\n    margin-bottom: 0px;\r\n\r\n    &:last-child {\r\n      margin-bottom: 0px;\r\n    }\r\n\r\n    @include rowFlex();\r\n\r\n    .help-message {\r\n      display: none;\r\n    }\r\n\r\n    .help-icon {\r\n      background-repeat: no-repeat;\r\n      background-position-y: center;\r\n\r\n      &.form-field {\r\n        background-position-x: calc(100% - 15px);\r\n      }\r\n\r\n      &.dara-icon {\r\n        display: none;\r\n        position: absolute;\r\n        z-index: 1;\r\n        top: 0px;\r\n        right: 0px;\r\n        height: 100%;\r\n        width: 20px;\r\n        margin-right: 15px;\r\n      }\r\n    }\r\n\r\n    &.invalid {\r\n      .form-field {\r\n        border-color: var(--invalid-border-color);\r\n        outline-color: var(--invalid-border-color);\r\n      }\r\n\r\n      > .df-field-container.required > .df-field .help-icon {\r\n        display: block;\r\n        background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiPjxwYXRoIGQ9Im0yNDktMjA3LTQyLTQyIDIzMS0yMzEtMjMxLTIzMSA0Mi00MiAyMzEgMjMxIDIzMS0yMzEgNDIgNDItMjMxIDIzMSAyMzEgMjMxLTQyIDQyLTIzMS0yMzEtMjMxIDIzMVoiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjZmY3MzczOyYjMTA7Ii8+PC9zdmc+\");\r\n      }\r\n\r\n      .help-message {\r\n        display: block;\r\n        color: var(--invalid-font-color);\r\n      }\r\n    }\r\n\r\n    &.valid {\r\n      > .df-field-container.required {\r\n        > .df-field .help-icon {\r\n          display: block;\r\n          background-image: url(\"data:image/svg+xml; base64, PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgLTk2MCA5NjAgOTYwIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHN0eWxlPSImIzEwOyAgICBmaWxsOiAjMTlhOTc0OyYjMTA7Ij48cGF0aCBkPSJNMzc4LTI0NiAxNTQtNDcwbDQzLTQzIDE4MSAxODEgMzg0LTM4NCA0MyA0My00MjcgNDI3WiIvPjwvc3ZnPg==\");\r\n        }\r\n      }\r\n    }\r\n\r\n    .file-label {\r\n      border: 1px solid var(--border-color);\r\n      display: inline;\r\n      width: 100%;\r\n      padding: 3px 15px;\r\n      line-height: 1;\r\n      background-clip: padding-box;\r\n      border-radius: 4px;\r\n      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;\r\n\r\n      &:hover {\r\n        background-color: var(--background-button-hover);\r\n      }\r\n    }\r\n  }\r\n}\r\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

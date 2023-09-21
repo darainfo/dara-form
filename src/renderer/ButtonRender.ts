@@ -21,10 +21,8 @@ export default class ButtonRender extends Render {
   }
 
   static template(field: FormField): string {
-    const desc = field.description ? `<div>${field.description}</div>` : "";
-
     return `
-      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${desc}
+      <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${Render.getDescriptionTemplate(field)}
      `;
   }
 
