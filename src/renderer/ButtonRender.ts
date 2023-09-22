@@ -6,6 +6,7 @@ export default class ButtonRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.initEvent();
+    this.setDefaultOption();
   }
 
   initEvent() {

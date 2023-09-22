@@ -35,6 +35,7 @@ export default class DropdownRender extends Render {
     }
 
     this.initEvent();
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
@@ -104,10 +105,11 @@ export default class DropdownRender extends Render {
     const valueKey = this.valuesValueKey(field);
     let template = "";
     field.listItem?.list?.forEach((val) => {
+      const attr = `${val.selected ? "selected" : ""} ${val.disabled ? "disabled" : ""}`;
       if (utils.isUndefined(val[valueKey]) && val.label) {
-        template += `<option value="${val.value || ""}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
+        template += `<option value="${val.value || ""}" ${attr}>${val.label}</option>`;
       } else {
-        template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+        template += `<option value="${val[valueKey]}" ${attr}>${this.valuesLabelValue(labelKey, val)}</option>`;
       }
     });
 

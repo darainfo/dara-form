@@ -15,6 +15,7 @@ export default class RangeRender extends Render {
     this.rangeNumElement = rowElement.querySelector(".range-num") as Element;
 
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
 

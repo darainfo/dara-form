@@ -41,8 +41,6 @@ export default class DaraForm {
 
   private formValue: any = {};
 
-  private addRowFields: string[] = [];
-
   private formTemplate: FormTemplate;
 
   constructor(selector: string, options: FormOptions, message: Message) {
@@ -66,6 +64,10 @@ export default class DaraForm {
       this.formTemplate = new FormTemplate(this, formElement, this.fieldInfoMap);
 
       this.createForm(this.options.fields);
+
+      if (this.options.onMounted) {
+        this.options.onMounted.call(this);
+      }
     } else {
       throw new Error(`${selector} form selector not found`);
     }

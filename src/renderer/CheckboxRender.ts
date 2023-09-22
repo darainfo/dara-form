@@ -31,7 +31,7 @@ export default class CheckboxRender extends Render {
     }
 
     this.initEvent();
-
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
@@ -63,7 +63,7 @@ export default class CheckboxRender extends Render {
       templates.push(`
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
-                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} />
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}  />
                   ${this.valuesLabelValue(labelKey, val)}
               </label>
           </span>

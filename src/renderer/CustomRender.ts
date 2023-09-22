@@ -1,16 +1,22 @@
 import { FormField } from "@t/FormField";
 import Render from "./Render";
-import { resetRowElementStyleClass } from "src/util/validUtils";
+import { invalidMessage, resetRowElementStyleClass } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
+import utils from "src/util/utils";
 
 export default class CustomRender extends Render {
   private customFunction;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
-    this.customFunction = field.renderer;
-    this.initEvent();
-    this.setDefaultInfo();
+    if (field.renderer) {
+      this.customFunction = field.renderer;
+      this.initEvent();
+      this.setDefaultOption();
+      this.setDefaultInfo();
+    } else {
+      this.customFunction = {} as any;
+    }
   }
 
   initEvent() {
@@ -24,8 +30,10 @@ export default class CustomRender extends Render {
   }
 
   static template(field: FormField): string {
-    if ((field.renderer as any).template) {
-      return ` <div class="df-field">${(field.renderer as any).template()}</div>
+    if (field.template) {
+      const fieldTempate = utils.isString(field.template) ? field.template : field.template();
+
+      return ` <div class="df-field">${fieldTempate}</div>
           ${Render.getDescriptionTemplate(field)}
       <div class="help-message"></div>`;
     }
@@ -60,7 +68,11 @@ export default class CustomRender extends Render {
 
   valid(): any {
     if (this.customFunction.valid) {
-      return (this.customFunction.valid as any).call(this, this.field, this.rowElement);
+      const validResult = (this.customFunction.valid as any).call(this, this.field, this.rowElement);
+
+      invalidMessage(this.field, this.rowElement, validResult);
+
+      return;
     }
     return true;
   }

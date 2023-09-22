@@ -31,6 +31,10 @@ export default abstract class Render {
     }
   }
 
+  public setDefaultOption() {
+    this.setDisabled(this.field.disabled ?? false);
+  }
+
   static isDataRender(): boolean {
     return true;
   }

@@ -5,14 +5,14 @@ import { RULES } from "src/constants";
 
 let localeMessage: Message = {
   required: "{label} 필수 입력사항입니다.",
-  fileButton: '파일찾기',
+  fileButton: "파일찾기",
   string: {
     minLength: "{minLength} 글자 이상으로 입력하세요.",
     maxLength: "{maxLength} 글자 이하로 입력하세요.",
     between: "{minLength} ~ {maxLength} 사이의 글자를 입력하세요.",
   },
   number: {
-    nan: '숫자만 입력 가능 합니다.',
+    nan: "숫자만 입력 가능 합니다.",
     minimum: "{minimum} 값과 같거나 커야 합니다",
     exclusiveMinimum: "{minimum} 보다 커야 합니다",
     maximum: "{maximum} 값과 같거나 작아야 합니다",
@@ -21,34 +21,30 @@ let localeMessage: Message = {
     betweenExclusiveMin: "{minimum} 보다 크고 {maximum} 보다 같거나 작아야 합니다",
     betweenExclusiveMax: "{minimum} 보다 같거나 크고 {maximum} 보다 작아야 합니다",
     betweenExclusiveMinMax: "{minimum} 보다 크고 {maximum} 보다 작아야 합니다",
-
   },
   regexp: {
-    'mobile': "핸드폰 번호가 유효하지 않습니다.",
-    'email': "이메일이 유효하지 않습니다.",
-    'url': "URL이 유효하지 않습니다.",
-    'alpha': "영문만 입력 가능 합니다.",
-    'alpha-num': "영문과 숫자만 입력 가능 합니다.",
-    'number': '숫자만 입력 가능 합니다.',
-    'variable': '값이 유효하지 않습니다.',
-    'number-char': '숫자, 문자 각각 하나 이상 포함 되어야 합니다.',
-    'upper-char': '대문자가 하나 이상 포함 되어야 합니다.',
-    'upper-char-special': '대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.',
-    'upper-char-special-number': '대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다.',
-
+    mobile: "핸드폰 번호가 유효하지 않습니다.",
+    email: "이메일이 유효하지 않습니다.",
+    url: "URL이 유효하지 않습니다.",
+    alpha: "영문만 입력 가능 합니다.",
+    "alpha-num": "영문과 숫자만 입력 가능 합니다.",
+    number: "숫자만 입력 가능 합니다.",
+    variable: "값이 유효하지 않습니다.",
+    "number-char": "숫자, 문자 각각 하나 이상 포함 되어야 합니다.",
+    "upper-char": "대문자가 하나 이상 포함 되어야 합니다.",
+    "upper-char-special": "대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.",
+    "upper-char-special-number": "대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다.",
   },
 };
 
-
 /**
- * validation 메시지 처리. 
+ * validation 메시지 처리.
  *
  * @class Language
  * @typedef {Language}
  */
 class Language {
   private lang: Message = localeMessage;
-
 
   /**
    * 다국어 메시지 등록
@@ -59,7 +55,6 @@ class Language {
   public set(lang?: Message) {
     this.lang = Object.assign({}, localeMessage, lang);
   }
-
 
   /**
    * 메시지 얻기
@@ -90,7 +85,7 @@ class Language {
       messageFormats.push(messageFormat);
     }
 
-    validResult.constraint.forEach(constraint => {
+    (validResult.constraint ?? []).forEach((constraint) => {
       if (constraint === RULES.REQUIRED) {
         messageFormat = message(this.lang.required, field);
         messageFormats.push(messageFormat);
@@ -103,17 +98,16 @@ class Language {
         messageFormat = (this.lang.string as any)[constraint];
         messageFormats.push(messageFormat);
       }
-    })
+    });
 
     const reMessage: string[] = [];
 
     const msgParam = Object.assign({}, { name: field.name, label: field.label }, field.rule);
-    messageFormats.forEach(msgFormat => {
+    messageFormats.forEach((msgFormat) => {
       if (msgFormat) {
-
         reMessage.push(message(msgFormat, msgParam));
       }
-    })
+    });
 
     if (validResult.validator) {
       reMessage.push(validResult.validator.message);

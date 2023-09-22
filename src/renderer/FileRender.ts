@@ -19,6 +19,7 @@ export default class FileRender extends Render {
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.fileList = field.listItem?.list || [];
     this.initEvent();
+    this.setDefaultOption();
   }
 
   initEvent() {

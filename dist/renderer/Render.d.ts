@@ -21,6 +21,12 @@ export default abstract class Render {
     focus(): void;
     show(): void;
     hide(): void;
+    /**
+     * 설명 추가
+     *
+     * @public
+     * @param {string} desc
+     */
     setDescription(desc: string): void;
     setActive(id: string): void;
     setDisabled(flag: boolean): void;

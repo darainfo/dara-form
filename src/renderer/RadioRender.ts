@@ -31,7 +31,7 @@ export default class RadioRender extends Render {
     }
 
     this.initEvent();
-
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
@@ -66,7 +66,7 @@ export default class RadioRender extends Render {
       templates.push(
         `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
         <label>
-            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}/>
             ${this.valuesLabelValue(labelKey, val)}
         </label>
         </span>

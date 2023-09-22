@@ -16,6 +16,7 @@ export default class DateRender extends Render {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
 

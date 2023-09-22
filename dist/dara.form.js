@@ -258,6 +258,13 @@ class DaraForm {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
     fieldInfo.$renderer.setDisabled(flag);
   }
+  /**
+   * 설명 추가
+   *
+   * @public
+   * @param {string} fieldName
+   * @param {string} desc
+   */
   setFieldDescription(fieldName, desc) {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
     fieldInfo.$renderer.setDescription(desc);
@@ -800,7 +807,10 @@ exports.RENDER_TEMPLATE = {
   hidden: HiddenRender_1.default,
   button: ButtonRender_1.default,
   range: RangeRender_1.default,
+  datehour: DateRender_1.default,
+  datemonth: DateRender_1.default,
   date: DateRender_1.default,
+  datetime: DateRender_1.default,
   tab: TabRender_1.default
 };
 exports.ALIGN = {
@@ -1201,6 +1211,7 @@ const stringValidator_1 = __webpack_require__(/*! src/rule/stringValidator */ ".
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
 const dara_datetimepicker_1 = __webpack_require__(/*! dara-datetimepicker */ "./node_modules/dara-datetimepicker/dist/index.js");
 __webpack_require__(/*! dara-datetimepicker/dist/dara.datetimepicker.min.css */ "./node_modules/dara-datetimepicker/dist/dara.datetimepicker.min.css");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class DateRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
@@ -1210,8 +1221,16 @@ class DateRender extends Render_1.default {
   }
   initEvent() {
     let dateOnChangeEvent;
+    this.field.customOptions = Object.assign({}, this.field.customOptions);
     if (typeof this.field.customOptions.onChange !== "undefined") {
       dateOnChangeEvent = typeof this.field.customOptions.onChange;
+    }
+    if (utils_1.default.isUndefined(this.field.customOptions.mode)) {
+      if (this.field.renderType == "datemonth" || this.field.renderType == "datehour") {
+        this.field.customOptions.mode = this.field.renderType.replace("date", "");
+      } else {
+        this.field.customOptions.mode = this.field.renderType;
+      }
     }
     this.field.customOptions.onChange = (dt, e) => {
       if (dateOnChangeEvent) {
@@ -2066,6 +2085,12 @@ class Render {
       this.rowElement.classList.add("df-hidden");
     }
   }
+  /**
+   * 설명 추가
+   *
+   * @public
+   * @param {string} desc
+   */
   setDescription(desc) {
     var _a;
     const descEle = this.rowElement.querySelector(".df-description");
@@ -2077,7 +2102,6 @@ class Render {
         const parser = new DOMParser();
         this.field.description = desc;
         const descEle = parser.parseFromString(Render.getDescriptionTemplate(this.field), "text/html").querySelector(".df-description");
-        console.log(Render.getDescriptionTemplate(this.field), descEle);
         if (descEle) (_a = fieldEle.parentNode) === null || _a === void 0 ? void 0 : _a.insertBefore(descEle, fieldEle.nextSibling);
       }
     }
@@ -2202,7 +2226,7 @@ class TabRender extends Render_1.default {
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
-        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render_1.default.getDescriptionTemplate(childField)}</div>`);
+        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render_1.default.getDescriptionTemplate(childField)}`);
         if (childField.children) {
           tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
         }
@@ -4688,6 +4712,7 @@ var DaraDate = class _DaraDate {
 // src/DateTimePicker.ts
 var DEFAULT_OPTIONS = {
   isEmbed: false,
+  // layer or innerhtml
   initialDate: "",
   autoClose: true,
   mode: "date" /* date */,
@@ -4713,12 +4738,12 @@ var DateTimePicker = class {
     this.minMonth = -1;
     this.maxMonth = -1;
     /**
-     * 바탕 클릭시 캘린더 숨김 처리. 
-     * 
-     * @param e 
+     * 바탕 클릭시 캘린더 숨김 처리.
+     *
+     * @param e
      */
     this._documentClickEvent = (e) => {
-      if (this.isVisible && (e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement))) {
+      if (this.isVisible && e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement)) {
         this.hide();
       }
     };
@@ -4738,7 +4763,7 @@ var DateTimePicker = class {
     Lanauage_default.set(message);
     this.dateFormat = this.options.format || DEFAULT_DATE_FORMAT;
     let viewDate;
-    if (typeof this.options.initialDate) {
+    if (this.options.initialDate) {
       if (typeof this.options.initialDate === "string") {
         viewDate = new DaraDate(parser_default(this.options.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
       } else {
@@ -4746,8 +4771,9 @@ var DateTimePicker = class {
       }
     } else {
       viewDate = new DaraDate(/* @__PURE__ */ new Date());
+      this.options.initialDate = viewDate.format(this.dateFormat);
     }
-    this.initialDate = viewDate.format(this.dateFormat);
+    this.todayDate = viewDate.format(DEFAULT_DATE_FORMAT);
     this.currentDate = viewDate;
     this.targetElement = selectorElement;
     this.minDate = this._minDate();
@@ -4757,7 +4783,7 @@ var DateTimePicker = class {
       this.datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} embed`;
     } else {
       this.isInput = true;
-      this.targetElement.setAttribute("value", this.initialDate);
+      this.targetElement.setAttribute("value", viewDate.format(this.dateFormat));
       const datetimeElement = document.createElement("div");
       datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} layer`;
       datetimeElement.setAttribute("style", `z-index:${this.options.zIndex};`);
@@ -4828,7 +4854,7 @@ var DateTimePicker = class {
   }
   /**
    * 모드  change
-   * @param mode 
+   * @param mode
    */
   changeViewMode(mode) {
     this.datetimeElement.querySelector(".ddtp-datetime")?.setAttribute("view-mode", mode);
@@ -4840,6 +4866,11 @@ var DateTimePicker = class {
       this.dayDraw();
     }
   }
+  /**
+   * init header event
+   *
+   * @public
+   */
   initHeaderEvent() {
     this.datetimeElement.querySelector(".ddtp-move-btn.prev")?.addEventListener("click", (e) => {
       this.moveDate("prev");
@@ -4925,7 +4956,7 @@ var DateTimePicker = class {
       this.dateChangeEvent(e);
     });
     this.datetimeElement.querySelector(".time-today")?.addEventListener("click", (e) => {
-      const initDate = new DaraDate(parser_default(this.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
+      const initDate = new DaraDate(parser_default(this.todayDate, DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
       this.currentDate.setYear(initDate.getYear());
       this.currentDate.setMonth(initDate.getMonth() - 1);
       this.currentDate.setDate(initDate.getDate());
@@ -4935,7 +4966,7 @@ var DateTimePicker = class {
   /**
    * 날짜 이동
    * @param moveMode // 앞뒤 이동 prev, next
-   * @returns 
+   * @returns
    */
   moveDate(moveMode) {
     if (this._viewMode === "date" /* date */ || this._viewMode === "datetime" /* datetime */) {
@@ -4955,8 +4986,8 @@ var DateTimePicker = class {
   }
   /**
    * get date value
-   * 
-   * @returns 
+   *
+   * @returns
    */
   getDateValue() {
     return this.currentDate.format(this.dateFormat);
@@ -4970,9 +5001,9 @@ var DateTimePicker = class {
     DEFAULT_OPTIONS = Object.assign({}, DEFAULT_OPTIONS, options);
   }
   /**
-   * 달력 보이기 처리. 
-   * 
-   * @returns 
+   * 달력 보이기 처리.
+   *
+   * @returns
    */
   show() {
     if (this.isVisible) {
@@ -5020,7 +5051,6 @@ var DateTimePicker = class {
       if (this.options.onChange(formatValue, e) === false) {
         return;
       }
-      ;
     }
     if (this.isInput) {
       this.targetElement.setAttribute("value", formatValue);
@@ -5116,6 +5146,9 @@ var DateTimePicker = class {
           const year = targetEle.getAttribute("data-year");
           if (year) {
             const numYear = +year;
+            if (this.isYearDisabled(numYear)) {
+              return;
+            }
             if (this.initMode == "year" /* year */) {
               if (this.isYearDisabled(numYear)) {
                 return;
@@ -5171,10 +5204,10 @@ var DateTimePicker = class {
         if (targetEle) {
           const month = targetEle.getAttribute("data-month");
           if (month) {
+            if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
+              return false;
+            }
             if (this.initMode == "month" /* month */) {
-              if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
-                return;
-              }
               this.currentDate.setMonth(+month);
               this.dateChangeEvent(e);
               return;
@@ -5191,8 +5224,7 @@ var DateTimePicker = class {
    * 날짜 그리기
    */
   dayDraw() {
-    const dateFormat = this.dateFormat;
-    let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), "YYYY-MM-DD") || /* @__PURE__ */ new Date());
+    let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
     this.datetimeElement.querySelector(".ddtp-header-year").textContent = monthFirstDate.format("YYYY");
     this.datetimeElement.querySelector(".ddtp-header-month").textContent = monthFirstDate.format("MMMM");
     let day = monthFirstDate.getDay();
@@ -5207,12 +5239,12 @@ var DateTimePicker = class {
       } else {
         dateItem = monthFirstDate.clone().addDate(i);
       }
-      const tooltipDt = dateItem.format(dateFormat);
+      const tooltipDt = dateItem.format(DEFAULT_DATE_FORMAT);
       if (i % 7 == 0) {
         calHTML.push((i == 0 ? "" : "</tr>") + "<tr>");
       }
       let disabled = this.isDayDisabled(dateItem);
-      calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.initialDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
+      calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.todayDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
       calHTML.push(`${dateItem.format("d")}`);
       calHTML.push("</td>");
     }
@@ -5247,14 +5279,8 @@ var DateTimePicker = class {
 };
 function getDocSize() {
   return {
-    clientHeight: Math.max(
-      document.documentElement.clientHeight,
-      window.innerHeight || 0
-    ),
-    clientWidth: Math.max(
-      document.documentElement.clientWidth,
-      window.innerWidth || 0
-    )
+    clientHeight: Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
+    clientWidth: Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
   };
 }
 
