@@ -3,7 +3,6 @@ import { ValidResult } from "@t/ValidResult";
 import Lanauage from "./Lanauage";
 
 export const invalidMessage = (field: FormField, rowElement: Element, validResult: ValidResult | boolean) => {
-
   if (validResult === true) {
     rowElement.classList.remove("invalid");
 
@@ -19,15 +18,13 @@ export const invalidMessage = (field: FormField, rowElement: Element, validResul
     return;
   }
 
-  rowElement.classList.remove('valid');
+  rowElement.classList.remove("valid");
 
   if (!rowElement.classList.contains("invalid")) {
     rowElement.classList.add("invalid");
   }
 
   if (validResult !== false) {
-
-
     const message: string[] = Lanauage.validMessage(field, validResult);
 
     if (validResult.message) {
@@ -43,16 +40,14 @@ export const invalidMessage = (field: FormField, rowElement: Element, validResul
       helpMessageElement.innerHTML = msgHtml.join("");
     }
   }
-
 };
 
-
 /**
- * remove row element style class 
+ * remove row element style class
  *
  * @param {Element} rowElement
  */
 export const resetRowElementStyleClass = (rowElement: Element) => {
   rowElement.classList.remove("invalid");
   rowElement.classList.remove("valid");
-}
+};
