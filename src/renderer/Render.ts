@@ -120,8 +120,6 @@ export default abstract class Render {
         this.field.description = desc;
         const descEle = parser.parseFromString(Render.getDescriptionTemplate(this.field), "text/html").querySelector(".df-description");
 
-        console.log(Render.getDescriptionTemplate(this.field), descEle);
-
         if (descEle) fieldEle.parentNode?.insertBefore(descEle, fieldEle.nextSibling);
       }
     }

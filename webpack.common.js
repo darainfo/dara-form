@@ -1,60 +1,59 @@
-const path = require('path');
+const path = require("path");
 
-const webpack = require('webpack');
+const webpack = require("webpack");
 
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
-const nodeExternals = require('webpack-node-externals');
+const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
-  entry: './src/index.ts',
+  entry: "./src/index.ts",
   output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'dara.form.js',
-    library: 'DaraForm',
-    libraryTarget: 'umd',
+    path: path.join(__dirname, "dist"),
+    filename: "dara.form.js",
+    library: "DaraForm",
+    libraryTarget: "umd",
   },
 
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
-      src: path.resolve(__dirname, 'src/'),
+      src: path.resolve(__dirname, "src/"),
       //moment: 'moment/src/moment'
-      '@t': path.resolve(__dirname, 'src/types'),
+      "@t": path.resolve(__dirname, "src/types"),
     },
   },
   optimization: {
-    providedExports: true
-    , usedExports: true
-
+    providedExports: true,
+    usedExports: true,
   },
   module: {
     rules: [
       {
         test: /\.ts$|\.tsx$/u,
         exclude: /node_modules/u,
-        include: path.resolve(__dirname, 'src'),
-        use: ['babel-loader', 'ts-loader'],
+        include: path.resolve(__dirname, "src"),
+        use: ["babel-loader", "ts-loader"],
       },
       {
         test: /\.js$|\.jsx$/u,
         exclude: /node_modules/u,
-        include: path.resolve(__dirname, 'src'),
-        use: ['babel-loader'],
+        include: path.resolve(__dirname, "src"),
+        use: ["babel-loader"],
       },
       {
         test: /\.css$/,
         exclude: /node_modules/u,
         use: [MiniCssExtractPlugin.loader, "css-loader"],
-      }
+      },
     ],
   },
   plugins: [
     new HtmlWebpackPlugin({
       inject: true,
-      template: 'src/index.html'
-    })
+      template: "src/index.html",
+    }),
   ],
 };

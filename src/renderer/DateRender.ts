@@ -6,6 +6,7 @@ import DaraForm from "src/DaraForm";
 import { DaraDateTimePicker } from "dara-datetimepicker";
 
 import "dara-datetimepicker/dist/dara.datetimepicker.min.css";
+import utils from "src/util/utils";
 
 export default class DateRender extends Render {
   private element: HTMLInputElement;
@@ -20,8 +21,17 @@ export default class DateRender extends Render {
 
   initEvent() {
     let dateOnChangeEvent: any;
+    this.field.customOptions = Object.assign({}, this.field.customOptions);
     if (typeof this.field.customOptions.onChange !== "undefined") {
       dateOnChangeEvent = typeof this.field.customOptions.onChange;
+    }
+
+    if (utils.isUndefined(this.field.customOptions.mode)) {
+      if (this.field.renderType == "datemonth" || this.field.renderType == "datehour") {
+        this.field.customOptions.mode = this.field.renderType.replace("date", "");
+      } else {
+        this.field.customOptions.mode = this.field.renderType;
+      }
     }
 
     this.field.customOptions.onChange = (dt: any, e: Event) => {

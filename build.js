@@ -1,16 +1,14 @@
-const esbuild = require('esbuild');
+const esbuild = require("esbuild");
 
-const { sassPlugin } = require('esbuild-sass-plugin');
+const { sassPlugin } = require("esbuild-sass-plugin");
 
 const baseConfig = {
-  entryPoints: ['src/index.js'],
+  entryPoints: ["src/index.js"],
   outdir: "dist",
   bundle: true,
   sourcemap: true,
-  plugins: [
-    sassPlugin(),
-  ]
-}
+  plugins: [sassPlugin()],
+};
 
 Promise.all([
   // 한번은 cjs
@@ -28,6 +26,6 @@ Promise.all([
     format: "esm",
   }),
 ]).catch(() => {
-  console.log('Build failed');
+  console.log("Build failed");
   process.exit(1);
 });

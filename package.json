@@ -38,7 +38,7 @@
     "dist"
   ],
   "dependencies": {
-    "dara-datetimepicker": "^0.1.1",
+    "dara-datetimepicker": "^0.1.2",
     "dara-toast": "^0.1.8",
     "init": "^0.1.2",
     "ink-docstrap": "^1.3.2",

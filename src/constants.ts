@@ -47,7 +47,10 @@ export const RENDER_TEMPLATE: any = {
   hidden: HiddenRender,
   button: ButtonRender,
   range: RangeRender,
+  datehour: DateRender,
+  datemonth: DateRender,
   date: DateRender,
+  datetime: DateRender,
   tab: TabRender,
 };
 
