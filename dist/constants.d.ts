@@ -22,7 +22,6 @@ export declare const ALIGN: {
     readonly right: "right";
 };
 export type TEXT_ALIGN_TYPE = (typeof ALIGN)[keyof typeof ALIGN];
-export type FORM_FIELD_TYPE = "number" | "string" | "array";
 export type RENDER_TYPE = "number" | "text" | "file" | "textarea" | "dropdown" | "radio" | "checkbox" | "date" | "group" | "custom";
 export type REGEXP_TYPE = "email" | "url" | "alpha" | "alpha-num";
 export type PASSWORD_TYPE = "number" | "upper" | "upper-special" | "upper-special-number";

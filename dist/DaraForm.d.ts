@@ -12,7 +12,6 @@ export default class DaraForm {
     private readonly options;
     private fieldInfoMap;
     private formValue;
-    private addRowFields;
     private formTemplate;
     constructor(selector: string, options: FormOptions, message: Message);
     static setMessage(message: Message): void;

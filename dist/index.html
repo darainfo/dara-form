@@ -40,6 +40,10 @@
       labelWidth: '3'
 
     },
+    // form load 이후 호출. 
+    onMounted: function () {
+      console.log(this)
+    },
     message: {
       empty: "{name} 필수 입력사항입니다.",
       string: {
@@ -158,7 +162,6 @@
               {
                 name: "uname333",
                 label: "tab-22222222222222222222222222222222",
-
                 rule: {
                   minLength: 2,
                   maxLength: 100,
@@ -174,6 +177,8 @@
       {
         name: "uname",
         label: "이름",
+        renderType: 'custom',
+        template: 'template||template||template',
         required: true,
         rule: {
           minLength: 2,
@@ -182,6 +187,14 @@
         onChange: (arg) => {
           console.log(arg);
         },
+        renderer: {
+          getValue: () => {
+            return 'awefawfe';
+          }
+          , valid: function (field, rowElement) {
+            return { name: field.name, message: 'custom type not valid' };
+          }
+        }
       },
       {
         label: '비밀번호'
@@ -226,6 +239,7 @@
         name: "age",
         label: "나이",
         required: true,
+        disabled: true,
         renderType: "number",
         defaultValue: 5,
       },
@@ -236,7 +250,7 @@
         renderType: "dropdown",
         listItem: {
           list: [
-            { label: "남", value: "Y", selected: true },
+            { label: "남", value: "Y", selected: true, disabled: true },
             { label: "여", value: "X" },
           ],
         },
@@ -265,7 +279,7 @@
           list: [
             { label: "checkbox value", value: "Y", selected: true }
             , { label: "checkbox value111", value: "Y1" }
-            , { label: "checkbox value222", value: "Y2" }
+            , { label: "checkbox value222", value: "Y2", disabled: true }
             , { label: "checkbox value333", value: "Y3" }
           ],
         },

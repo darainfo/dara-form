@@ -126,6 +126,9 @@ var init_Render = __esm({
           }
         }
       }
+      setDefaultOption() {
+        this.setDisabled(this.field.disabled ?? false);
+      }
       static isDataRender() {
         return true;
       }
@@ -472,6 +475,7 @@ var init_NumberRender = __esm({
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -572,6 +576,7 @@ var init_TextAreaRender = __esm({
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -643,6 +648,7 @@ var init_DropdownRender = __esm({
           this.defaultCheckValue = "";
         }
         this.initEvent();
+        this.setDefaultOption();
         this.setValue(this.defaultCheckValue);
       }
       initEvent() {
@@ -699,10 +705,11 @@ var init_DropdownRender = __esm({
         const valueKey = this.valuesValueKey(field);
         let template = "";
         field.listItem?.list?.forEach((val) => {
+          const attr = `${val.selected ? "selected" : ""} ${val.disabled ? "disabled" : ""}`;
           if (utils_default.isUndefined(val[valueKey]) && val.label) {
-            template += `<option value="${val.value || ""}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
+            template += `<option value="${val.value || ""}" ${attr}>${val.label}</option>`;
           } else {
-            template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+            template += `<option value="${val[valueKey]}" ${attr}>${this.valuesLabelValue(labelKey, val)}</option>`;
           }
         });
         return template;
@@ -725,6 +732,7 @@ var init_TextRender = __esm({
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -793,6 +801,7 @@ var init_CheckboxRender = __esm({
           });
         }
         this.initEvent();
+        this.setDefaultOption();
         this.setValue(this.defaultCheckValue);
       }
       initEvent() {
@@ -818,7 +827,7 @@ var init_CheckboxRender = __esm({
           templates.push(`
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
-                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} />
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}  />
                   ${this.valuesLabelValue(labelKey, val)}
               </label>
           </span>
@@ -943,6 +952,7 @@ var init_RadioRender = __esm({
           }
         }
         this.initEvent();
+        this.setDefaultOption();
         this.setValue(this.defaultCheckValue);
       }
       initEvent() {
@@ -968,7 +978,7 @@ var init_RadioRender = __esm({
           templates.push(
             `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
         <label>
-            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}/>
             ${this.valuesLabelValue(labelKey, val)}
         </label>
         </span>
@@ -1056,6 +1066,7 @@ var init_PasswordRender = __esm({
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -1134,6 +1145,7 @@ var init_FileRender = __esm({
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.fileList = field.listItem?.list || [];
         this.initEvent();
+        this.setDefaultOption();
       }
       initEvent() {
         this.element.addEventListener("change", (e) => {
@@ -1312,12 +1324,18 @@ var init_CustomRender = __esm({
     "use strict";
     init_Render();
     init_validUtils();
+    init_utils();
     CustomRender = class extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.customFunction = field.renderer;
-        this.initEvent();
-        this.setDefaultInfo();
+        if (field.renderer) {
+          this.customFunction = field.renderer;
+          this.initEvent();
+          this.setDefaultOption();
+          this.setDefaultInfo();
+        } else {
+          this.customFunction = {};
+        }
       }
       initEvent() {
         if (this.customFunction.initEvent) {
@@ -1328,8 +1346,9 @@ var init_CustomRender = __esm({
         return false;
       }
       static template(field) {
-        if (field.renderer.template) {
-          return ` <div class="df-field">${field.renderer.template()}</div>
+        if (field.template) {
+          const fieldTempate = utils_default.isString(field.template) ? field.template : field.template();
+          return ` <div class="df-field">${fieldTempate}</div>
           ${Render.getDescriptionTemplate(field)}
       <div class="help-message"></div>`;
         }
@@ -1359,7 +1378,9 @@ var init_CustomRender = __esm({
       }
       valid() {
         if (this.customFunction.valid) {
-          return this.customFunction.valid.call(this, this.field, this.rowElement);
+          const validResult = this.customFunction.valid.call(this, this.field, this.rowElement);
+          invalidMessage(this.field, this.rowElement, validResult);
+          return;
         }
         return true;
       }
@@ -1447,6 +1468,7 @@ var init_ButtonRender = __esm({
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
         this.initEvent();
+        this.setDefaultOption();
       }
       initEvent() {
         this.rowElement.querySelector(`#${this.field.$key}`)?.addEventListener("click", (evt) => {
@@ -1496,6 +1518,7 @@ var init_RangeRender = __esm({
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.rangeNumElement = rowElement.querySelector(".range-num");
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -1565,8 +1588,14 @@ function hiddenElement() {
 }
 function getDocSize() {
   return {
-    clientHeight: Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
-    clientWidth: Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
+    clientHeight: Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight || 0
+    ),
+    clientWidth: Math.max(
+      document.documentElement.clientWidth,
+      window.innerWidth || 0
+    )
   };
 }
 var localeMessage, Language, Lanauage_default2, EXPRESSIONS_FORMAT, MAX_CHAR_LENGTH, DEFAULT_DATE_FORMAT, DateViewMode, xssFilter2, utils_default2, format_default, expressionsFunction, parser_default, matchFind, digitsCheck, word, expressionsFunction2, DaraDate, DEFAULT_OPTIONS, daraDatetimeIdx, DateTimePicker, DaraDateTimePicker;
@@ -2105,7 +2134,6 @@ var init_dist = __esm({
     };
     DEFAULT_OPTIONS = {
       isEmbed: false,
-      // layer or innerhtml
       initialDate: "",
       autoClose: true,
       mode: "date",
@@ -2125,7 +2153,7 @@ var init_dist = __esm({
         this.minMonth = -1;
         this.maxMonth = -1;
         this._documentClickEvent = (e) => {
-          if (this.isVisible && e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement)) {
+          if (this.isVisible && (e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement))) {
             this.hide();
           }
         };
@@ -2145,7 +2173,7 @@ var init_dist = __esm({
         Lanauage_default2.set(message2);
         this.dateFormat = this.options.format || DEFAULT_DATE_FORMAT;
         let viewDate;
-        if (this.options.initialDate) {
+        if (typeof this.options.initialDate) {
           if (typeof this.options.initialDate === "string") {
             viewDate = new DaraDate(parser_default(this.options.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
           } else {
@@ -2153,9 +2181,8 @@ var init_dist = __esm({
           }
         } else {
           viewDate = new DaraDate(/* @__PURE__ */ new Date());
-          this.options.initialDate = viewDate.format(this.dateFormat);
         }
-        this.todayDate = viewDate.format(DEFAULT_DATE_FORMAT);
+        this.initialDate = viewDate.format(this.dateFormat);
         this.currentDate = viewDate;
         this.targetElement = selectorElement;
         this.minDate = this._minDate();
@@ -2165,7 +2192,7 @@ var init_dist = __esm({
           this.datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} embed`;
         } else {
           this.isInput = true;
-          this.targetElement.setAttribute("value", viewDate.format(this.dateFormat));
+          this.targetElement.setAttribute("value", this.initialDate);
           const datetimeElement = document.createElement("div");
           datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} layer`;
           datetimeElement.setAttribute("style", `z-index:${this.options.zIndex};`);
@@ -2236,7 +2263,7 @@ var init_dist = __esm({
       }
       /**
        * 모드  change
-       * @param mode
+       * @param mode 
        */
       changeViewMode(mode) {
         this.datetimeElement.querySelector(".ddtp-datetime")?.setAttribute("view-mode", mode);
@@ -2248,11 +2275,6 @@ var init_dist = __esm({
           this.dayDraw();
         }
       }
-      /**
-       * init header event
-       *
-       * @public
-       */
       initHeaderEvent() {
         this.datetimeElement.querySelector(".ddtp-move-btn.prev")?.addEventListener("click", (e) => {
           this.moveDate("prev");
@@ -2338,7 +2360,7 @@ var init_dist = __esm({
           this.dateChangeEvent(e);
         });
         this.datetimeElement.querySelector(".time-today")?.addEventListener("click", (e) => {
-          const initDate = new DaraDate(parser_default(this.todayDate, DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
+          const initDate = new DaraDate(parser_default(this.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
           this.currentDate.setYear(initDate.getYear());
           this.currentDate.setMonth(initDate.getMonth() - 1);
           this.currentDate.setDate(initDate.getDate());
@@ -2348,7 +2370,7 @@ var init_dist = __esm({
       /**
        * 날짜 이동
        * @param moveMode // 앞뒤 이동 prev, next
-       * @returns
+       * @returns 
        */
       moveDate(moveMode) {
         if (this._viewMode === "date" || this._viewMode === "datetime") {
@@ -2368,8 +2390,8 @@ var init_dist = __esm({
       }
       /**
        * get date value
-       *
-       * @returns
+       * 
+       * @returns 
        */
       getDateValue() {
         return this.currentDate.format(this.dateFormat);
@@ -2383,9 +2405,9 @@ var init_dist = __esm({
         DEFAULT_OPTIONS = Object.assign({}, DEFAULT_OPTIONS, options);
       }
       /**
-       * 달력 보이기 처리.
-       *
-       * @returns
+       * 달력 보이기 처리. 
+       * 
+       * @returns 
        */
       show() {
         if (this.isVisible) {
@@ -2433,6 +2455,7 @@ var init_dist = __esm({
           if (this.options.onChange(formatValue, e) === false) {
             return;
           }
+          ;
         }
         if (this.isInput) {
           this.targetElement.setAttribute("value", formatValue);
@@ -2528,9 +2551,6 @@ var init_dist = __esm({
               const year = targetEle.getAttribute("data-year");
               if (year) {
                 const numYear = +year;
-                if (this.isYearDisabled(numYear)) {
-                  return;
-                }
                 if (this.initMode == "year") {
                   if (this.isYearDisabled(numYear)) {
                     return;
@@ -2586,10 +2606,10 @@ var init_dist = __esm({
             if (targetEle) {
               const month = targetEle.getAttribute("data-month");
               if (month) {
-                if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
-                  return false;
-                }
                 if (this.initMode == "month") {
+                  if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
+                    return;
+                  }
                   this.currentDate.setMonth(+month);
                   this.dateChangeEvent(e);
                   return;
@@ -2606,7 +2626,8 @@ var init_dist = __esm({
        * 날짜 그리기
        */
       dayDraw() {
-        let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
+        const dateFormat = this.dateFormat;
+        let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), "YYYY-MM-DD") || /* @__PURE__ */ new Date());
         this.datetimeElement.querySelector(".ddtp-header-year").textContent = monthFirstDate.format("YYYY");
         this.datetimeElement.querySelector(".ddtp-header-month").textContent = monthFirstDate.format("MMMM");
         let day = monthFirstDate.getDay();
@@ -2621,12 +2642,12 @@ var init_dist = __esm({
           } else {
             dateItem = monthFirstDate.clone().addDate(i);
           }
-          const tooltipDt = dateItem.format(DEFAULT_DATE_FORMAT);
+          const tooltipDt = dateItem.format(dateFormat);
           if (i % 7 == 0) {
             calHTML.push((i == 0 ? "" : "</tr>") + "<tr>");
           }
           let disabled = this.isDayDisabled(dateItem);
-          calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.todayDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
+          calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.initialDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
           calHTML.push(`${dateItem.format("d")}`);
           calHTML.push("</td>");
         }
@@ -2685,6 +2706,7 @@ var init_DateRender = __esm({
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
         this.initEvent();
+        this.setDefaultOption();
         this.setDefaultInfo();
       }
       initEvent() {
@@ -3036,13 +3058,13 @@ var init_Lanauage = __esm({
         betweenExclusiveMinMax: "{minimum} \uBCF4\uB2E4 \uD06C\uACE0 {maximum} \uBCF4\uB2E4 \uC791\uC544\uC57C \uD569\uB2C8\uB2E4"
       },
       regexp: {
-        "mobile": "\uD578\uB4DC\uD3F0 \uBC88\uD638\uAC00 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        "email": "\uC774\uBA54\uC77C\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        "url": "URL\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
-        "alpha": "\uC601\uBB38\uB9CC \uC785\uB825 \uAC00\uB2A5 \uD569\uB2C8\uB2E4.",
+        mobile: "\uD578\uB4DC\uD3F0 \uBC88\uD638\uAC00 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+        email: "\uC774\uBA54\uC77C\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+        url: "URL\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+        alpha: "\uC601\uBB38\uB9CC \uC785\uB825 \uAC00\uB2A5 \uD569\uB2C8\uB2E4.",
         "alpha-num": "\uC601\uBB38\uACFC \uC22B\uC790\uB9CC \uC785\uB825 \uAC00\uB2A5 \uD569\uB2C8\uB2E4.",
-        "number": "\uC22B\uC790\uB9CC \uC785\uB825 \uAC00\uB2A5 \uD569\uB2C8\uB2E4.",
-        "variable": "\uAC12\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+        number: "\uC22B\uC790\uB9CC \uC785\uB825 \uAC00\uB2A5 \uD569\uB2C8\uB2E4.",
+        variable: "\uAC12\uC774 \uC720\uD6A8\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
         "number-char": "\uC22B\uC790, \uBB38\uC790 \uAC01\uAC01 \uD558\uB098 \uC774\uC0C1 \uD3EC\uD568 \uB418\uC5B4\uC57C \uD569\uB2C8\uB2E4.",
         "upper-char": "\uB300\uBB38\uC790\uAC00 \uD558\uB098 \uC774\uC0C1 \uD3EC\uD568 \uB418\uC5B4\uC57C \uD569\uB2C8\uB2E4.",
         "upper-char-special": "\uB300\uBB38\uC790,\uC18C\uBB38\uC790,\uD2B9\uC218\uBB38\uC790 \uAC01\uAC01 \uD558\uB098 \uC774\uC0C1 \uD3EC\uD568 \uB418\uC5B4\uC57C \uD569\uB2C8\uB2E4.",
@@ -3087,12 +3109,12 @@ var init_Lanauage = __esm({
           messageFormat = this.lang.regexp[validResult.regexp];
           messageFormats.push(messageFormat);
         }
-        validResult.constraint.forEach((constraint) => {
+        (validResult.constraint ?? []).forEach((constraint) => {
           if (constraint === RULES.REQUIRED) {
             messageFormat = message(this.lang.required, field);
             messageFormats.push(messageFormat);
           }
-          if (field.type == "number" || field.renderType == "number" || field.renderType == "range") {
+          if (field.renderType == "number" || field.renderType == "range") {
             messageFormat = this.lang.number[constraint];
             messageFormats.push(messageFormat);
           } else {
@@ -3594,7 +3616,6 @@ var init_DaraForm = __esm({
     DaraForm = class {
       constructor(selector, options, message2) {
         this.formValue = {};
-        this.addRowFields = [];
         /**
          * 폼 데이터 reset
          */
@@ -3749,6 +3770,9 @@ var init_DaraForm = __esm({
           }
           this.formTemplate = new FormTemplate(this, formElement, this.fieldInfoMap);
           this.createForm(this.options.fields);
+          if (this.options.onMounted) {
+            this.options.onMounted.call(this);
+          }
         } else {
           throw new Error(`${selector} form selector not found`);
         }

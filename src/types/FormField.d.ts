@@ -1,4 +1,4 @@
-import { FORM_FIELD_TYPE, RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
+import { RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
 import Render from "src/renderer/Render";
 
 export interface OptionCallback {
@@ -62,7 +62,6 @@ export interface FieldStyle {
  */
 export interface FormField {
   name: string; // 'uid'
-  type: FORM_FIELD_TYPE;
   renderType?: RENDER_TYPE | string;
   customOptions: any;
   label: string; // '아이디'

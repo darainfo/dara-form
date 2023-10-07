@@ -51,7 +51,6 @@ let daraFormIdx = 0;
 class DaraForm {
   constructor(selector, options, message) {
     this.formValue = {};
-    this.addRowFields = [];
     /**
      * 폼 데이터 reset
      */
@@ -207,6 +206,9 @@ class DaraForm {
       }
       this.formTemplate = new FormTemplate_1.default(this, formElement, this.fieldInfoMap);
       this.createForm(this.options.fields);
+      if (this.options.onMounted) {
+        this.options.onMounted.call(this);
+      }
     } else {
       throw new Error(`${selector} form selector not found`);
     }
@@ -925,6 +927,7 @@ class ButtonRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
     this.initEvent();
+    this.setDefaultOption();
   }
   initEvent() {
     var _a;
@@ -998,6 +1001,7 @@ class CheckboxRender extends Render_1.default {
       });
     }
     this.initEvent();
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
   initEvent() {
@@ -1024,7 +1028,7 @@ class CheckboxRender extends Render_1.default {
       templates.push(`
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
-                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} />
+                  <input type="checkbox" name="${fieldName}" value="${checkVal ? utils_1.default.replace(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}  />
                   ${this.valuesLabelValue(labelKey, val)}
               </label>
           </span>
@@ -1138,12 +1142,18 @@ Object.defineProperty(exports, "__esModule", ({
 const tslib_1 = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.mjs");
 const Render_1 = tslib_1.__importDefault(__webpack_require__(/*! ./Render */ "./src/renderer/Render.ts"));
 const validUtils_1 = __webpack_require__(/*! src/util/validUtils */ "./src/util/validUtils.ts");
+const utils_1 = tslib_1.__importDefault(__webpack_require__(/*! src/util/utils */ "./src/util/utils.ts"));
 class CustomRender extends Render_1.default {
   constructor(field, rowElement, daraForm) {
     super(daraForm, field, rowElement);
-    this.customFunction = field.renderer;
-    this.initEvent();
-    this.setDefaultInfo();
+    if (field.renderer) {
+      this.customFunction = field.renderer;
+      this.initEvent();
+      this.setDefaultOption();
+      this.setDefaultInfo();
+    } else {
+      this.customFunction = {};
+    }
   }
   initEvent() {
     if (this.customFunction.initEvent) {
@@ -1154,8 +1164,9 @@ class CustomRender extends Render_1.default {
     return false;
   }
   static template(field) {
-    if (field.renderer.template) {
-      return ` <div class="df-field">${field.renderer.template()}</div>
+    if (field.template) {
+      const fieldTempate = utils_1.default.isString(field.template) ? field.template : field.template();
+      return ` <div class="df-field">${fieldTempate}</div>
           ${Render_1.default.getDescriptionTemplate(field)}
       <div class="help-message"></div>`;
     }
@@ -1185,7 +1196,9 @@ class CustomRender extends Render_1.default {
   }
   valid() {
     if (this.customFunction.valid) {
-      return this.customFunction.valid.call(this, this.field, this.rowElement);
+      const validResult = this.customFunction.valid.call(this, this.field, this.rowElement);
+      (0, validUtils_1.invalidMessage)(this.field, this.rowElement, validResult);
+      return;
     }
     return true;
   }
@@ -1217,6 +1230,7 @@ class DateRender extends Render_1.default {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -1314,6 +1328,7 @@ class DropdownRender extends Render_1.default {
       this.defaultCheckValue = "";
     }
     this.initEvent();
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
   initEvent() {
@@ -1374,10 +1389,11 @@ class DropdownRender extends Render_1.default {
     const valueKey = this.valuesValueKey(field);
     let template = "";
     (_b = (_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) === null || _b === void 0 ? void 0 : _b.forEach(val => {
+      const attr = `${val.selected ? "selected" : ""} ${val.disabled ? "disabled" : ""}`;
       if (utils_1.default.isUndefined(val[valueKey]) && val.label) {
-        template += `<option value="${val.value || ""}" ${val.selected ? "selected" : ""}>${val.label}</option>`;
+        template += `<option value="${val.value || ""}" ${attr}>${val.label}</option>`;
       } else {
-        template += `<option value="${val[valueKey]}" ${val.selected ? "selected" : ""}>${this.valuesLabelValue(labelKey, val)}</option>`;
+        template += `<option value="${val[valueKey]}" ${attr}>${this.valuesLabelValue(labelKey, val)}</option>`;
       }
     });
     return template;
@@ -1415,6 +1431,7 @@ class FileRender extends Render_1.default {
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.fileList = ((_a = field.listItem) === null || _a === void 0 ? void 0 : _a.list) || [];
     this.initEvent();
+    this.setDefaultOption();
   }
   initEvent() {
     this.element.addEventListener("change", e => {
@@ -1693,6 +1710,7 @@ class NumberRender extends Render_1.default {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -1753,6 +1771,7 @@ class PasswordRender extends Render_1.default {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -1829,6 +1848,7 @@ class RadioRender extends Render_1.default {
       }
     }
     this.initEvent();
+    this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
   initEvent() {
@@ -1854,7 +1874,7 @@ class RadioRender extends Render_1.default {
       const radioVal = val[valueKey];
       templates.push(`<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
         <label>
-            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} />
+            <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}/>
             ${this.valuesLabelValue(labelKey, val)}
         </label>
         </span>
@@ -1954,6 +1974,7 @@ class RangeRender extends Render_1.default {
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.rangeNumElement = rowElement.querySelector(".range-num");
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -2032,6 +2053,10 @@ class Render {
         ele.setAttribute("placeholder", this.field.placeholder);
       }
     }
+  }
+  setDefaultOption() {
+    var _a;
+    this.setDisabled((_a = this.field.disabled) !== null && _a !== void 0 ? _a : false);
   }
   static isDataRender() {
     return true;
@@ -2284,6 +2309,7 @@ class TextAreaRender extends Render_1.default {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -2347,6 +2373,7 @@ class TextRender extends Render_1.default {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
     this.initEvent();
+    this.setDefaultOption();
     this.setDefaultInfo();
   }
   initEvent() {
@@ -2711,14 +2738,14 @@ Object.defineProperty(exports, "__esModule", ({
 const constants_1 = __webpack_require__(/*! src/constants */ "./src/constants.ts");
 let localeMessage = {
   required: "{label} 필수 입력사항입니다.",
-  fileButton: '파일찾기',
+  fileButton: "파일찾기",
   string: {
     minLength: "{minLength} 글자 이상으로 입력하세요.",
     maxLength: "{maxLength} 글자 이하로 입력하세요.",
     between: "{minLength} ~ {maxLength} 사이의 글자를 입력하세요."
   },
   number: {
-    nan: '숫자만 입력 가능 합니다.',
+    nan: "숫자만 입력 가능 합니다.",
     minimum: "{minimum} 값과 같거나 커야 합니다",
     exclusiveMinimum: "{minimum} 보다 커야 합니다",
     maximum: "{maximum} 값과 같거나 작아야 합니다",
@@ -2729,17 +2756,17 @@ let localeMessage = {
     betweenExclusiveMinMax: "{minimum} 보다 크고 {maximum} 보다 작아야 합니다"
   },
   regexp: {
-    'mobile': "핸드폰 번호가 유효하지 않습니다.",
-    'email': "이메일이 유효하지 않습니다.",
-    'url': "URL이 유효하지 않습니다.",
-    'alpha': "영문만 입력 가능 합니다.",
-    'alpha-num': "영문과 숫자만 입력 가능 합니다.",
-    'number': '숫자만 입력 가능 합니다.',
-    'variable': '값이 유효하지 않습니다.',
-    'number-char': '숫자, 문자 각각 하나 이상 포함 되어야 합니다.',
-    'upper-char': '대문자가 하나 이상 포함 되어야 합니다.',
-    'upper-char-special': '대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.',
-    'upper-char-special-number': '대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다.'
+    mobile: "핸드폰 번호가 유효하지 않습니다.",
+    email: "이메일이 유효하지 않습니다.",
+    url: "URL이 유효하지 않습니다.",
+    alpha: "영문만 입력 가능 합니다.",
+    "alpha-num": "영문과 숫자만 입력 가능 합니다.",
+    number: "숫자만 입력 가능 합니다.",
+    variable: "값이 유효하지 않습니다.",
+    "number-char": "숫자, 문자 각각 하나 이상 포함 되어야 합니다.",
+    "upper-char": "대문자가 하나 이상 포함 되어야 합니다.",
+    "upper-char-special": "대문자,소문자,특수문자 각각 하나 이상 포함 되어야 합니다.",
+    "upper-char-special-number": "대문자,소문자,특수문자,숫자 각각 하나 이상 포함 되어야합니다."
   }
 };
 /**
@@ -2780,18 +2807,19 @@ class Language {
    * @returns {string[]}
    */
   validMessage(field, validResult) {
+    var _a;
     let messageFormat = "";
     let messageFormats = [];
     if (validResult.regexp) {
       messageFormat = this.lang.regexp[validResult.regexp];
       messageFormats.push(messageFormat);
     }
-    validResult.constraint.forEach(constraint => {
+    ((_a = validResult.constraint) !== null && _a !== void 0 ? _a : []).forEach(constraint => {
       if (constraint === constants_1.RULES.REQUIRED) {
         messageFormat = message(this.lang.required, field);
         messageFormats.push(messageFormat);
       }
-      if (field.type == "number" || field.renderType == "number" || field.renderType == "range") {
+      if (field.renderType == "number" || field.renderType == "range") {
         messageFormat = this.lang.number[constraint];
         messageFormats.push(messageFormat);
       } else {
@@ -3069,7 +3097,7 @@ const invalidMessage = (field, rowElement, validResult) => {
     }
     return;
   }
-  rowElement.classList.remove('valid');
+  rowElement.classList.remove("valid");
   if (!rowElement.classList.contains("invalid")) {
     rowElement.classList.add("invalid");
   }
@@ -4712,7 +4740,6 @@ var DaraDate = class _DaraDate {
 // src/DateTimePicker.ts
 var DEFAULT_OPTIONS = {
   isEmbed: false,
-  // layer or innerhtml
   initialDate: "",
   autoClose: true,
   mode: "date" /* date */,
@@ -4738,12 +4765,12 @@ var DateTimePicker = class {
     this.minMonth = -1;
     this.maxMonth = -1;
     /**
-     * 바탕 클릭시 캘린더 숨김 처리.
-     *
-     * @param e
+     * 바탕 클릭시 캘린더 숨김 처리. 
+     * 
+     * @param e 
      */
     this._documentClickEvent = (e) => {
-      if (this.isVisible && e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement)) {
+      if (this.isVisible && (e.target != this.targetElement && !e.composedPath().includes(this.datetimeElement))) {
         this.hide();
       }
     };
@@ -4763,7 +4790,7 @@ var DateTimePicker = class {
     Lanauage_default.set(message);
     this.dateFormat = this.options.format || DEFAULT_DATE_FORMAT;
     let viewDate;
-    if (this.options.initialDate) {
+    if (typeof this.options.initialDate) {
       if (typeof this.options.initialDate === "string") {
         viewDate = new DaraDate(parser_default(this.options.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
       } else {
@@ -4771,9 +4798,8 @@ var DateTimePicker = class {
       }
     } else {
       viewDate = new DaraDate(/* @__PURE__ */ new Date());
-      this.options.initialDate = viewDate.format(this.dateFormat);
     }
-    this.todayDate = viewDate.format(DEFAULT_DATE_FORMAT);
+    this.initialDate = viewDate.format(this.dateFormat);
     this.currentDate = viewDate;
     this.targetElement = selectorElement;
     this.minDate = this._minDate();
@@ -4783,7 +4809,7 @@ var DateTimePicker = class {
       this.datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} embed`;
     } else {
       this.isInput = true;
-      this.targetElement.setAttribute("value", viewDate.format(this.dateFormat));
+      this.targetElement.setAttribute("value", this.initialDate);
       const datetimeElement = document.createElement("div");
       datetimeElement.className = `dara-datetime-wrapper ddtp-${daraDatetimeIdx} layer`;
       datetimeElement.setAttribute("style", `z-index:${this.options.zIndex};`);
@@ -4854,7 +4880,7 @@ var DateTimePicker = class {
   }
   /**
    * 모드  change
-   * @param mode
+   * @param mode 
    */
   changeViewMode(mode) {
     this.datetimeElement.querySelector(".ddtp-datetime")?.setAttribute("view-mode", mode);
@@ -4866,11 +4892,6 @@ var DateTimePicker = class {
       this.dayDraw();
     }
   }
-  /**
-   * init header event
-   *
-   * @public
-   */
   initHeaderEvent() {
     this.datetimeElement.querySelector(".ddtp-move-btn.prev")?.addEventListener("click", (e) => {
       this.moveDate("prev");
@@ -4956,7 +4977,7 @@ var DateTimePicker = class {
       this.dateChangeEvent(e);
     });
     this.datetimeElement.querySelector(".time-today")?.addEventListener("click", (e) => {
-      const initDate = new DaraDate(parser_default(this.todayDate, DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
+      const initDate = new DaraDate(parser_default(this.initialDate, this.dateFormat) || /* @__PURE__ */ new Date());
       this.currentDate.setYear(initDate.getYear());
       this.currentDate.setMonth(initDate.getMonth() - 1);
       this.currentDate.setDate(initDate.getDate());
@@ -4966,7 +4987,7 @@ var DateTimePicker = class {
   /**
    * 날짜 이동
    * @param moveMode // 앞뒤 이동 prev, next
-   * @returns
+   * @returns 
    */
   moveDate(moveMode) {
     if (this._viewMode === "date" /* date */ || this._viewMode === "datetime" /* datetime */) {
@@ -4986,8 +5007,8 @@ var DateTimePicker = class {
   }
   /**
    * get date value
-   *
-   * @returns
+   * 
+   * @returns 
    */
   getDateValue() {
     return this.currentDate.format(this.dateFormat);
@@ -5001,9 +5022,9 @@ var DateTimePicker = class {
     DEFAULT_OPTIONS = Object.assign({}, DEFAULT_OPTIONS, options);
   }
   /**
-   * 달력 보이기 처리.
-   *
-   * @returns
+   * 달력 보이기 처리. 
+   * 
+   * @returns 
    */
   show() {
     if (this.isVisible) {
@@ -5051,6 +5072,7 @@ var DateTimePicker = class {
       if (this.options.onChange(formatValue, e) === false) {
         return;
       }
+      ;
     }
     if (this.isInput) {
       this.targetElement.setAttribute("value", formatValue);
@@ -5146,9 +5168,6 @@ var DateTimePicker = class {
           const year = targetEle.getAttribute("data-year");
           if (year) {
             const numYear = +year;
-            if (this.isYearDisabled(numYear)) {
-              return;
-            }
             if (this.initMode == "year" /* year */) {
               if (this.isYearDisabled(numYear)) {
                 return;
@@ -5204,10 +5223,10 @@ var DateTimePicker = class {
         if (targetEle) {
           const month = targetEle.getAttribute("data-month");
           if (month) {
-            if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
-              return false;
-            }
             if (this.initMode == "month" /* month */) {
+              if (this.isMonthDisabled(this.currentDate.getYear(), +month)) {
+                return;
+              }
               this.currentDate.setMonth(+month);
               this.dateChangeEvent(e);
               return;
@@ -5224,7 +5243,8 @@ var DateTimePicker = class {
    * 날짜 그리기
    */
   dayDraw() {
-    let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), DEFAULT_DATE_FORMAT) || /* @__PURE__ */ new Date());
+    const dateFormat = this.dateFormat;
+    let monthFirstDate = new DaraDate(parser_default(this.currentDate.format("YYYY-MM-01"), "YYYY-MM-DD") || /* @__PURE__ */ new Date());
     this.datetimeElement.querySelector(".ddtp-header-year").textContent = monthFirstDate.format("YYYY");
     this.datetimeElement.querySelector(".ddtp-header-month").textContent = monthFirstDate.format("MMMM");
     let day = monthFirstDate.getDay();
@@ -5239,12 +5259,12 @@ var DateTimePicker = class {
       } else {
         dateItem = monthFirstDate.clone().addDate(i);
       }
-      const tooltipDt = dateItem.format(DEFAULT_DATE_FORMAT);
+      const tooltipDt = dateItem.format(dateFormat);
       if (i % 7 == 0) {
         calHTML.push((i == 0 ? "" : "</tr>") + "<tr>");
       }
       let disabled = this.isDayDisabled(dateItem);
-      calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.todayDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
+      calHTML.push(`<td class="ddtp-day ${i % 7 == 0 ? "red" : ""} ${this.initialDate == tooltipDt ? "today" : ""} ${disabled ? "disabled" : ""}" data-day="${dateItem.format("M,D")}">`);
       calHTML.push(`${dateItem.format("d")}`);
       calHTML.push("</td>");
     }
@@ -5279,8 +5299,14 @@ var DateTimePicker = class {
 };
 function getDocSize() {
   return {
-    clientHeight: Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
-    clientWidth: Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
+    clientHeight: Math.max(
+      document.documentElement.clientHeight,
+      window.innerHeight || 0
+    ),
+    clientWidth: Math.max(
+      document.documentElement.clientWidth,
+      window.innerWidth || 0
+    )
   };
 }
 
