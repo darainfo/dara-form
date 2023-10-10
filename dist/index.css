@@ -113,6 +113,22 @@
 .dara-datetime-wrapper .ddtp-body > * {
   display: none;
 }
+.dara-datetime-wrapper .ddtp-body button {
+  background-color: var(--background-color);
+  border-color: var(--input-border);
+  border-radius: 4px;
+  border-width: 1px;
+  display: block;
+  margin-bottom: 7px;
+  padding: 3px;
+  width: 100%;
+}
+.dara-datetime-wrapper .ddtp-body button:hover {
+  background-color: var(--select-background-color);
+}
+.dara-datetime-wrapper .ddtp-body .time-today:hover {
+  background-color: var(--button-hover-color);
+}
 .dara-datetime-wrapper .ddtp-body .ddtp-days {
   border-collapse: separate;
   border-spacing: 0;
@@ -186,24 +202,11 @@
 .dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn {
   position: absolute;
   right: 0;
-  top: 5px;
+  top: 9px;
   width: 55px;
 }
-.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button {
-  background-color: var(--background-color);
-  border-color: var(--input-border);
-  border-radius: 4px;
-  border-width: 1px;
-  display: block;
-  margin-bottom: 7px;
-  padding: 3px;
-  width: 100%;
-}
-.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > button:hover {
-  background-color: var(--select-background-color);
-}
-.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn .time-today:hover {
-  background-color: var(--button-hover-color);
+.dara-datetime-wrapper .ddtp-body .ddtp-times > .time-btn > .time-select {
+  height: 40px;
 }
 .dara-datetime-wrapper .ddtp-body .ddtp-times .ddtp-time {
   display: table-row;

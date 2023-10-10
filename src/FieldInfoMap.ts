@@ -265,7 +265,7 @@ export default class FieldInfoMap {
 function addFieldFormData(formData: FormData, fieldInfo: FormField, fieldValue: any) {
   if (fieldInfo.renderType === "file") {
     const uploadFiles = fieldValue["uploadFile"];
-
+    formData.delete(fieldInfo.name);
     for (let uploadFile of uploadFiles) {
       formData.append(fieldInfo.name, uploadFile);
     }
