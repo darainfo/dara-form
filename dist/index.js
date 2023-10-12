@@ -631,18 +631,25 @@ var init_DropdownRender = __esm({
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
         this.element = rowElement.querySelector(`[name="${field.$xssName}"]`);
+        let initDefaultValue = "";
         if (!utils_default.isUndefined(field.defaultValue)) {
-          this.defaultCheckValue = field.defaultValue;
-        } else {
-          const valueKey = _DropdownRender.valuesValueKey(field);
-          this.field.listItem?.list?.forEach((val) => {
-            if (val.selected) {
-              this.defaultCheckValue = val[valueKey];
-            }
-          });
-          if (!this.defaultCheckValue) {
-            this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
+          initDefaultValue = field.defaultValue;
+        }
+        const valueKey = _DropdownRender.valuesValueKey(field);
+        let initDefaultValueFlag = false;
+        this.field.listItem?.list?.forEach((item) => {
+          let itemValue = item[valueKey];
+          if (item.selected) {
+            this.defaultCheckValue = itemValue;
           }
+          if (itemValue == initDefaultValue) {
+            initDefaultValueFlag = true;
+          }
+        });
+        if (initDefaultValueFlag) {
+          this.defaultCheckValue = initDefaultValue;
+        } else if (!this.defaultCheckValue) {
+          this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
         }
         if (utils_default.isUndefined(this.defaultCheckValue)) {
           this.defaultCheckValue = "";
@@ -786,20 +793,26 @@ var init_CheckboxRender = __esm({
         super(daraForm, field, rowElement);
         this.defaultCheckValue = [];
         this.defaultCheckValue = [];
+        let initDefaultValue = [];
         if (!utils_default.isUndefined(field.defaultValue)) {
           if (utils_default.isArray(field.defaultValue)) {
-            this.defaultCheckValue = field.defaultValue;
+            initDefaultValue = field.defaultValue;
           } else {
-            this.defaultCheckValue = [field.defaultValue];
+            initDefaultValue = [field.defaultValue];
           }
-        } else {
-          const valueKey = _CheckboxRender.valuesValueKey(field);
-          this.field.listItem?.list?.forEach((val) => {
-            if (val.selected) {
-              this.defaultCheckValue.push(val[valueKey] ? val[valueKey] : true);
-            }
-          });
         }
+        const valueKey = _CheckboxRender.valuesValueKey(field);
+        let initDefaultValueFlag = false;
+        this.field.listItem?.list?.forEach((item) => {
+          let itemValue = item[valueKey];
+          if (item.selected) {
+            this.defaultCheckValue.push(itemValue ? itemValue : true);
+          }
+          if (initDefaultValue.includes(itemValue)) {
+            initDefaultValueFlag = true;
+          }
+        });
+        this.defaultCheckValue = initDefaultValueFlag ? initDefaultValue : this.defaultCheckValue;
         this.initEvent();
         this.setDefaultOption();
         this.setValue(this.defaultCheckValue);
@@ -931,25 +944,31 @@ var init_RadioRender = __esm({
     init_Render();
     init_constants();
     init_validUtils();
-    init_utils();
     init_renderEvents();
     init_utils();
     RadioRender = class _RadioRender extends Render {
       constructor(field, rowElement, daraForm) {
         super(daraForm, field, rowElement);
-        this.defaultCheckValue = [];
+        this.defaultCheckValue = "";
+        let initDefaultValue = [];
         if (!utils_default.isUndefined(field.defaultValue)) {
-          this.defaultCheckValue = field.defaultValue;
-        } else {
-          const valueKey = _RadioRender.valuesValueKey(field);
-          this.field.listItem?.list?.forEach((val) => {
-            if (val.selected) {
-              this.defaultCheckValue.push(val[valueKey]);
-            }
-          });
-          if (!this.defaultCheckValue) {
-            this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
+          initDefaultValue = field.defaultValue;
+        }
+        const valueKey = _RadioRender.valuesValueKey(field);
+        let initDefaultValueFlag = false;
+        this.field.listItem?.list?.forEach((item) => {
+          let itemValue = item[valueKey];
+          if (item.selected) {
+            this.defaultCheckValue = itemValue;
           }
+          if (initDefaultValue == itemValue) {
+            initDefaultValueFlag = true;
+          }
+        });
+        if (initDefaultValueFlag) {
+          this.defaultCheckValue = initDefaultValue;
+        } else if (!this.defaultCheckValue) {
+          this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
         }
         this.initEvent();
         this.setDefaultOption();
@@ -2170,7 +2189,7 @@ var init_dist = __esm({
       initialDate: "",
       autoClose: true,
       mode: "date",
-      enableTodayBtn: false,
+      enableTodayBtn: true,
       headerOrder: "month,year",
       format: "",
       zIndex: 1e3,

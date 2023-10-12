@@ -15,21 +15,30 @@ export default class DropdownRender extends Render {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
+    let initDefaultValue = "";
+
     if (!utils.isUndefined(field.defaultValue)) {
-      this.defaultCheckValue = field.defaultValue;
-    } else {
-      const valueKey = DropdownRender.valuesValueKey(field);
-
-      this.field.listItem?.list?.forEach((val) => {
-        if (val.selected) {
-          this.defaultCheckValue = val[valueKey];
-        }
-      });
-
-      if (!this.defaultCheckValue) {
-        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
-      }
+      initDefaultValue = field.defaultValue;
     }
+
+    const valueKey = DropdownRender.valuesValueKey(field);
+    let initDefaultValueFlag = false;
+    this.field.listItem?.list?.forEach((item) => {
+      let itemValue = item[valueKey];
+      if (item.selected) {
+        this.defaultCheckValue = itemValue;
+      }
+      if (itemValue == initDefaultValue) {
+        initDefaultValueFlag = true;
+      }
+    });
+
+    if (initDefaultValueFlag) {
+      this.defaultCheckValue = initDefaultValue;
+    } else if (!this.defaultCheckValue) {
+      this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
+    }
+
     if (utils.isUndefined(this.defaultCheckValue)) {
       this.defaultCheckValue = "";
     }

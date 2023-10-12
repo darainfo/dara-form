@@ -285,6 +285,7 @@
         name: "checkbox11",
         required: true,
         renderType: "checkbox",
+        defaultValue: '',
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
@@ -301,11 +302,13 @@
       , {
         label: "라벨주소",
         name: 'newAddress',
-        renderType: 'checkbox',
+        renderType: 'radio',
+        //defaultValue: 'N',
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
-            { label: "추가주소", value: "Y", selected: true }
+            { label: "추가1", value: "Y", selected: true },
+            { label: "추가", value: "N" }
           ],
         }
         , description: `<div><a href="asdf">111111111111111</a></div>`

@@ -14,7 +14,7 @@
   --info:#3498db;
   --background-color:#fff;
   --sunday:#f00d0d;
-  --input-border:#9b94948a;
+  --input-border:#d3d2d2;
   --select-background-color:#0abf30;
   --button-hover-color:#d4d4d48a;
   --disabled-background-color:#f1f1f18a;
@@ -117,6 +117,7 @@
   background-color: var(--background-color);
   border-color: var(--input-border);
   border-radius: 4px;
+  border-style: solid;
   border-width: 1px;
   display: block;
   margin-bottom: 7px;
