@@ -1,0 +1,11 @@
+
+# markdown 
+**/*.md
+
+# Ignore artifacts:
+dist
+
+**/.git
+**/.svn
+**/.hg
+**/node_modules
