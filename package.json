@@ -1,6 +1,6 @@
 {
   "name": "dara-form",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "sideEffects": false,
   "description": "Dara form validation ",
   "author": {
@@ -25,14 +25,14 @@
     ".": "./dist/index.js",
     "./dist/": "./dist/"
   },
-  "homepage": "https://github.com/darainfo/data-form",
+  "homepage": "https://github.com/darainfo/dara-form",
   "bugs": {
     "url": "https://github.com/darainfo/validation/issues",
     "email": "darainfosys@gmail.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/darainfo/data-form.git"
+    "url": "https://github.com/darainfo/dara-form.git"
   },
   "files": [
     "dist"

@@ -1,4 +1,10 @@
-# DaraForm.js
+# DaraForm
+JavaScript form creation library
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/darainfo/dara-form/blob/main/LICENSE)
+[![npm version](https://badge.fury.io/js/dara-form.svg)](https://img.shields.io/npm/v/dara-form)
+![npm](https://img.shields.io/npm/dt/dara-form)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/dara-form)](https://bundlephobia.com/package/dara-form)
 
 
 ## Browser Support
