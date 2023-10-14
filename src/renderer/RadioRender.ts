@@ -3,7 +3,6 @@ import Render from "./Render";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import util from "src/util/utils";
 import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 import utils from "src/util/utils";
@@ -14,20 +13,31 @@ export default class RadioRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
 
-    this.defaultCheckValue = [];
+    this.defaultCheckValue = "";
+    let initDefaultValue = [] as any;
     if (!utils.isUndefined(field.defaultValue)) {
-      this.defaultCheckValue = field.defaultValue;
-    } else {
-      const valueKey = RadioRender.valuesValueKey(field);
-      this.field.listItem?.list?.forEach((val) => {
-        if (val.selected) {
-          this.defaultCheckValue.push(val[valueKey]);
-        }
-      });
+      initDefaultValue = field.defaultValue;
+    }
 
-      if (!this.defaultCheckValue) {
-        this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
+    const valueKey = RadioRender.valuesValueKey(field);
+    let initDefaultValueFlag = false;
+    this.field.listItem?.list?.forEach((item) => {
+      let itemValue = item[valueKey];
+      if (item.selected) {
+        this.defaultCheckValue = itemValue;
       }
+
+      if (initDefaultValue == itemValue) {
+        initDefaultValueFlag = true;
+      }
+    });
+
+    // 처리 할것.
+
+    if (initDefaultValueFlag) {
+      this.defaultCheckValue = initDefaultValue;
+    } else if (!this.defaultCheckValue) {
+      this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
     }
 
     this.initEvent();
@@ -142,7 +152,7 @@ export default class RadioRender extends Render {
     let validResult: ValidResult | boolean = true;
 
     if (this.field.required) {
-      if (util.isBlank(value)) {
+      if (utils.isBlank(value)) {
         validResult = { name: this.field.name, constraint: [] };
         validResult.constraint.push(RULES.REQUIRED);
       }

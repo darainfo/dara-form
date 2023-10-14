@@ -79,7 +79,7 @@ export interface FormField {
   description: string; // 설명
   placeholder: string; // input , textarea 문구
   orientation: ORIENTATION_TYPE; // children에 사용
-  required?: boolean; //true // 필요 여부
+  required?: boolean; //true // 필수 여부
   regexpType?: REGEXP_TYPE; // 정규식 타입
   rule: {
     // 규칙

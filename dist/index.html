@@ -4,9 +4,9 @@
 <head>
   <meta charset="utf-8" />
   <title>Dara Form</title>
-<script defer src="dara.form.js"></script></head>
+</head>
 
-<body onload="formObj.load()">
+<body>
   <div>
     <div class="form-button">
       <button type="button" onclick="formObj.addItem()">Add</button>
@@ -19,7 +19,10 @@
   </div>
 
   <div style="padding: 0px 20px">
+    <form id="loginForm"></form>
+
     <form id="formArea"></form>
+
   </div>
 </body>
 
@@ -29,7 +32,54 @@
     text-align: center;
   }
 </style>
-<script>
+<script type="module">
+
+  const form = new DaraForm("#loginForm", {
+    message: "This value is not valid",
+    //mode: 'vertical',
+    //autoFocus: false,
+    style: {
+      //width: '600px',
+      //position: 'top-left',
+      labelWidth: '3'
+
+    },
+    // form load 이후 호출. 
+    onMounted: function () {
+      console.log(this)
+    },
+    message: {
+      empty: "{name} 필수 입력사항입니다.",
+      string: {
+        minLength: "{size} 글자 이상 입력해야합니다.",
+        maxLength: "{size} 글자 이상 입력할 수 없습니다.",
+      },
+      number: {
+        minimum: "{size} 보다 커야 합니다",
+        miximum: "{size} 보다 커야 합니다",
+      },
+      regexp: {
+        email: "이메일이 유효하지 않습니다.",
+        url: "URL이 유효하지 않습니다.",
+      },
+    },
+    fields: [
+      {
+        name: "uid",
+        label: "아이디",
+        tooltip: "아이디를 넣어주세요.",
+        placeholder: "아이디를 넣어주세요.",
+        renderType: "text",
+      }
+      , {
+        name: "password",
+        label: "패스워드",
+        description: "비밀번호는 대문자 소문자 포함입니다.",
+        placeholder: "패스워드를 입력하세요",
+        renderType: "password",
+      }
+    ]
+  });
   var formInfo = {
     message: "This value is not valid",
     //mode: 'vertical',
@@ -256,6 +306,17 @@
         },
       },
       {
+        name: "picture",
+        label: "사진",
+        required: true,
+        renderType: "file",
+        listItem: {
+          list: [
+          ],
+        },
+      },
+
+      {
         name: "cmpCredId",
         label: "credentials",
         renderType: "dropdown",
@@ -274,6 +335,7 @@
         name: "checkbox11",
         required: true,
         renderType: "checkbox",
+        defaultValue: '',
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
@@ -290,11 +352,13 @@
       , {
         label: "라벨주소",
         name: 'newAddress',
-        renderType: 'checkbox',
+        renderType: 'radio',
+        //defaultValue: 'N',
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
-            { label: "추가주소", value: "Y", selected: true }
+            { label: "추가1", value: "Y", selected: true },
+            { label: "추가", value: "N" }
           ],
         }
         , description: `<div><a href="asdf">111111111111111</a></div>`
@@ -451,4 +515,6 @@
       formBuilder.setValue({ sex: "X" });
     },
   };
+
+  formObj.load();
 </script>

@@ -14,21 +14,29 @@ export default class CheckboxRender extends Render {
     super(daraForm, field, rowElement);
 
     this.defaultCheckValue = [];
+    let initDefaultValue = [] as any;
     if (!utils.isUndefined(field.defaultValue)) {
       if (utils.isArray(field.defaultValue)) {
-        this.defaultCheckValue = field.defaultValue;
+        initDefaultValue = field.defaultValue;
       } else {
-        this.defaultCheckValue = [field.defaultValue];
+        initDefaultValue = [field.defaultValue];
       }
-    } else {
-      const valueKey = CheckboxRender.valuesValueKey(field);
-
-      this.field.listItem?.list?.forEach((val) => {
-        if (val.selected) {
-          this.defaultCheckValue.push(val[valueKey] ? val[valueKey] : true);
-        }
-      });
     }
+
+    const valueKey = CheckboxRender.valuesValueKey(field);
+
+    let initDefaultValueFlag = false;
+    this.field.listItem?.list?.forEach((item) => {
+      let itemValue = item[valueKey];
+      if (item.selected) {
+        this.defaultCheckValue.push(itemValue ? itemValue : true);
+      }
+      if (initDefaultValue.includes(itemValue)) {
+        initDefaultValueFlag = true;
+      }
+    });
+
+    this.defaultCheckValue = initDefaultValueFlag ? initDefaultValue : this.defaultCheckValue;
 
     this.initEvent();
     this.setDefaultOption();

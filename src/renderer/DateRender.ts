@@ -3,7 +3,7 @@ import Render from "./Render";
 import { stringValidator } from "src/rule/stringValidator";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
-import { DaraDateTimePicker } from "dara-datetimepicker";
+import { DateTimePicker } from "dara-datetimepicker";
 
 import "dara-datetimepicker/dist/dara.datetimepicker.min.css";
 import utils from "src/util/utils";
@@ -45,7 +45,7 @@ export default class DateRender extends Render {
       this.changeEventCall(this.field, e, this);
     };
 
-    this.dateObj = new DaraDateTimePicker(this.element, this.field.customOptions, {} as any);
+    this.dateObj = new DateTimePicker(this.element, this.field.customOptions, {} as any);
   }
 
   static template(field: FormField): string {

@@ -52,7 +52,17 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      inject: true,
+      inject: false,
+      templateParameters: (compilation, assets, tags, options) => {
+        tags.headTags.forEach((tag) => {
+          if (tag.tagName === "script") {
+            tag.attributes.async = true;
+          }
+        });
+        return {
+          htmlWebpackPlugin: { options },
+        };
+      },
       template: "src/index.html",
     }),
   ],
