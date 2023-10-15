@@ -55,7 +55,9 @@ export default class DaraForm {
 
     const formElement = document.querySelector(selector);
     if (formElement) {
-      formElement.className = `dara-form df-${daraFormIdx}`;
+      //formElement.className = `dara-form df-${daraFormIdx}`;
+
+      formElement.classList.add('dara-form', 'df-${daraFormIdx}');
 
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);

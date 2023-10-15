@@ -26,7 +26,7 @@ export default {
     };
 
     const defaultLabelWidth = beforeField?.style?.labelWidth ?? formOptions.style.labelWidth ?? "3";
-    const defaultValueWidth = beforeField?.style?.valueWidth ?? formOptions.style.valueWidth ?? "9";
+    let defaultValueWidth = beforeField?.style?.valueWidth ?? formOptions.style.valueWidth ?? "9";
     const position = beforeField?.style?.position ?? formOptions.style.position;
 
     const width = field.style?.width;
@@ -34,8 +34,11 @@ export default {
 
     fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
     if (width) {
-      fieldStyle.fieldClass += utils.isNumber(width) ? ` col-xs-${width}` : "";
-      fieldStyle.fieldStyle = utils.isNumber(width) ? "" : `width:${width};`;
+      if(utils.isNumber(width)){
+        fieldStyle.fieldClass += utils.isNumber(width) ? ` col-xs-${width}` : "";
+      }else{
+        fieldStyle.fieldStyle = utils.isNumber(width) ? "" : `width:${width};`;
+      }
     }
 
     fieldStyle.tabAlignClass = "tab-al-" + (["right", "center"].includes(field.style?.tabAlign) ? field.style.tabAlign : "left");
@@ -46,8 +49,9 @@ export default {
     if (!isLabelHide && labelWidth && !["top", "bottom"].includes(positionArr[0])) {
       if (utils.isNumber(labelWidth)) {
         const labelWidthValue = +labelWidth;
+        defaultValueWidth = 12 - labelWidthValue;
         fieldStyle.labelClass = `col-xs-${labelWidthValue}`;
-        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${12 - labelWidthValue}`;
+        fieldStyle.valueClass = fieldStyle.labelStyle ? "col-full" : `col-xs-${defaultValueWidth}`;
       } else {
         fieldStyle.labelStyle = `width:${labelWidth};`;
       }
