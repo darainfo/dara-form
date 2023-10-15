@@ -9,7 +9,6 @@ import { numberValidator } from "./rule/numberValidator";
 import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
-import TabRender from "./renderer/TabRender";
 
 const defaultOptions = {
   style: {
