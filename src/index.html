@@ -7,7 +7,7 @@
 </head>
 
 <body>
-  <div>
+  <div class="header">
     <div class="form-button">
       <button type="button" onclick="formObj.addItem()">Add</button>
       <button type="button" onclick="formObj.getValue()">getValue</button>
@@ -15,6 +15,11 @@
       <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
       <button type="button" onclick="formBuilder.resetForm()">Reset</button>
       <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
+    </div>
+
+    <div>
+      Theme : <label>Light<input type="radio" name="theme-toggle" value="light" checked="true"></label>
+      <label>Dark<input type="radio" name="theme-toggle" value="dark"></label>
     </div>
   </div>
 
@@ -31,8 +36,64 @@
   .form-button {
     text-align: center;
   }
+
+  :root {
+    --bg: #ffffff;
+    --bg-color: #070d19;
+
+  }
+
+  body.dark {
+    --bg: #070d19;
+    --bg-color: #ffffff;
+
+  }
+
+  body {
+    background-color: var(--bg);
+  }
+
+  .header {
+    color: var(--bg-color);
+  }
 </style>
 <script type="module">
+
+  const THEME_KEY = "form-theme";
+  const theme = localStorage.getItem(THEME_KEY);
+
+  if (theme) setMainTheme(theme);
+
+  function setMainTheme(theme, persist = false) {
+    const classList = document.body.classList;
+
+    classList.remove("light", "dark");
+
+    classList.add(theme);
+
+    if (persist) {
+      localStorage.setItem(THEME_KEY, theme);
+    }
+  }
+
+  function load() {
+    // theme
+    const toggler = document.querySelectorAll('[name="theme-toggle"]');
+    const theme = localStorage.getItem(THEME_KEY);
+
+    if (toggler) {
+      if (theme === "dark") {
+        document.querySelector('[name="theme-toggle"][value="dark"]').checked = true;
+      }
+
+      toggler.forEach((el) => {
+        el.addEventListener("click", (e) => {
+          setMainTheme(el.value, true);
+        });
+      })
+    }
+  }
+  load();
 
   const form = new DaraForm("#loginForm", {
     message: "This value is not valid",
@@ -40,7 +101,7 @@
     //autoFocus: false,
     style: {
       //width: '600px',
-      //position: 'top-left',
+      position: 'left',
       labelWidth: '3'
 
     },

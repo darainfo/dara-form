@@ -27,18 +27,46 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   --border-color: #dfe1e5;
   --color-danger: #d9534f;
   --background-danger: #d9534f;
-  --font-color: #70757a;
+  --font-color: #686868;
+  --font-hover-color: #3a3d41;
   --invalid-font-color: #ff4136;
   --invalid-border-color: #ffb6b4;
   --invalid-background-color: #fdd;
-  --background-button: #f6f6f6;
-  --background-button-hover: #ebebeb;
+  --button-bg: #f6f6f6;
+  --button-bg-hover: #ebebeb;
+  --tab-bg: #f6f6f6;
+  --tab-bg-hover: #ebebeb;
   --tooltip-background: #3e3e3e;
   --tooltip-color: #fff;
   --field-margin-top: 10px;
-  --field-background: #fff;
-  --field-color: #212529;
+  --input-bg: #fff;
+  --input-color: #212529;
+  --input-disabled-bg: #ebebeb;
+}
 
+body.dark .dara-form,
+.dara-form.dark {
+  --border-color: #41444c;
+  --color-danger: #d9534f;
+  --background-danger: #d9534f;
+  --font-color: #b9bdc1;
+  --font-hover-color: #f5f3f3;
+  --invalid-font-color: #ff4136;
+  --invalid-border-color: #ffb6b4;
+  --invalid-background-color: #fdd;
+  --button-bg: #435ebe;
+  --button-bg-hover: #3950a2;
+  --tab-bg: #23418f;
+  --tab-bg-hover: #516db1;
+  --tooltip-background: #3e3e3e;
+  --tooltip-color: #fff;
+  --field-margin-top: 10px;
+  --input-bg: transparent;
+  --input-color: #c6cddb;
+  --input-disabled-bg: #878787;
+}
+
+.dara-form {
   padding: 0px;
   margin-top: 10px;
   color: var(--font-color);
@@ -75,8 +103,10 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
   input,
   select,
   textarea {
+    background-color: transparent;
+    color: var(--font-color);
     &[disabled] {
-      background-color: #ebebeb;
+      background-color: var(--input-disabled-bg);
       opacity: 0.8;
     }
   }
@@ -103,8 +133,8 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
 
     .df-tooltip {
       visibility: visible;
-      color: #fff;
-      background: #000;
+      color: var(--tooltip-color);
+      background: var(--tooltip-background);
       width: 16px;
       height: 16px;
       border-radius: 8px;
@@ -144,11 +174,11 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
     padding: 0.375rem 0.75rem;
     font-weight: 400;
     line-height: 1.5;
-    background-clip: padding-box;
     border-radius: 4px;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    background: var(--field-background);
-    color: var(--field-color);
+    background-color: var(--input-bg);
+    background-clip: padding-box;
+    color: var(--input-color);
 
     &[type="radio"],
     &[type="checkbox"] {
@@ -301,7 +331,7 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       cursor: pointer;
 
       &:hover {
-        background-color: var(--background-button-hover);
+        background-color: var(--button-bg-hover);
       }
 
       &.download {
@@ -362,27 +392,30 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       margin: 1px 0.4em 0 0;
       padding: 0;
       white-space: nowrap;
-      border-top-left-radius: 3px;
-      border-top-right-radius: 3px;
-      border: 1px solid var(--border-color);
-      border-bottom-width: 0;
 
       &.active {
         a {
-          background-color: var(--background-button-hover);
+          color: var(--font-hover-color);
+          background-color: var(--tab-bg);
         }
       }
 
       a {
+        border-top-left-radius: calc(0.45rem - 1px);
+        border-top-right-radius: calc(0.45rem - 1px);
+        border: 1px solid transparent;
+        border-bottom-width: 0;
         float: left;
         padding: 0.5em 1em;
         text-decoration: none;
-        background: var(--background-button);
         color: var(--font-color);
         height: 30px;
+        line-height: 15px;
 
         &:hover {
-          background-color: var(--background-button-hover);
+          background-color: var(--tab-bg-hover);
+          border: 1px solid var(--border-color);
+          border-bottom-width: 0;
         }
       }
     }
@@ -395,6 +428,17 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       &.active {
         display: block;
       }
+    }
+  }
+
+  .df-btn {
+    padding: 5px 10px;
+    border-radius: calc(0.45rem - 1px);
+    border: 1px solid var(--border-color);
+
+    &:hover {
+      color: var(--font-hover-color);
+      background-color: var(--button-bg-hover);
     }
   }
 
@@ -481,7 +525,7 @@ $sizes: 8.33333333%, 16.66666667%, 25%, 33.33333333%, 41.66666667%, 50%, 58.3333
       transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 
       &:hover {
-        background-color: var(--background-button-hover);
+        background-color: var(--button-bg-hover);
       }
     }
   }

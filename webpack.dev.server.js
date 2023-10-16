@@ -37,6 +37,7 @@ module.exports = merge(common, {
     //mode: 'development',
     host: "0.0.0.0",
     port: 8889,
+    watchFiles: ["src/**/*"],
   },
   plugins: [
     //new BundleAnalyzerPlugin()

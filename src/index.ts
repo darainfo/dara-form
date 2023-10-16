@@ -1,5 +1,5 @@
-import DaraForm from './DaraForm'
+import DaraForm from "./DaraForm";
 
-import '../style/form.style.scss';
+import "../style/dara.form.scss";
 
 export = DaraForm;
