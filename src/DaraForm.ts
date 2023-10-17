@@ -36,7 +36,12 @@ interface FieldMap {
 export default class DaraForm {
   private readonly options;
 
-  private fieldInfoMap;
+  private orginFormStyleClass;
+
+  private selector: string;
+  private formElement: Element;
+
+  private fieldInfoMap: FieldInfoMap;
 
   private formValue: any = {};
 
@@ -50,25 +55,17 @@ export default class DaraForm {
 
     Lanauage.set(message);
 
-    this.fieldInfoMap = new FieldInfoMap(selector);
-
     const formElement = document.querySelector(selector);
     if (formElement) {
-      //formElement.className = `dara-form df-${daraFormIdx}`;
-
-      formElement.classList.add("dara-form", `df-${daraFormIdx}`);
+      this.orginFormStyleClass = formElement.className;
+      formElement.classList.add("dara-form");
 
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);
       }
-
-      this.formTemplate = new FormTemplate(this, formElement, this.fieldInfoMap);
-
+      this.selector = selector;
+      this.formElement = formElement;
       this.createForm(this.options.fields);
-
-      if (this.options.onMounted) {
-        this.options.onMounted.call(this);
-      }
     } else {
       throw new Error(`${selector} form selector not found`);
     }
@@ -78,11 +75,19 @@ export default class DaraForm {
     Lanauage.set(message);
   }
 
-  public createForm(fields: FormField[]) {
+  private createForm(fields: FormField[]) {
+    this.fieldInfoMap = new FieldInfoMap(this.selector);
+    this.formElement.innerHTML = "";
+    this.formTemplate = new FormTemplate(this, this.formElement, this.fieldInfoMap);
+
     fields.forEach((field) => {
       this.formTemplate.addRow(field);
     });
     this.conditionCheck();
+
+    if (this.options.onMounted) {
+      this.options.onMounted.call(this);
+    }
   }
 
   /**
@@ -286,6 +291,9 @@ export default class DaraForm {
     return true;
   };
 
+  /**
+   * 설정 옵션 얻기
+   */
   public getOptions = () => {
     return this.options;
   };
@@ -311,11 +319,16 @@ export default class DaraForm {
     fieldInfo.$renderer.setDescription(desc);
   }
 
-  /*
-    destroy = () => {
-        return this.options;
+  public destroy = () => {
+    this.formElement.className = this.orginFormStyleClass;
+    this.formElement.replaceChildren();
+
+    for (const key in this) {
+      if (utils.hasOwnProp(this, key)) {
+        delete this[key];
+      }
     }
-    */
+  };
 
   public static validator = {
     string: (value: string, field: FormField) => {
@@ -328,5 +341,21 @@ export default class DaraForm {
       let result: ValidResult = { name: field.name, constraint: [] };
       return regexpValidator(value, field, result);
     },
+  };
+
+  /**
+   * 모든 field 얻기
+   */
+  public getFields = (): [] => {
+    return this.options.fields;
+  };
+
+  /**
+   * field setting
+   * @param fields
+   */
+  public setFields = (fields: any[]) => {
+    this.options.fields = fields;
+    this.createForm(fields);
   };
 }

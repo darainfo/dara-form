@@ -5,16 +5,9 @@
       // "@/*": [
       //   "src/*"
       // ],
-      "@t/*": [
-        "src/types/*"
-      ]
+      "@t/*": ["src/types/*"]
     },
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

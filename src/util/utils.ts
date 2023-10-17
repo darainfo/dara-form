@@ -19,6 +19,10 @@ export default {
     return returnText;
   },
 
+  hasOwnProp<T extends object, K extends keyof T>(obj: T, key: string | K): key is K {
+    return obj.hasOwnProperty(key);
+  },
+
   unReplace(inputText: string): string {
     let returnText = inputText;
 
