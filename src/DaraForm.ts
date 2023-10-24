@@ -27,6 +27,13 @@ interface FieldMap {
   [key: string]: FormField;
 }
 
+interface DaraFormMap {
+  [key: string]: DaraForm;
+}
+
+// all instance
+const allInstance: DaraFormMap = {};
+
 /**
  * DaraForm class
  *
@@ -66,6 +73,8 @@ export default class DaraForm {
       this.selector = selector;
       this.formElement = formElement;
       this.createForm(this.options.fields);
+
+      allInstance[selector] = this;
     } else {
       throw new Error(`${selector} form selector not found`);
     }
@@ -326,6 +335,7 @@ export default class DaraForm {
     for (const key in this) {
       if (utils.hasOwnProp(this, key)) {
         delete this[key];
+        delete allInstance[this.selector];
       }
     }
   };
@@ -342,6 +352,10 @@ export default class DaraForm {
       return regexpValidator(value, field, result);
     },
   };
+
+  public static instance(selector: string) {
+    return allInstance[selector];
+  }
 
   /**
    * 모든 field 얻기
