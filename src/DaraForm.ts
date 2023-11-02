@@ -21,8 +21,6 @@ const defaultOptions = {
   fields: [],
 } as FormOptions;
 
-let daraFormIdx = 0;
-
 interface FieldMap {
   [key: string]: FormField;
 }
@@ -57,8 +55,6 @@ export default class DaraForm {
   constructor(selector: string, options: FormOptions, message: Message) {
     this.options = {} as FormOptions;
     Object.assign(this.options, defaultOptions, options);
-
-    daraFormIdx += 1;
 
     Lanauage.set(message);
 
@@ -353,7 +349,15 @@ export default class DaraForm {
     },
   };
 
-  public static instance(selector: string) {
+  public static instance(selector?: string) {
+    if (utils.isUndefined(selector) || utils.isBlank(selector)) {
+      const keys = Object.keys(allInstance);
+      if (keys.length > 1) {
+        throw new Error(`selector empty : [${selector}]`);
+      }
+      selector = keys[0];
+    }
+
     return allInstance[selector];
   }
 
