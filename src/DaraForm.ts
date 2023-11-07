@@ -175,6 +175,7 @@ export default class DaraForm {
    * @param values
    */
   public setValue = (values: any) => {
+    this.resetForm();
     Object.keys(values).forEach((fieldName) => {
       this._setFieldValue(fieldName, values[fieldName]);
     });
