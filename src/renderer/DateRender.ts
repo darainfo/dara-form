@@ -51,7 +51,7 @@ export default class DateRender extends Render {
   static template(field: FormField): string {
     return `
     <div class="df-field">
-      <input type="text" name="${field.name}" class="form-field text help-icon" />
+      <input type="text" name="${field.name}" class="form-field text help-icon" autocomplete="off"/>
      </div>
      ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>

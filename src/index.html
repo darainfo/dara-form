@@ -139,6 +139,16 @@
         placeholder: "패스워드를 입력하세요",
         renderType: "password",
       }
+      , {
+        name: "sex",
+        label: "남성/여성",
+        renderType: "checkbox",
+        listItem: {
+          list: [
+            { label: "", value: "Y", selected: true },
+          ],
+        }
+      }
     ]
   });
   var formInfo = {
@@ -348,20 +358,21 @@
       }
       , {
         name: "age",
-        label: "나이",
+        label: "생년월일",
         required: true,
-        disabled: true,
-        renderType: "number",
-        defaultValue: 5,
+        renderType: "date",
+        customOptions: {
+          mode: 'time'
+        }
       },
       {
         name: "sex",
         label: "성별",
         required: true,
-        renderType: "dropdown",
+        renderType: "radio",
         listItem: {
           list: [
-            { label: "남", value: "Y", selected: true, disabled: true },
+            { label: "남", value: "Y", selected: true },
             { label: "여", value: "X" },
           ],
         },
@@ -512,7 +523,6 @@
                 name: "address22222",
                 label: "주소1",
                 labelWidth: "150px",
-                renderType: "datemonth",
               },
               {
                 name: "address222333322",
