@@ -21,10 +21,10 @@ export default class DateRender extends Render {
   }
 
   initEvent() {
-    let dateOnChangeEvent: any;
+    let dateOnSelectEvent: any;
     this.field.customOptions = Object.assign({}, this.field.customOptions);
-    if (typeof this.field.customOptions.onChange !== "undefined") {
-      dateOnChangeEvent = typeof this.field.customOptions.onChange;
+    if (typeof this.field.customOptions.onSelect !== "undefined") {
+      dateOnSelectEvent = typeof this.field.customOptions.onSelect;
     }
 
     if (utils.isUndefined(this.field.customOptions.mode)) {
@@ -35,9 +35,9 @@ export default class DateRender extends Render {
       }
     }
 
-    this.field.customOptions.onChange = (dt: any, e: Event) => {
-      if (dateOnChangeEvent) {
-        dateOnChangeEvent.call(null, dt, e);
+    this.field.customOptions.onSelect = (dt: any, e: Event) => {
+      if (dateOnSelectEvent) {
+        dateOnSelectEvent.call(null, dt, e);
       }
 
       this.setValue(dt);
