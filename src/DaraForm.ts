@@ -10,6 +10,8 @@ import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
 
+declare const APP_VERSION: string;
+
 const defaultOptions = {
   style: {
     width: "100%",
@@ -39,6 +41,8 @@ const allInstance: DaraFormMap = {};
  * @typedef {DaraForm}
  */
 export default class DaraForm {
+  public static VERSION = `${APP_VERSION}`;
+
   private readonly options;
 
   private orginFormStyleClass;
