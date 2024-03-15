@@ -51,11 +51,11 @@ module.exports = merge(common, {
     ],
   },
   output: {
-    filename: "dara.form.min.js",
+    filename: common.output.filename.replace(/\.js$/, ".min.js"),
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: "dara.form.min.css",
+      filename: common.output.filename.replace(/\.js$/, ".min.css"),
     }),
     //, new BundleAnalyzerPlugin()
   ],
