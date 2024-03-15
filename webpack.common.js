@@ -68,8 +68,6 @@ module.exports = {
       banner: topBanner,
       raw: true,
     }),
-    // datepicker version package 에서 가져다 쓸수 있게 수정 할것.
-
     new webpack.DefinePlugin({
       APP_VERSION: JSON.stringify(packageJson.version), // 패키지 버전을 전역 변수로 설정합니다.
     }),
