@@ -9,16 +9,53 @@ import { OptionCallback } from "./FormField";
  * @typedef {FormOptions}
  */
 export interface FormOptions {
+  /**
+   * style 옵션
+   *
+   * @example
+   * ```
+   * width: '600px',
+      position: 'left',
+      labelWidth: '3'
+      valueWidth: '9'
+   * ```
+   */
   style: {
+    /**
+     * form width
+     * @example
+     * 600px, 100em
+     */
     width: string;
+    /**
+     * field label width
+     * @example
+     * bootstrap width 참고 (1 ~ 12) 또는 '600px'
+     */
     labelWidth: string | number;
+    /**
+     * field value width
+     * @example
+     * bootstrap width 참고 (1 ~ 12) 또는 '600px'
+     */
     valueWidth: string | number;
+    /**
+     * field label position
+     * @example
+     * "top" | "left" | "left-left" | "left-right" | "right" | "right-left" | "right-right" | "bottom"
+     */
     position: string;
   };
-  autoFocus: boolean; //  default true
-  notValidMessage: string; //'This value is not valid'
-  onMounted: OptionCallback;
-  message: {
+  /**
+   * field 자동 포커스
+   * @default true
+   * @example
+   * true or false
+   */
+  autoFocus?: boolean; //  default true
+  notValidMessage?: string; //'This value is not valid'
+  onMounted?: OptionCallback;
+  message?: {
     required: string; // '{name} 필수 입력사항입니다.'
     string: {
       minLength: string; //'{size} 글자 이상 입력해야합니다.'
@@ -32,5 +69,5 @@ export interface FormOptions {
       message: string; // '{type} 유효하지 않습니다.'
     };
   };
-  fields: array;
+  fields: any[];
 }

@@ -5,6 +5,7 @@ import { fileValidator } from "src/rule/fileValidator";
 import Lanauage from "src/util/Lanauage";
 import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
+import utils from "src/util/utils";
 
 export default class FileRender extends Render {
   private element: HTMLInputElement;
@@ -27,7 +28,11 @@ export default class FileRender extends Render {
       const files = (e.target as HTMLInputElement)?.files;
 
       if (files) {
-        this.addFiles(files);
+        let fileList = [];
+        for (let item of files) {
+          fileList.push(item);
+        }
+        this.addFiles(fileList);
       }
       customChangeEventCall(this.field, e, this);
       this.valid();
@@ -40,7 +45,7 @@ export default class FileRender extends Render {
     this.setFileList(this.fileList);
   }
 
-  addFiles(files: FileList) {
+  addFiles(files: any[]) {
     let addFlag = false;
 
     const newFiles: FileInfo[] = [];

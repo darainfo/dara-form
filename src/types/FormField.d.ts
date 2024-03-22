@@ -66,11 +66,11 @@ export interface FormField {
   customOptions: any;
   label: string; // '아이디'
   style: {
-    width: stirng | number;
+    width: string | number;
     labelHide: boolean;
-    labelWidth: stirng | number;
+    labelWidth: string | number;
     customClass: string;
-    valueWidth: stirng | number;
+    valueWidth: string | number;
     position: string;
     tabAlign: string;
   };
@@ -86,9 +86,9 @@ export interface FormField {
     minLength: number; // 3
     maxLength: number; //100
     minimum: number;
-    exclusiveMinimum: booealn;
+    exclusiveMinimum: boolean;
     maximum: number;
-    exclusiveMaximum: booealn;
+    exclusiveMaximum: boolean;
   };
   different: {
     // field 값이 다른지 비교

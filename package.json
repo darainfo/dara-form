@@ -1,6 +1,6 @@
 {
   "name": "dara-form",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "sideEffects": false,
   "description": "Dara form validation ",
   "author": {
@@ -122,6 +122,7 @@
     "build:dev": "webpack --config webpack.dev.js",
     "build:prod": "webpack --config webpack.prod.js && webpack --env=mode=deploy --config webpack.dev.js",
     "dts:gen": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
+    "docs:gen": "typedoc --tsconfig tsconfig.doc.json",
     "test": "jest",
     "start": "webpack-dev-server --open --config ./webpack.dev.server.js",
     "copy-dts": "copyfiles -u 1 \"src/**/*.d.ts\" dist",

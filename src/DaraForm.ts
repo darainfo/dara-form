@@ -369,7 +369,7 @@ export default class DaraForm {
   /**
    * 모든 field 얻기
    */
-  public getFields = (): [] => {
+  public getFields = (): any[] => {
     return this.options.fields;
   };
 
