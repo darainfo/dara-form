@@ -62,7 +62,7 @@ export const ALIGN = {
 
 export type TEXT_ALIGN_TYPE = (typeof ALIGN)[keyof typeof ALIGN];
 
-export type RENDER_TYPE = "number" | "text" | "file" | "textarea" | "dropdown" | "radio" | "checkbox" | "date" | "datetime" | "dateyear" |"datemonth" |"datehour" |"group" | "custom";
+export type RENDER_TYPE = "number" | "text" | "file" | "textarea" | "dropdown" | "radio" | "checkbox" | "date" | "datetime" | "dateyear" | "datemonth" | "datehour" | "group" | "custom";
 
 export type REGEXP_TYPE = "email" | "url" | "alpha" | "alpha-num";
 

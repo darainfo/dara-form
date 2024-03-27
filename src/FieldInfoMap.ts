@@ -107,11 +107,11 @@ export default class FieldInfoMap {
    * 모든 필드값 구하기
    *
    * @public
-   * @param {boolean} isValid
+   * @param {boolean} validationCheck
    * @returns {*}
    */
-  public getAllFieldValue(formValue: any, isValid: boolean) {
-    if (isValid !== true) {
+  public getAllFieldValue(formValue: any, validationCheck: boolean) {
+    if (validationCheck !== true) {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
         formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
       }
@@ -145,8 +145,8 @@ export default class FieldInfoMap {
     });
   }
 
-  public getFormDataValue(formValue: any, isValid: boolean) {
-    if (isValid !== true) {
+  public getFormDataValue(formValue: any, validationCheck: boolean) {
+    if (validationCheck !== true) {
       let reval = new FormData();
 
       for (let [key, value] of Object.entries(formValue)) {
