@@ -73,8 +73,29 @@ export default {
     return Array.isArray(value);
   },
 
+  /**
+   * tab render type check
+   *
+   * @param {FormField} field
+   * @returns {boolean} tab type 인지 여부
+   */
+  isTabType(field: FormField): boolean {
+    return field && field.renderType === "tab";
+  },
+  /**
+   * grid render type check
+   *
+   * @param {FormField} field
+   * @returns {boolean} grid type 인지 여부
+   */
+  isGridType(field: FormField): boolean {
+    return field && field.renderType === "grid";
+  },
   replaceXssField(field: FormField): FormField {
-    field.name = this.replace(field.name);
+    if (this.isUndefined(field.$xssName)) {
+      field.$xssName = "df_" + field.name?.replaceAll(/[<>"'&]/g, "_");
+    }
+
     field.label = this.replace(field.label);
     return field;
   },

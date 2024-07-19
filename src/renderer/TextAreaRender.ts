@@ -11,12 +11,12 @@ export default class TextAreaRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLTextAreaElement;
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setDefaultInfo();
   }
 
-  initEvent() {
+  mounted() {
     inputEvent(this.field, this.element, this);
   }
 
@@ -26,7 +26,7 @@ export default class TextAreaRender extends Render {
 
     return `
         <div class="df-field">
-            <textarea name="${field.name}" rows="${rows}" class="form-field textarea help-icon"></textarea>
+            <textarea name="${field.$xssName}" rows="${rows}" class="form-field textarea help-icon"></textarea>
         </div> 
         ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>

@@ -5,11 +5,11 @@ import DaraForm from "src/DaraForm";
 export default class ButtonRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
   }
 
-  initEvent() {
+  mounted() {
     this.rowElement.querySelector(`#${this.field.$key}`)?.addEventListener("click", (evt) => {
       if (this.field.onClick) {
         this.field.onClick.call(null, this.field);

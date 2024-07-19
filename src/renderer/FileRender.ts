@@ -19,11 +19,11 @@ export default class FileRender extends Render {
 
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.fileList = field.listItem?.list || [];
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
   }
 
-  initEvent() {
+  mounted() {
     this.element.addEventListener("change", (e: Event) => {
       const files = (e.target as HTMLInputElement)?.files;
 
@@ -75,6 +75,8 @@ export default class FileRender extends Render {
 
   private setFileList(fileList: FileInfo[], initFlag?: boolean | undefined) {
     const fileListElement = this.rowElement.querySelector(".dara-file-list");
+
+    console.log("fileList", fileList);
 
     if (fileListElement) {
       if (initFlag === true) {
@@ -174,7 +176,7 @@ export default class FileRender extends Render {
     <div class="df-field">
       <span class="file-wrapper">
         <label class="file-label">
-          <input type="file" name="${field.name}" class="form-field file" multiple />
+          <input type="file" name="${field.$xssName}" class="form-field file" multiple />
           ${Lanauage.getMessage("fileButton")}
         </label>
         <i class="dara-icon help-icon"></i>

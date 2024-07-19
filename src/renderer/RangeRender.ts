@@ -14,12 +14,12 @@ export default class RangeRender extends Render {
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.rangeNumElement = rowElement.querySelector(".range-num") as Element;
 
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setDefaultInfo();
   }
 
-  initEvent() {
+  mounted() {
     this.element.addEventListener("input", (e: any) => {
       this.rangeNumElement.innerHTML = e.target.value;
 
@@ -33,7 +33,7 @@ export default class RangeRender extends Render {
     return `
         <div class="df-field">
             <span class="range-num">${field.defaultValue ? field.defaultValue : 0}</span>
-            <input type="range" name="${field.name}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
+            <input type="range" name="${field.$xssName}" class="form-field range help-icon" min="${field.rule.minimum}" max="${field.rule.maximum}"/>
         </div> 
         ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>

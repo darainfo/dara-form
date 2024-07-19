@@ -113,7 +113,9 @@ export default class FieldInfoMap {
   public getAllFieldValue(formValue: any, validationCheck: boolean) {
     if (validationCheck !== true) {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
+        if (!utils.isGridType(fieldInfo.$parent)) {
+          formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
+        }
       }
       return formValue;
     }

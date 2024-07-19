@@ -15,12 +15,12 @@ export default class DateRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setDefaultInfo();
   }
 
-  initEvent() {
+  mounted() {
     let dateOnSelectEvent: any;
     this.field.customOptions = Object.assign({}, this.field.customOptions);
     if (typeof this.field.customOptions.onSelect !== "undefined") {
@@ -51,7 +51,7 @@ export default class DateRender extends Render {
   static template(field: FormField): string {
     return `
     <div class="df-field">
-      <input type="text" name="${field.name}" class="form-field text help-icon" autocomplete="off"/>
+      <input type="text" name="${field.$xssName}" class="form-field text help-icon" autocomplete="off"/>
      </div>
      ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>

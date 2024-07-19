@@ -54,7 +54,7 @@ export default class DaraForm {
 
   private formValue: any = {};
 
-  private formTemplate: FormTemplate;
+  public formTemplate: FormTemplate;
 
   constructor(selector: string, options: FormOptions, message: Message) {
     this.options = {} as FormOptions;
@@ -178,8 +178,11 @@ export default class DaraForm {
    * 폼 필드 value 셋팅
    * @param values
    */
-  public setValue = (values: any) => {
-    this.resetForm();
+  public setValue = (values: any, clear: boolean | undefined) => {
+    if (clear !== false) {
+      this.resetForm();
+    }
+
     Object.keys(values).forEach((fieldName) => {
       this._setFieldValue(fieldName, values[fieldName]);
     });

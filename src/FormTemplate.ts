@@ -6,6 +6,7 @@ import FieldInfoMap from "src/FieldInfoMap";
 import styleUtils from "./util/styleUtils";
 import DaraForm from "./DaraForm";
 import TabRender from "./renderer/TabRender";
+import GridRender from "./renderer/GridRender";
 
 /**
  * form template
@@ -49,12 +50,14 @@ export default class FormTemplate {
 
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-      fileldInfo.$xssName = utils.unFieldName(fileldInfo.name);
 
-      const fieldRowElement = this.formElement.querySelector(`#${fileldInfo.$key}`);
+      console.log(fileldInfo, fileldInfo.$key);
+      let fieldKey = fileldInfo.$key;
 
-      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldRowElement, this.daraform);
-      fieldRowElement?.removeAttribute("id");
+      const fieldWrapperElement = this.formElement.querySelector(`#${fieldKey}`);
+
+      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldWrapperElement, this.daraform);
+      fieldWrapperElement?.removeAttribute("id");
     });
   }
 
@@ -91,8 +94,11 @@ export default class FormTemplate {
    */
   private getTemplate(field: FormField, fieldStyle: FieldStyle): string {
     let fieldTemplate = "";
-    if (this.isTabType(field)) {
+
+    if (utils.isTabType(field)) {
       fieldTemplate = this.tabTemplate(field);
+    } else if (utils.isGridType(field)) {
+      fieldTemplate = this.gridTemplate(field);
     } else if (field.children) {
       if (!utils.isUndefined(field.name)) {
         fieldTemplate = this.getFieldTempate(field);
@@ -182,20 +188,16 @@ export default class FormTemplate {
     return `${field.label ?? ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
 
-  /**
-   * tab render type check
-   *
-   * @param {FormField} field
-   * @returns {boolean} tab type 인지 여부
-   */
-  private isTabType(field: FormField) {
-    return field.renderType === "tab";
-  }
-
   private tabTemplate(field: FormField) {
     this.addRowFieldInfo(field);
 
     return TabRender.template(field, this, this.options);
+  }
+
+  private gridTemplate(field: FormField) {
+    this.addRowFieldInfo(field);
+
+    return GridRender.template(field, this, this.options);
   }
 
   /**

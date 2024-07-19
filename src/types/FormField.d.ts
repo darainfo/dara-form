@@ -61,7 +61,7 @@ export interface FieldStyle {
  * @typedef {FormField}
  */
 export interface FormField {
-  name: string; // 'uid'
+  name: string; // 'name'
   renderType?: RENDER_TYPE | string;
   customOptions: any;
   label: string; // '아이디'

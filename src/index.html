@@ -12,7 +12,7 @@
       <button type="button" onclick="formObj.addItem()">Add</button>
       <button type="button" onclick="formObj.getValue()">getValue</button>
       <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
-      <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
+      <button type="button" onclick="loginForm.isValidForm()">valid check</button>
       <button type="button" onclick="formBuilder.resetForm()">Reset</button>
       <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
     </div>
@@ -95,7 +95,7 @@
   }
   load();
 
-  const form = new DaraForm("#loginForm", {
+  const loginForm = new DaraForm("#loginForm", {
     message: "This value is not valid",
     //mode: 'vertical',
     //autoFocus: false,
@@ -126,7 +126,8 @@
     },
     fields: [
       {
-        name: "uid",
+        name: "\"uid<div>",
+        required: true,
         label: "아이디",
         tooltip: "아이디를 넣어주세요.",
         placeholder: "아이디를 넣어주세요.",
@@ -149,8 +150,43 @@
           ],
         }
       }
+      , {
+        name: "grid",
+        label: "grid",
+        renderType: "grid",
+        children: [
+          {
+            name: "key",
+            label: "key",
+            renderType: "text",
+            required: true,
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+          }
+          , {
+            name: "value",
+            label: "value",
+            renderType: "text",
+          }
+          , {
+            name: "sex",
+            label: "성별",
+            required: true,
+            renderType: "dropdown",
+            listItem: {
+              labelField: "credName",
+              valueField: "credId",
+              list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
+            }
+          },
+        ],
+
+      }
     ]
   });
+
   var formInfo = {
     message: "This value is not valid",
     //mode: 'vertical',
@@ -297,9 +333,9 @@
       },
       {
         name: "uname",
-        label: "이름",
+        label: "이름222222",
         renderType: 'custom',
-        template: 'template||template||template',
+        template: '<div id="customElementID">111</div>',
         required: true,
         rule: {
           minLength: 2,
@@ -309,10 +345,14 @@
           console.log(arg);
         },
         renderer: {
-          getValue: () => {
-            return 'awefawfe';
+          mounted: () => {
+            console.log(document.getElementById('customElementID'))
           }
-          , valid: function (field, rowElement) {
+          , getValue() {
+            return '21';
+          }
+          , valid(field, rowElement) {
+            const val = this.getValue();
             return { name: field.name, message: 'custom type not valid' };
           }
         }
@@ -560,7 +600,7 @@
       });
     },
     getValue: () => {
-      alert(JSON.stringify(formBuilder.getValue()));
+      alert(JSON.stringify(loginForm.getValue()));
     },
     getValuePromise: () => {
       formBuilder
@@ -583,7 +623,7 @@
         { fileId: "test1", fileName: "aaa.zip" },
         { fileId: "test2", fileName: "bbb.zip" },
       ]);
-      formBuilder.setValue({ sex: "X" });
+      formBuilder.setValue({ sex: "X" }, false);
     },
   };
 
@@ -591,4 +631,5 @@
 
   window.formBuilder = formBuilder;
   window.formObj = formObj;
+  window.loginForm = loginForm; 
 </script>

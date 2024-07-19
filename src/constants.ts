@@ -13,6 +13,7 @@ import ButtonRender from "./renderer/ButtonRender";
 import RangeRender from "./renderer/RangeRender";
 import DateRender from "./renderer/DateRender";
 import TabRender from "./renderer/TabRender";
+import GridRender from "./renderer/GridRender";
 
 export const RULES = {
   NAN: "nan",
@@ -52,6 +53,7 @@ export const RENDER_TEMPLATE: any = {
   date: DateRender,
   datetime: DateRender,
   tab: TabRender,
+  grid: GridRender,
 };
 
 export const ALIGN = {

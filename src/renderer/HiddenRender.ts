@@ -3,15 +3,12 @@ import Render from "./Render";
 import DaraForm from "src/DaraForm";
 
 export default class HiddenRender extends Render {
-
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.field.$value = field.defaultValue;
   }
 
-  initEvent() {
-
-  }
+  mounted() {}
 
   static template(field: FormField): string {
     return ``;

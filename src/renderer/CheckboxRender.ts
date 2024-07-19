@@ -38,12 +38,12 @@ export default class CheckboxRender extends Render {
 
     this.defaultCheckValue = initDefaultValueFlag ? initDefaultValue : this.defaultCheckValue;
 
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
-  public initEvent() {
+  public mounted() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
     checkboxes.forEach((ele) => {
@@ -60,7 +60,7 @@ export default class CheckboxRender extends Render {
 
   static template(field: FormField): string {
     const templates: string[] = [];
-    const fieldName = field.name;
+    const fieldName = field.$xssName;
 
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
@@ -94,7 +94,7 @@ export default class CheckboxRender extends Render {
       }
       containerEle.innerHTML = CheckboxRender.template(this.field);
 
-      this.initEvent();
+      this.mounted();
     }
   }
 

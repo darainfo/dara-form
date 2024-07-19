@@ -43,17 +43,17 @@ export default class DropdownRender extends Render {
       this.defaultCheckValue = "";
     }
 
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
-  initEvent() {
+  mounted() {
     dropdownChangeEvent(this.field, this.element, this);
   }
 
   static template(field: FormField): string {
-    let template = ` <div class="df-field"><select name="${field.name}" class="form-field dropdown">
+    let template = ` <div class="df-field"><select name="${field.$xssName}" class="form-field dropdown">
           ${DropdownRender.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
                 ${Render.getDescriptionTemplate(field)}

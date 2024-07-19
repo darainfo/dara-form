@@ -43,7 +43,7 @@ export default abstract class Render {
     return this.daraForm;
   }
 
-  public abstract initEvent(): void;
+  public abstract mounted(): void;
   public abstract getValue(): any;
   public abstract setValue(value: any): void;
   public abstract reset(): void;

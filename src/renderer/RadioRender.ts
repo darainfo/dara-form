@@ -40,12 +40,12 @@ export default class RadioRender extends Render {
       this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem?.list[0][valueKey] : "";
     }
 
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setValue(this.defaultCheckValue);
   }
 
-  public initEvent() {
+  public mounted() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
     checkboxes.forEach((ele) => {
@@ -63,7 +63,7 @@ export default class RadioRender extends Render {
 
   static template(field: FormField): string {
     const templates: string[] = [];
-    const fieldName = field.name;
+    const fieldName = field.$xssName;
 
     const labelKey = this.valuesLabelKey(field);
     const valueKey = this.valuesValueKey(field);
@@ -104,7 +104,7 @@ export default class RadioRender extends Render {
 
       containerEle.innerHTML = RadioRender.template(this.field);
 
-      this.initEvent();
+      this.mounted();
     }
   }
 

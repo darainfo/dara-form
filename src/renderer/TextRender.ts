@@ -11,19 +11,19 @@ export default class TextRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setDefaultInfo();
   }
 
-  initEvent() {
+  mounted() {
     inputEvent(this.field, this.element, this);
   }
 
   static template(field: FormField): string {
     return `
      <div class="df-field">
-      <input type="text" name="${field.name}" class="form-field text help-icon" />
+      <input type="text" name="${field.$xssName}" class="form-field text help-icon" />
      </div>
      ${Render.getDescriptionTemplate(field)}
      <div class="help-message"></div>

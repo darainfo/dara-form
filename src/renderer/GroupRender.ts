@@ -7,7 +7,7 @@ export default class GroupRender extends Render {
     super(daraForm, field, rowElement);
   }
 
-  public initEvent() {}
+  public mounted() {}
 
   static isDataRender(): boolean {
     return false;

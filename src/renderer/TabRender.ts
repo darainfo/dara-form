@@ -13,10 +13,10 @@ export default class TabRender extends Render {
     super(daraForm, field, rowElement);
 
     this.tabContainerElement = rowElement.querySelector(".df-field-container") as HTMLElement;
-    this.initEvent();
+    this.mounted();
   }
 
-  initEvent() {
+  mounted() {
     this.tabContainerElement.querySelectorAll(".tab-item").forEach((tabItem) => {
       tabItem.addEventListener("click", (e: any) => {
         this.clickEventHandler(tabItem, e);

@@ -3,6 +3,7 @@ import Render from "./Render";
 import { invalidMessage, resetRowElementStyleClass } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
 import utils from "src/util/utils";
+import { stringValidator } from "src/rule/stringValidator";
 
 export default class CustomRender extends Render {
   private customFunction;
@@ -11,7 +12,7 @@ export default class CustomRender extends Render {
     super(daraForm, field, rowElement);
     if (field.renderer) {
       this.customFunction = field.renderer;
-      this.initEvent();
+      this.mounted();
       this.setDefaultOption();
       this.setDefaultInfo();
     } else {
@@ -19,9 +20,9 @@ export default class CustomRender extends Render {
     }
   }
 
-  initEvent() {
-    if (this.customFunction.initEvent) {
-      (this.customFunction.initEvent as any).call(this, this.field, this.rowElement);
+  mounted() {
+    if (this.customFunction.mounted) {
+      (this.customFunction.mounted as any).call(this, this.field, this.rowElement);
     }
   }
 
@@ -74,6 +75,10 @@ export default class CustomRender extends Render {
 
       return;
     }
-    return true;
+    const validResult = stringValidator(this.getValue(), this.field);
+
+    invalidMessage(this.field, this.rowElement, validResult);
+
+    return validResult;
   }
 }

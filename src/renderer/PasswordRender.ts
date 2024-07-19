@@ -11,19 +11,19 @@ export default class PasswordRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
-    this.initEvent();
+    this.mounted();
     this.setDefaultOption();
     this.setDefaultInfo();
   }
 
-  initEvent() {
+  mounted() {
     inputEvent(this.field, this.element, this);
   }
 
   static template(field: FormField): string {
     return `
         <div class="df-field">
-            <input type="password" name="${field.name}" class="form-field password help-icon" autocomplete="off" />
+            <input type="password" name="${field.$xssName}" class="form-field password help-icon" autocomplete="off" />
         </div>
         ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>
