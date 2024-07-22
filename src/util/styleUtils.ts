@@ -1,5 +1,5 @@
 import { FieldStyle, FormField } from "@t/FormField";
-import utils from "./utils";
+import * as utils from "./utils";
 import { FIELD_POSITION_STYLE, ALIGN } from "src/constants";
 import { FormOptions } from "@t/FormOptions";
 
@@ -34,9 +34,9 @@ export default {
 
     fieldStyle.fieldClass = `${positionArr[0]} ${field.style?.customClass || ""}`;
     if (width) {
-      if(utils.isNumber(width)){
+      if (utils.isNumber(width)) {
         fieldStyle.fieldClass += utils.isNumber(width) ? ` col-xs-${width}` : "";
-      }else{
+      } else {
         fieldStyle.fieldStyle = utils.isNumber(width) ? "" : `width:${width};`;
       }
     }

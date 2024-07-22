@@ -5,7 +5,7 @@ import { fileValidator } from "src/rule/fileValidator";
 import Lanauage from "src/util/Lanauage";
 import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 
 export default class FileRender extends Render {
   private element: HTMLInputElement;

@@ -6,7 +6,7 @@ import DaraForm from "src/DaraForm";
 import { DateTimePicker } from "dara-datetimepicker";
 
 import "dara-datetimepicker/dist/dara.datetimepicker.min.css";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 
 export default class DateRender extends Render {
   private element: HTMLInputElement;

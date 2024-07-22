@@ -2,7 +2,7 @@ import { FormField } from "@t/FormField";
 import Render from "./Render";
 import { invalidMessage, resetRowElementStyleClass } from "src/util/validUtils";
 import DaraForm from "src/DaraForm";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 import { stringValidator } from "src/rule/stringValidator";
 
 export default class CustomRender extends Render {
@@ -32,11 +32,13 @@ export default class CustomRender extends Render {
 
   static template(field: FormField): string {
     if (field.template) {
-      const fieldTempate = utils.isString(field.template) ? field.template : field.template();
+      const fieldTemplate = utils.isString(field.template) ? field.template : field.template();
 
-      return ` <div class="df-field">${fieldTempate}</div>
+      return ` <div class="df-field">
+        ${fieldTemplate}
+        </div>
           ${Render.getDescriptionTemplate(field)}
-      <div class="help-message"></div>`;
+        <div class="help-message"></div>`;
     }
     return "";
   }

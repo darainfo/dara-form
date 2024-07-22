@@ -3,7 +3,7 @@ import { FormField } from "./types/FormField";
 import { ValidResult } from "./types/ValidResult";
 import { getRenderer } from "./util/renderFactory";
 import Lanauage from "./util/Lanauage";
-import utils from "./util/utils";
+import * as utils from "./util/utils";
 
 interface NumberFieldMap {
   [key: string]: FormField;

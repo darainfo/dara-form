@@ -5,7 +5,7 @@ import { RULES } from "src/constants";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { customChangeEventCall } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 
 export default class RadioRender extends Render {
   private defaultCheckValue;

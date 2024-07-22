@@ -1,6 +1,6 @@
 import { FormOptions } from "@t/FormOptions";
 import { FormField } from "@t/FormField";
-import utils from "./util/utils";
+import * as utils from "./util/utils";
 import { ValidResult } from "@t/ValidResult";
 import { Message } from "@t/Message";
 import Lanauage from "./util/Lanauage";
@@ -19,6 +19,7 @@ const defaultOptions = {
     valueWidth: 9,
     position: "left-right",
   },
+  autoCreate: true,
   notValidMessage: "This form is not valid.",
   fields: [],
 } as FormOptions;
@@ -56,13 +57,18 @@ export default class DaraForm {
 
   public formTemplate: FormTemplate;
 
-  constructor(selector: string, options: FormOptions, message: Message) {
-    this.options = {} as FormOptions;
-    Object.assign(this.options, defaultOptions, options);
+  constructor(selector: string, options: FormOptions, message?: Message) {
+    this.options = utils.merge({}, defaultOptions, options) as FormOptions;
 
     Lanauage.set(message);
 
-    const formElement = document.querySelector(selector);
+    let formElement = document.querySelector(selector);
+    if (options.autoCreate === false) {
+      formElement = document.createElement("div");
+    } else {
+      formElement = document.querySelector(selector);
+    }
+
     if (formElement) {
       this.orginFormStyleClass = formElement.className;
       formElement.classList.add("dara-form");
@@ -72,9 +78,12 @@ export default class DaraForm {
       }
       this.selector = selector;
       this.formElement = formElement;
+
       this.createForm(this.options.fields);
 
-      allInstance[selector] = this;
+      if (this.options.autoCreate !== false) {
+        allInstance[selector] = this;
+      }
     } else {
       throw new Error(`${selector} form selector not found`);
     }
@@ -88,6 +97,10 @@ export default class DaraForm {
     this.fieldInfoMap = new FieldInfoMap(this.selector);
     this.formElement.innerHTML = "";
     this.formTemplate = new FormTemplate(this, this.formElement, this.fieldInfoMap);
+
+    if (this.options.autoCreate === false) {
+      return;
+    }
 
     fields.forEach((field) => {
       this.formTemplate.addRow(field);

@@ -100,6 +100,7 @@ export interface FormField {
     field: string;
     message: string;
   };
+  enableGridAddButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
   template: OptionCallback | string; // 필드 템플릿
   defaultValue: string; // 기본값
   listItem: ValuesInfo; // dropdown, radio, checkbox

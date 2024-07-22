@@ -1,6 +1,6 @@
 import { FormField, ValuesInfo } from "@t/FormField";
 import Render from "./Render";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 import { ValidResult } from "@t/ValidResult";
 import { RULES } from "src/constants";
 import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";

@@ -46,6 +46,14 @@ export interface FormOptions {
      */
     position: string;
   };
+
+  /**
+   * form 자동 생성 여부
+   * @default true
+   * @example
+   * true or false
+   */
+  autoCreate?: boolean;
   /**
    * field 자동 포커스
    * @default true

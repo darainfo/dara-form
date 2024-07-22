@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import DaraForm from "src/DaraForm";
-import utils from "src/util/utils";
+import * as utils from "src/util/utils";
 
 export default abstract class Render {
   protected daraForm;

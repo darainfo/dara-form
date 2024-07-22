@@ -1,6 +1,6 @@
 import { FormOptions } from "@t/FormOptions";
 import { FieldStyle, FormField } from "@t/FormField";
-import utils from "./util/utils";
+import * as utils from "./util/utils";
 import FieldInfoMap from "src/FieldInfoMap";
 
 import styleUtils from "./util/styleUtils";
@@ -50,8 +50,6 @@ export default class FormTemplate {
 
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-
-      console.log(fileldInfo, fileldInfo.$key);
       let fieldKey = fileldInfo.$key;
 
       const fieldWrapperElement = this.formElement.querySelector(`#${fieldKey}`);
@@ -101,13 +99,13 @@ export default class FormTemplate {
       fieldTemplate = this.gridTemplate(field);
     } else if (field.children) {
       if (!utils.isUndefined(field.name)) {
-        fieldTemplate = this.getFieldTempate(field);
+        fieldTemplate = this.getFieldTemplate(field);
       } else {
         this.addRowFieldInfo(field);
       }
       fieldTemplate += this.childTemplate(field, fieldStyle);
     } else {
-      fieldTemplate = this.getFieldTempate(field);
+      fieldTemplate = this.getFieldTemplate(field);
     }
     return fieldTemplate;
   }
@@ -150,17 +148,17 @@ export default class FormTemplate {
         labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" title="${childField.label ?? ""}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
       }
 
-      let childFieldTempate = "";
+      let childFieldTemplate = "";
 
       if (childField.children) {
-        childFieldTempate = this.getTemplate(childField, childFieldStyle);
+        childFieldTemplate = this.getTemplate(childField, childFieldStyle);
       } else {
-        childFieldTempate = this.getTemplate(childField, parentFieldStyle);
+        childFieldTemplate = this.getTemplate(childField, parentFieldStyle);
       }
 
       template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
         ${labelTemplate}
-        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTempate}</span>
+        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTemplate}</span>
       </div>`);
 
       if (!labelHideFlag) {
@@ -216,7 +214,7 @@ export default class FormTemplate {
    * @param {FormField} field
    * @returns {string}
    */
-  public getFieldTempate(field: FormField): string {
+  public getFieldTemplate(field: FormField): string {
     if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
       throw new Error(`Duplicate field name "${field.name}"`);
     }
