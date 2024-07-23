@@ -154,12 +154,20 @@
         name: "grid",
         label: "grid",
         renderType: "grid",
-        children: [
+        gridOptions: {
+          disableAddButton: false,
+          disableRemoveButton: false,
+          height: '200px',
+        }
+        , children: [
           {
             name: "key",
             label: "key",
             renderType: "text",
             required: true,
+            style: {
+              width: '200px'
+            },
             rule: {
               minLength: 2,
               maxLength: 100,

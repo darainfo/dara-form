@@ -100,7 +100,6 @@ export interface FormField {
     field: string;
     message: string;
   };
-  enableGridAddButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
   template: OptionCallback | string; // 필드 템플릿
   defaultValue: string; // 기본값
   listItem: ValuesInfo; // dropdown, radio, checkbox
@@ -111,6 +110,12 @@ export interface FormField {
   fileDownload: OptionCallback; // file download function
   renderer: Render; // custom renderer
   conditional: ConditionInfo; // 보이기 여부
+  gridOptions?: {
+    disableAddButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
+    disableRemoveButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
+    align?: TEXT_ALIGN_TYPE; // renderer 그리드 타입 추가 버튼 유무
+    height: string; // grid 높이값
+  };
   $renderer: Render; // 실제 render
   $xssName: string; // xss 변경명
   $key: string; // 내부 key

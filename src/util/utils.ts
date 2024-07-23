@@ -8,7 +8,7 @@ const xssFilter = {
   "'": "&#39;",
 } as any;
 
-export const replace = (inputText: string): string => {
+export const replaceXss = (inputText: string): string => {
   let returnText = inputText;
   if (returnText) {
     Object.keys(xssFilter).forEach((key) => {
@@ -98,12 +98,31 @@ export const isGridType = (field: FormField): boolean => {
   return field && field.renderType === "grid";
 };
 export const replaceXssField = (field: FormField): FormField => {
+  field.$xssName = getXssFieldName(field);
+
+  field.label = replaceXss(field.label);
+  return field;
+};
+
+/**
+ * grid field name xss repalce
+ *
+ * @param {FormField} field
+ * @returns {string} replace 된 field name
+ */
+export const getXssFieldName = (field: FormField): string => {
   if (isUndefined(field.$xssName)) {
-    field.$xssName = "df_" + field.name?.replaceAll(/[<>"'&]/g, "_");
+    let returnText = field.name;
+    if (returnText) {
+      Object.keys(xssFilter).forEach((key) => {
+        returnText = returnText.replaceAll(key, "_");
+      });
+    }
+
+    return "df_" + returnText;
   }
 
-  field.label = replace(field.label);
-  return field;
+  return field.$xssName;
 };
 
 export const getHashCode = (str: string) => {

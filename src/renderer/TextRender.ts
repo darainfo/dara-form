@@ -10,6 +10,9 @@ export default class TextRender extends Render {
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
+
+    console.log(field.$xssName, rowElement);
+
     this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
     this.mounted();
     this.setDefaultOption();

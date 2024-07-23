@@ -8,7 +8,6 @@ import styleUtils from "src/util/styleUtils";
 import FormTemplate from "src/FormTemplate";
 import { FormOptions } from "@t/FormOptions";
 import { NumberKeyMap } from "@t/DataMap";
-import { util } from "prettier";
 
 let $$idx = 0;
 
@@ -63,23 +62,35 @@ export default class GridRender extends Render {
 
   static template(field: FormField, formTemplate: FormTemplate, options: FormOptions, olnyAddRow?: boolean): string {
     let theadTemplate = [];
+    let colgroupTemplate = [];
+    let addBtnTemplate = [];
 
     if (field.children) {
-      if (field.enableGridAddButton !== false) {
-        theadTemplate.push(`<tr><td class="df-grid-btn-area" colspan="${field.children.length + 1}"><button type="button" class="df-grid-add-row-btn">+ Add</button></td></tr>`);
+      if (field.gridOptions?.disableAddButton !== true) {
+        addBtnTemplate.push(`<div class="df-grid-btn-area txt-${field.gridOptions?.align ?? "center"}"><button type="button" class="df-btn df-grid-add-row-btn"><i class="df-icon df-add-icon"></i> Add</button></div>`);
       }
-      theadTemplate.push("<tr><th></th>");
+      colgroupTemplate.push("<colgroup>");
+
+      theadTemplate.push("<tr>");
+      if (field.gridOptions?.disableRemoveButton !== true) {
+        colgroupTemplate.push(`<col style="width:38px">`);
+        theadTemplate.push("<th></th>");
+      }
+
       for (const childField of field.children) {
+        colgroupTemplate.push(`<col style="width:${childField.style?.width ?? "*"}">`);
         theadTemplate.push(`<th class="df-grid-header">${childField.label}</th>`);
       }
+      colgroupTemplate.push("</colgroup>");
       theadTemplate.push("</tr>");
     }
 
     return `
-     <div class="df-field grid-container ${field.style?.position}">
-      <div class="">
-        <table class="df-grid"><thead>${theadTemplate.join("")}</thead><tbody></tbody></table>
-      </div>
+    <div class="df-grid-field">
+      ${addBtnTemplate.join("")}
+     <div class="df-grid-container ${field.style?.position ?? ""}" style="height:${field.gridOptions?.height ?? "auto"};">
+        <table class="df-grid">${colgroupTemplate.join("")}<thead>${theadTemplate.join("")}</thead><tbody></tbody></table>
+     </div>
      </div>
      `;
   }
@@ -88,7 +99,7 @@ export default class GridRender extends Render {
    * add row
    */
   addRow() {
-    let tbodyTemplate = [];
+    let rowTemplate = [];
 
     const options = this.daraForm.getOptions();
     const formTemplate = this.gridForm.formTemplate;
@@ -96,7 +107,12 @@ export default class GridRender extends Render {
 
     ++$$idx;
     let addColumns = [];
-    tbodyTemplate.push(`<tr class="grid-row"><td><button type="button" data-row-idx="${$$idx}" class="df-grid-row-remove">X</button></td>`);
+    rowTemplate.push(`<tr class="grid-row">`);
+
+    if (this.field.gridOptions?.disableRemoveButton !== true) {
+      rowTemplate.push(`<td><button type="button" data-row-idx="${$$idx}" class="df-btn df-grid-row-remove"><i class="df-icon df-remove-icon"></i></button></td>`);
+    }
+
     for (const childField of this.field.children) {
       let fieldStyle: FieldStyle = styleUtils.fieldStyle(options, childField, null, true);
 
@@ -105,19 +121,17 @@ export default class GridRender extends Render {
       addColumns.push(columnField);
 
       columnField.name = columnField.name + "_" + $$idx;
+      columnField.$xssName = parentName + "_" + utils.getXssFieldName(columnField);
 
       const columnElement = formTemplate.getFieldTemplate(columnField);
-      columnField.$xssName = parentName + "_" + columnField.$xssName;
 
-      tbodyTemplate.push(`<td class=""><div class="grid-column ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}">${columnElement}</div></td>`);
+      rowTemplate.push(`<td id="${columnField.$xssName}"><div class="grid-column ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}">${columnElement}</div></td>`);
     }
-    tbodyTemplate.push("</tr>");
+    rowTemplate.push("</tr>");
 
     this.allAddRowInfo[$$idx] = addColumns;
 
-    const addRowElement = this.createTrRow(tbodyTemplate.join(""));
-
-    console.log("addRowElement : ", addRowElement);
+    const addRowElement = this.createTrRow(rowTemplate.join(""));
 
     if (addRowElement) {
       this.rowElement.querySelector("tbody")?.append(addRowElement);
@@ -128,7 +142,7 @@ export default class GridRender extends Render {
     }
 
     for (let columnField of this.allAddRowInfo[$$idx]) {
-      columnField.$renderer = new (columnField.$renderer as any)(columnField, this.rowElement, this.gridForm);
+      columnField.$renderer = new (columnField.$renderer as any)(columnField, addRowElement?.querySelector(`#${columnField.$xssName}`), this.gridForm);
     }
   }
 
@@ -143,7 +157,9 @@ export default class GridRender extends Render {
     const rowElement = target.closest("tr");
 
     if (rowElement) {
-      let rowIdx = rowElement.getAttribute("data-row-idx") || "-1";
+      if (rowElement.parentElement?.childElementCount == 1) return;
+
+      let rowIdx = target.getAttribute("data-row-idx") || "-1";
 
       delete this.allAddRowInfo[parseInt(rowIdx, 10)];
       rowElement.remove();
@@ -167,12 +183,9 @@ export default class GridRender extends Render {
     for (let idx in this.allAddRowInfo) {
       const rowColumns = this.allAddRowInfo[idx];
 
-      console.log(rowColumns);
-
       let rowInfo = {} as any;
       for (let childIdx = 0; childIdx < childrenLength; childIdx++) {
         let childField = children[childIdx];
-        console.log(rowColumns[childIdx].$renderer);
         rowInfo[childField.name] = this.gridForm.getFieldValue(rowColumns[childIdx].name); // rowColumns[childIdx].$renderer.getValue();
       }
 
