@@ -1,4 +1,4 @@
-import { TEXT_ALIGN_TYPE } from "src/constants";
+import { FORM_MODE, TEXT_ALIGN_TYPE } from "src/constants";
 import { OptionCallback } from "./FormField";
 
 /**
@@ -63,6 +63,7 @@ export interface FormOptions {
   autoFocus?: boolean; //  default true
   notValidMessage?: string; //'This value is not valid'
   onMounted?: OptionCallback;
+  mode?: FORM_MODE;
   message?: {
     required: string; // '{name} 필수 입력사항입니다.'
     string: {

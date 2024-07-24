@@ -98,7 +98,7 @@ export default class GridRender extends Render {
   /**
    * add row
    */
-  addRow() {
+  addRow(valueItem?: any): void {
     let rowTemplate = [];
 
     const options = this.daraForm.getOptions();
@@ -119,13 +119,15 @@ export default class GridRender extends Render {
       let columnField = utils.merge({}, childField) as FormField;
 
       addColumns.push(columnField);
-
+      columnField.$orgin = childField;
       columnField.name = columnField.name + "_" + $$idx;
       columnField.$xssName = parentName + "_" + utils.getXssFieldName(columnField);
 
       const columnElement = formTemplate.getFieldTemplate(columnField);
 
-      rowTemplate.push(`<td id="${columnField.$xssName}"><div class="grid-column ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}">${columnElement}</div></td>`);
+      // static 로 사용할지 객체 자체에서 추가 할지 여부 확인할것.
+
+      rowTemplate.push(`<td id="${columnField.$xssName}"><div class="df-field-container ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}">${columnElement}</div></td>`);
     }
     rowTemplate.push("</tr>");
 
@@ -141,8 +143,13 @@ export default class GridRender extends Render {
       });
     }
 
+    valueItem = valueItem ?? {};
     for (let columnField of this.allAddRowInfo[$$idx]) {
       columnField.$renderer = new (columnField.$renderer as any)(columnField, addRowElement?.querySelector(`#${columnField.$xssName}`), this.gridForm);
+
+      if (valueItem[columnField.$orgin.name]) {
+        columnField.$renderer.setValue(valueItem[columnField.$orgin.name]);
+      }
     }
   }
 
@@ -159,11 +166,16 @@ export default class GridRender extends Render {
     if (rowElement) {
       if (rowElement.parentElement?.childElementCount == 1) return;
 
-      let rowIdx = target.getAttribute("data-row-idx") || "-1";
+      let rowIdx = (evt.currentTarget as Element)?.getAttribute("data-row-idx") || "-1";
 
       delete this.allAddRowInfo[parseInt(rowIdx, 10)];
       rowElement.remove();
     }
+  }
+
+  allRemoveRow(): void {
+    this.rowElement.querySelector("tbody")?.replaceChildren();
+    this.allAddRowInfo = {} as NumberKeyMap;
   }
 
   createTrRow(trTemplate: string): Element | null {
@@ -176,7 +188,6 @@ export default class GridRender extends Render {
     if (this.customFunction.getValue) {
       return (this.customFunction.getValue as any).call(this, this.field, this.rowElement);
     }
-
     let result = [];
     const children = this.field.children;
     const childrenLength = children.length;
@@ -196,8 +207,22 @@ export default class GridRender extends Render {
 
   setValue(value: any): void {
     this.field.$value = value;
-    if (this.customFunction.setValue) {
-      (this.customFunction.setValue as any).call(this, value, this.field, this.rowElement);
+
+    let valueArr: any[] = [];
+    if (Array.isArray(value)) {
+      valueArr = value;
+    } else {
+      if (utils.isPlainObject(value)) {
+        valueArr.push(value);
+      }
+    }
+
+    if (valueArr.length > 0) {
+      this.allRemoveRow();
+
+      for (let valueItem of valueArr) {
+        this.addRow(valueItem);
+      }
     }
   }
 

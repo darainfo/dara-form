@@ -9,6 +9,7 @@ import { numberValidator } from "./rule/numberValidator";
 import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "src/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
+import { FORM_MODE } from "./constants";
 
 declare const APP_VERSION: string;
 
@@ -19,6 +20,7 @@ const defaultOptions = {
     valueWidth: 9,
     position: "left-right",
   },
+  mode: "new",
   autoCreate: true,
   notValidMessage: "This form is not valid.",
   fields: [],
@@ -78,7 +80,7 @@ export default class DaraForm {
       }
       this.selector = selector;
       this.formElement = formElement;
-
+      this.changeMode(this.options.mode ?? "new");
       this.createForm(this.options.fields);
 
       if (this.options.autoCreate !== false) {
@@ -111,6 +113,16 @@ export default class DaraForm {
       this.options.onMounted.call(this);
     }
   }
+
+  /**
+   * change mode
+   *
+   * @param mode form_mode default new
+   */
+  public changeMode = (mode: FORM_MODE): void => {
+    this.options.mode = mode;
+    this.formElement.setAttribute("data-df-mode", mode);
+  };
 
   /**
    * 폼 데이터 reset

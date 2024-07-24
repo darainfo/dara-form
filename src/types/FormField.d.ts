@@ -117,6 +117,7 @@ export interface FormField {
     height: string; // grid 높이값
   };
   $renderer: Render; // 실제 render
+  $orgin: FormField;
   $xssName: string; // xss 변경명
   $key: string; // 내부 key
   $value: string; // 내부 사용 value

@@ -93,6 +93,20 @@ body.dark .dara-form,
     }
   }
 
+  &[data-df-mode="view"] {
+    .form-field {
+      border-width: 0px;
+      border-color: transparent;
+      border-color: transparent;
+      outline: initial;
+
+      &:focus-visible,
+      &:focus {
+        border-width: 0px;
+      }
+    }
+  }
+
   .df-hidden {
     max-height: 0vh !important;
     width: 0px;

@@ -12,8 +12,9 @@
       <button type="button" onclick="formObj.addItem()">Add</button>
       <button type="button" onclick="formObj.getValue()">getValue</button>
       <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
-      <button type="button" onclick="loginForm.isValidForm()">valid check</button>
-      <button type="button" onclick="formBuilder.resetForm()">Reset</button>
+      <button type="button" onclick="formObj.setValue()">setValue()</button>
+      <button type="button" onclick="formObj.isValidForm()">valid check</button>
+      <button type="button" onclick="formObj.resetForm()">Reset</button>
       <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
     </div>
 
@@ -105,6 +106,7 @@
       labelWidth: '3'
 
     },
+    mode: 'view',
     // form load 이후 호출. 
     onMounted: function () {
       console.log(this)
@@ -179,7 +181,7 @@
             renderType: "text",
           }
           , {
-            name: "sex",
+            name: "cre",
             label: "성별",
             required: true,
             renderType: "dropdown",
@@ -596,6 +598,7 @@
   var formBuilder;
   var formObj = {
     load: () => {
+      formBuilder = loginForm;
       //formBuilder = new DaraForm("#formArea", formInfo);
     },
     addItem: () => {
@@ -632,6 +635,15 @@
         { fileId: "test2", fileName: "bbb.zip" },
       ]);
       formBuilder.setValue({ sex: "X" }, false);
+    },
+
+    setValue: () => {
+      formBuilder.setValue({
+        grid: [
+          { key: 'aaa', value: 'bbb', cre: 'credId' },
+          { key: 'key임', value: 'value임', cre: 'credId' }
+        ]
+      }, false);
     },
   };
 

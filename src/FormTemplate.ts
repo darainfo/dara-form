@@ -55,7 +55,7 @@ export default class FormTemplate {
       const fieldWrapperElement = this.formElement.querySelector(`#${fieldKey}`);
 
       fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldWrapperElement, this.daraform);
-      fieldWrapperElement?.removeAttribute("id");
+      //fieldWrapperElement?.removeAttribute("id");
     });
   }
 

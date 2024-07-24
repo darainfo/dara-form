@@ -15,6 +15,8 @@ import DateRender from "./renderer/DateRender";
 import TabRender from "./renderer/TabRender";
 import GridRender from "./renderer/GridRender";
 
+export type FORM_MODE = "new" | "modify" | "view";
+
 export const RULES = {
   NAN: "nan",
   MIN: "minimum",

@@ -24,9 +24,3 @@ export const getRenderer = (field: FormField): Render => {
 
   return RENDER_TEMPLATE["text"];
 };
-
-export const getRenderTemplate = (field: FormField): string => {
-  let render = getRenderer(field) as any;
-
-  return render.template(field);
-};
