@@ -143,6 +143,12 @@ export const isHiddenField = (field: FormField): boolean => {
   return false;
 };
 
+export const templateToElement = (htmlTemplate: string): Element | null => {
+  const template = document.createElement("template");
+  template.innerHTML = htmlTemplate;
+  return template.content.firstElementChild;
+};
+
 export function isPlainObject(obj: any) {
   // 객체가 아닌 경우 또는 null인 경우 false 반환
   if (typeof obj !== "object" || obj === null) {

@@ -21,8 +21,12 @@ export default class ButtonRender extends Render {
     return false;
   }
 
-  static template(field: FormField): string {
-    return `
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
+    fieldContainerElement.innerHTML = `
       <button type="button" id="${field.$key}" class="df-btn">${field.label}</button> ${Render.getDescriptionTemplate(field)}
      `;
   }

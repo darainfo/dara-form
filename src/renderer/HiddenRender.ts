@@ -10,7 +10,7 @@ export default class HiddenRender extends Render {
 
   mounted() {}
 
-  static template(field: FormField): string {
+  createField() {
     return ``;
   }
 

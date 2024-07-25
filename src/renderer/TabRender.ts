@@ -12,7 +12,6 @@ export default class TabRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
 
-    this.tabContainerElement = rowElement.querySelector(".df-field-container") as HTMLElement;
     this.mounted();
   }
 
@@ -61,6 +60,10 @@ export default class TabRender extends Render {
     return false;
   }
 
+  static isChildrenCreate(): boolean {
+    return false;
+  }
+
   /**
    * tab template
    *
@@ -69,12 +72,21 @@ export default class TabRender extends Render {
    * @param {FormOptions} options
    * @returns {string} template string
    */
-  static template(field: FormField, formTemplate: FormTemplate, options: FormOptions): string {
+
+  createField() {
+    const field = this.field;
+
+    const formTemplate = this.daraForm.formTemplate;
+    const options = this.daraForm.getOptions();
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
     let tabTemplate = [];
     let tabChildTemplate = [];
 
     //tab 이벤트 처리 할것.
     let fieldStyle = styleUtils.fieldStyle(options, field);
+
+    console.log("tab", field);
 
     if (field.children) {
       let firstFlag = true;
@@ -86,15 +98,19 @@ export default class TabRender extends Render {
         tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
 
         tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render.getDescriptionTemplate(childField)}`);
+
+        tabChildTemplate.push(`</div>`);
+
         if (childField.children) {
+          // 새로운 폼으로 해서 처리 할것.
+
           tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
         }
-        tabChildTemplate.push(`</div>`);
         firstFlag = false;
       }
     }
 
-    return `
+    fieldContainerElement.innerHTML = `
      <div class="df-field ">
       <div class="tab-header ${fieldStyle.tabAlignClass}">
       ${tabTemplate.join("")}
@@ -104,6 +120,8 @@ export default class TabRender extends Render {
       ${tabChildTemplate.join("")}
      </div>
      `;
+
+    this.tabContainerElement = fieldContainerElement;
   }
 
   getValue() {

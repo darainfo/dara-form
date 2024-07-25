@@ -39,7 +39,7 @@ export default class FieldInfoMap {
     field.$key = `${this.fieldPrefix}_${this.fieldIdx}`;
     this.keyNameMap[field.name] = field.$key;
     this.allFieldInfo[field.$key] = field;
-    field.$renderer = getRenderer(field);
+    field.$renderType = getRenderer(field);
 
     if (field.conditional) {
       this.conditionFields.push(field.$key);
@@ -114,7 +114,7 @@ export default class FieldInfoMap {
     if (validationCheck !== true) {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
         if (!utils.isGridType(fieldInfo.$parent)) {
-          formValue[fieldInfo.name] = fieldInfo.$renderer.getValue();
+          formValue[fieldInfo.name] = fieldInfo.$instance.getValue();
         }
       }
       return formValue;
@@ -126,7 +126,7 @@ export default class FieldInfoMap {
           continue;
         }
 
-        const renderInfo = fieldInfo.$renderer;
+        const renderInfo = fieldInfo.$instance;
         let fieldValid = renderInfo.valid();
 
         if (fieldValid !== true) {
@@ -156,7 +156,7 @@ export default class FieldInfoMap {
       }
 
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        addFieldFormData(reval, fieldInfo, fieldInfo.$renderer.getValue());
+        addFieldFormData(reval, fieldInfo, fieldInfo.$instance.getValue());
       }
 
       return reval;
@@ -174,7 +174,7 @@ export default class FieldInfoMap {
           continue;
         }
 
-        const renderInfo = fieldInfo.$renderer;
+        const renderInfo = fieldInfo.$instance;
         let fieldValid = renderInfo.valid();
 
         if (fieldValid !== true) {
@@ -234,7 +234,7 @@ export default class FieldInfoMap {
         const condField = this.getFieldName(field.conditional.field);
 
         if (condField) {
-          if (field.conditional.eq == condField.$renderer.getValue()) {
+          if (field.conditional.eq == condField.$instance.getValue()) {
             condFlag = true;
           }
         }
@@ -256,9 +256,9 @@ export default class FieldInfoMap {
       let condFlag = this.isConditionField(fieldInfo);
 
       if (condFlag) {
-        fieldInfo.$renderer.show();
+        fieldInfo.$instance.show();
       } else {
-        fieldInfo.$renderer.hide();
+        fieldInfo.$instance.hide();
       }
     });
   }

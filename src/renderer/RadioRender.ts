@@ -46,6 +46,10 @@ export default class RadioRender extends Render {
   }
 
   public mounted() {
+    this.initEvent();
+  }
+
+  public initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
     checkboxes.forEach((ele) => {
@@ -61,12 +65,16 @@ export default class RadioRender extends Render {
     return `input[type="radio"][name="${this.field.$xssName}"]`;
   }
 
-  static template(field: FormField): string {
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
     const templates: string[] = [];
     const fieldName = field.$xssName;
 
-    const labelKey = this.valuesLabelKey(field);
-    const valueKey = this.valuesValueKey(field);
+    const labelKey = Render.valuesLabelKey(field);
+    const valueKey = Render.valuesValueKey(field);
 
     templates.push(`<div class="df-field"><div class="field-group">`);
 
@@ -77,7 +85,7 @@ export default class RadioRender extends Render {
         `<span class="field ${field.orientation == "vertical" ? "vertical" : "horizontal"}">
         <label>
             <input type="radio" name="${fieldName}" value="${radioVal}" class="form-field radio" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}/>
-            ${this.valuesLabelValue(labelKey, val)}
+            ${Render.valuesLabelValue(labelKey, val)}
         </label>
         </span>
                 `
@@ -88,7 +96,9 @@ export default class RadioRender extends Render {
      <div class="help-message"></div>
     `);
 
-    return templates.join("");
+    fieldContainerElement.innerHTML = templates.join("");
+
+    this.initEvent();
   }
 
   public setValueItems(items: any): void {
@@ -102,9 +112,7 @@ export default class RadioRender extends Render {
         } as ValuesInfo;
       }
 
-      containerEle.innerHTML = RadioRender.template(this.field);
-
-      this.mounted();
+      this.createField();
     }
   }
 

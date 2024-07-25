@@ -30,11 +30,15 @@ export default class CustomRender extends Render {
     return false;
   }
 
-  static template(field: FormField): string {
+  createField() {
+    const field = this.field;
+
     if (field.template) {
       const fieldTemplate = utils.isString(field.template) ? field.template : field.template();
 
-      return ` <div class="df-field">
+      const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
+      fieldContainerElement.innerHTML = ` <div class="df-field">
         ${fieldTemplate}
         </div>
           ${Render.getDescriptionTemplate(field)}

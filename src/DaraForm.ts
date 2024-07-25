@@ -37,6 +37,9 @@ interface DaraFormMap {
 // all instance
 const allInstance: DaraFormMap = {};
 
+const SEQ_ATTR_KEY = "data-form-uid";
+
+let DARA_FORM_SEQ = 0;
 /**
  * DaraForm class
  *
@@ -59,35 +62,30 @@ export default class DaraForm {
 
   public formTemplate: FormTemplate;
 
-  constructor(selector: string, options: FormOptions, message?: Message) {
+  constructor(formElement: Element, options: FormOptions, message?: Message) {
     this.options = utils.merge({}, defaultOptions, options) as FormOptions;
 
     Lanauage.set(message);
 
-    let formElement = document.querySelector(selector);
-    if (options.autoCreate === false) {
-      formElement = document.createElement("div");
-    } else {
-      formElement = document.querySelector(selector);
-    }
-
     if (formElement) {
       this.orginFormStyleClass = formElement.className;
       formElement.classList.add("dara-form");
+      this.selector = `df_${++DARA_FORM_SEQ}`;
+      formElement.setAttribute(SEQ_ATTR_KEY, this.selector);
 
       if (this.options.style.width) {
         formElement.setAttribute("style", `width:${this.options.style.width};`);
       }
-      this.selector = selector;
+
       this.formElement = formElement;
       this.changeMode(this.options.mode ?? "new");
       this.createForm(this.options.fields);
 
       if (this.options.autoCreate !== false) {
-        allInstance[selector] = this;
+        allInstance[this.selector] = this;
       }
     } else {
-      throw new Error(`${selector} form selector not found`);
+      throw new Error(`${formElement} form selector not found`);
     }
   }
 
@@ -131,7 +129,7 @@ export default class DaraForm {
     const fieldMap = this.fieldInfoMap.getAllFieldInfo();
     for (const seq in fieldMap) {
       const fieldInfo = fieldMap[seq];
-      const renderInfo = fieldInfo.$renderer;
+      const renderInfo = fieldInfo.$instance;
 
       if (renderInfo && typeof renderInfo.reset === "function") {
         renderInfo.reset();
@@ -146,7 +144,7 @@ export default class DaraForm {
    * @param fieldName 필드명
    */
   public resetField = (fieldName: string) => {
-    this.fieldInfoMap.getFieldName(fieldName).$renderer.reset();
+    this.fieldInfoMap.getFieldName(fieldName).$instance.reset();
     this.formValue[fieldName] = "";
     this.conditionCheck();
   };
@@ -160,8 +158,8 @@ export default class DaraForm {
   public getFieldElement(fieldName: string) {
     const field = this.fieldInfoMap.getFieldName(fieldName);
 
-    if (field?.$renderer) {
-      return field.$renderer.getElement();
+    if (field?.$instance) {
+      return field.$instance.getElement();
     }
 
     return null;
@@ -181,7 +179,7 @@ export default class DaraForm {
     const field = this.fieldInfoMap.getFieldName(fieldName);
 
     if (field) {
-      return field.$renderer.getValue();
+      return field.$instance.getValue();
     }
     return null;
   };
@@ -224,7 +222,7 @@ export default class DaraForm {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
 
     if (fieldInfo) {
-      fieldInfo.$renderer.setValue(value);
+      fieldInfo.$instance.setValue(value);
     }
   }
 
@@ -232,7 +230,7 @@ export default class DaraForm {
     const field = this.fieldInfoMap.getFieldName(fieldName);
 
     if (field) {
-      return field.$renderer.setValueItems(values);
+      return field.$instance.setValueItems(values);
     }
   };
 
@@ -285,7 +283,7 @@ export default class DaraForm {
     const fieldMap = this.fieldInfoMap.getAllFieldInfo();
     for (const fieldKey in fieldMap) {
       const fieldInfo = fieldMap[fieldKey];
-      const renderInfo = fieldInfo.$renderer;
+      const renderInfo = fieldInfo.$instance;
 
       let fieldValid = renderInfo.valid();
 
@@ -308,7 +306,7 @@ export default class DaraForm {
   private validTabCheck(fieldInfo: FormField) {
     if (fieldInfo.$parent) {
       if (fieldInfo.$parent.renderType == "tab") {
-        fieldInfo.$parent.$renderer.setActive(fieldInfo.$key);
+        fieldInfo.$parent.$instance.setActive(fieldInfo.$key);
       }
       this.validTabCheck(fieldInfo.$parent);
     }
@@ -321,7 +319,7 @@ export default class DaraForm {
       throw new Error(`Field name [${fieldName}] not found`);
     }
 
-    const renderInfo = fieldInfo.$renderer;
+    const renderInfo = fieldInfo.$instance;
     if (renderInfo) {
       return renderInfo.valid() === true;
     }
@@ -342,7 +340,7 @@ export default class DaraForm {
 
   public setFieldDisabled(fieldName: string, flag: boolean) {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
-    fieldInfo.$renderer.setDisabled(flag);
+    fieldInfo.$instance.setDisabled(flag);
   }
 
   /**
@@ -354,7 +352,7 @@ export default class DaraForm {
    */
   public setFieldDescription(fieldName: string, desc: string) {
     const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
-    fieldInfo.$renderer.setDescription(desc);
+    fieldInfo.$instance.setDescription(desc);
   }
 
   public destroy = () => {
@@ -382,18 +380,19 @@ export default class DaraForm {
     },
   };
 
-  public static instance(selector?: string) {
+  public static instance(element: Element) {
+    let selector = element.getAttribute(SEQ_ATTR_KEY);
+
     if (utils.isUndefined(selector) || utils.isBlank(selector)) {
       const keys = Object.keys(allInstance);
       if (keys.length > 1) {
         throw new Error(`selector empty : [${selector}]`);
       }
       selector = keys[0];
+
+      return allInstance[selector];
     }
-
-    return allInstance[selector];
   }
-
   /**
    * 모든 field 얻기
    */

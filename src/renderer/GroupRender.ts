@@ -13,7 +13,7 @@ export default class GroupRender extends Render {
     return false;
   }
 
-  static template(field: FormField): string {
+  createField() {
     return "";
   }
 

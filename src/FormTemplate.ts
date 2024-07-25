@@ -44,19 +44,19 @@ export default class FormTemplate {
 
     this.addRowFields = [];
 
-    let template = this.rowTemplate(field);
+    this.addRowTemplate(field);
 
-    this.formElement.insertAdjacentHTML("beforeend", template); // Append the element
-
+    /*
     this.addRowFields.forEach((fieldSeq) => {
       const fileldInfo = this.fieldInfoMap.get(fieldSeq);
       let fieldKey = fileldInfo.$key;
 
       const fieldWrapperElement = this.formElement.querySelector(`#${fieldKey}`);
 
-      fileldInfo.$renderer = new (fileldInfo.$renderer as any)(fileldInfo, fieldWrapperElement, this.daraform);
+      fileldInfo.$instance = new (fileldInfo.$instance as any)(fileldInfo, fieldWrapperElement, this.daraform);
       //fieldWrapperElement?.removeAttribute("id");
     });
+    */
   }
 
   /**
@@ -65,49 +65,34 @@ export default class FormTemplate {
    * @param {FormField} field
    * @returns {string} row template
    */
-  public rowTemplate(field: FormField): string {
+  public addRowTemplate(field: FormField): void {
     let labelHideFlag = this.isLabelHide(field);
 
     let fieldStyle: FieldStyle = styleUtils.fieldStyle(this.options, field, null, labelHideFlag);
 
-    let fieldTemplate = this.getTemplate(field, fieldStyle);
+    this.addRowFieldInfo(field);
 
-    return `
+    const rowElement = utils.templateToElement(`
         <div class="df-row form-group ${fieldStyle.fieldClass}" id="${field.$key}">
           ${labelHideFlag ? "" : `<div class="df-label ${fieldStyle.labelClass} ${fieldStyle.labelAlignClass}" title="${field.label ?? ""}" style="${fieldStyle.labelStyle}">${this.getLabelTemplate(field)}</div>`}
 
-          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}">
-              ${fieldTemplate}
-          </div>
+          <div class="df-field-container ${fieldStyle.valueClass} ${field.required ? "required" : ""}" style="${fieldStyle.valueStyle}"></div>
         </div>
-    `;
+    `);
+
+    if (rowElement) {
+      this.createField(field, rowElement);
+      this.formElement.append(rowElement);
+
+      if (field.children) {
+        this.childTemplate(field, fieldStyle);
+      }
+    }
   }
 
-  /**
-   * template 얻기
-   *
-   * @param {FormField} field
-   * @param {FieldStyle} fieldStyle
-   * @returns {string}
-   */
-  private getTemplate(field: FormField, fieldStyle: FieldStyle): string {
-    let fieldTemplate = "";
-
-    if (utils.isTabType(field)) {
-      fieldTemplate = this.tabTemplate(field);
-    } else if (utils.isGridType(field)) {
-      fieldTemplate = this.gridTemplate(field);
-    } else if (field.children) {
-      if (!utils.isUndefined(field.name)) {
-        fieldTemplate = this.getFieldTemplate(field);
-      } else {
-        this.addRowFieldInfo(field);
-      }
-      fieldTemplate += this.childTemplate(field, fieldStyle);
-    } else {
-      fieldTemplate = this.getFieldTemplate(field);
-    }
-    return fieldTemplate;
+  public createField(field: FormField, element: Element): void {
+    console.log("createField : ", field.name, field);
+    field.$instance = new (field.$renderType as any)(field, element, this.daraform);
   }
 
   /**
@@ -117,19 +102,28 @@ export default class FormTemplate {
    * @param {FieldStyle} parentFieldStyle
    * @returns {*}
    */
-  public childTemplate(field: FormField, parentFieldStyle: FieldStyle) {
-    const template = [];
-
+  public childTemplate(field: FormField, parentFieldStyle: FieldStyle): void {
     let beforeField: FormField = null as any;
     let firstFlag = true;
     let isEmptyLabel = false;
-    template.push(`<div class="df-row ${parentFieldStyle.rowStyleClass}">`);
+
+    console.log("childTemplate , ", field.label, (field.$renderType as any).isChildrenCreate);
+
+    if (!(field.$renderType as any).isChildrenCreate()) {
+      return;
+    }
+
+    const rowElement = document.createElement("div");
+    rowElement.classList.add("df-row", parentFieldStyle.rowStyleClass ?? "");
+
     for (const childField of field.children) {
       childField.$parent = field;
 
       if (this.checkHiddenField(childField)) {
         continue;
       }
+
+      this.addRowFieldInfo(childField);
 
       if (firstFlag) {
         beforeField = childField;
@@ -148,19 +142,19 @@ export default class FormTemplate {
         labelTemplate = `<span class="df-label ${childFieldStyle.labelClass} ${childFieldStyle.labelAlignClass}" title="${childField.label ?? ""}" style="${childFieldStyle.labelStyle}">${this.getLabelTemplate(childField)}</span>`;
       }
 
-      let childFieldTemplate = "";
-
-      if (childField.children) {
-        childFieldTemplate = this.getTemplate(childField, childFieldStyle);
-      } else {
-        childFieldTemplate = this.getTemplate(childField, parentFieldStyle);
-      }
-
-      template.push(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
+      const groupElement = utils.templateToElement(`<div class="form-group ${childFieldStyle.fieldClass}" style="${childFieldStyle.fieldStyle}" id="${childField.$key}">
         ${labelTemplate}
-        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}">${childFieldTemplate}</span>
+        <span class="df-field-container ${childFieldStyle.valueClass} ${childField.required ? "required" : ""}" style="${childFieldStyle.valueStyle}"></span>
       </div>`);
 
+      if (groupElement) {
+        this.createField(childField, groupElement);
+        rowElement.append(groupElement);
+
+        if (childField.children) {
+          this.childTemplate(childField, childField.children ? childFieldStyle : parentFieldStyle);
+        }
+      }
       if (!labelHideFlag) {
         isEmptyLabel = true;
       }
@@ -168,9 +162,7 @@ export default class FormTemplate {
       firstFlag = false;
     }
 
-    template.push("</div>");
-
-    return template.join("");
+    field.$instance.addChildField(rowElement);
   }
 
   /**
@@ -186,18 +178,6 @@ export default class FormTemplate {
     return `${field.label ?? ""} ${tooltipTemplate} ${requiredTemplate}`;
   }
 
-  private tabTemplate(field: FormField) {
-    this.addRowFieldInfo(field);
-
-    return TabRender.template(field, this, this.options);
-  }
-
-  private gridTemplate(field: FormField) {
-    this.addRowFieldInfo(field);
-
-    return GridRender.template(field, this, this.options);
-  }
-
   /**
    * label 숨김 여부
    *
@@ -208,28 +188,12 @@ export default class FormTemplate {
     return field.style?.labelHide || utils.isUndefined(field.label);
   }
 
-  /**
-   * field tempalte 구하기
-   *
-   * @param {FormField} field
-   * @returns {string}
-   */
-  public getFieldTemplate(field: FormField): string {
-    if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
-      throw new Error(`Duplicate field name "${field.name}"`);
-    }
-
-    this.addRowFieldInfo(field);
-
-    return (field.$renderer as any).template(field);
-  }
-
   public checkHiddenField(field: FormField) {
     const isHidden = utils.isHiddenField(field);
 
     if (isHidden) {
       this.fieldInfoMap.addField(field);
-      field.$renderer = new (field.$renderer as any)(field, null, this.daraform);
+      field.$instance = new (field.$renderType as any)(field, null, this.daraform);
 
       return true;
     }
@@ -243,6 +207,9 @@ export default class FormTemplate {
    * @param {FormField} field
    */
   public addRowFieldInfo(field: FormField) {
+    if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
+      throw new Error(`Duplicate field name "${field.name}"`);
+    }
     utils.replaceXssField(field);
     this.fieldInfoMap.addField(field);
     this.addRowFields.push(field.$key);

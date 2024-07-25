@@ -13,7 +13,6 @@ export default class DropdownRender extends Render {
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
-    this.element = rowElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
 
     let initDefaultValue = "";
 
@@ -52,14 +51,20 @@ export default class DropdownRender extends Render {
     dropdownChangeEvent(this.field, this.element, this);
   }
 
-  static template(field: FormField): string {
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
     let template = ` <div class="df-field"><select name="${field.$xssName}" class="form-field dropdown">
-          ${DropdownRender.dropdownValuesTemplate(field)}
+          ${this.dropdownValuesTemplate(field)}
           </select> <i class="help-icon"></i></div>
                 ${Render.getDescriptionTemplate(field)}
       <div class="help-message"></div>
     `;
-    return template;
+    fieldContainerElement.innerHTML = template;
+
+    this.element = fieldContainerElement.querySelector(`[name="${field.$xssName}"]`) as HTMLSelectElement;
   }
 
   public setValueItems(items: any): void {
@@ -70,7 +75,7 @@ export default class DropdownRender extends Render {
         list: items,
       } as ValuesInfo;
     }
-    this.element.innerHTML = DropdownRender.dropdownValuesTemplate(this.field);
+    this.element.innerHTML = this.dropdownValuesTemplate(this.field);
   }
 
   getValue() {
@@ -109,16 +114,16 @@ export default class DropdownRender extends Render {
     return validResult;
   }
 
-  static dropdownValuesTemplate(field: FormField) {
-    const labelKey = this.valuesLabelKey(field);
-    const valueKey = this.valuesValueKey(field);
+  public dropdownValuesTemplate(field: FormField) {
+    const labelKey = Render.valuesLabelKey(field);
+    const valueKey = Render.valuesValueKey(field);
     let template = "";
     field.listItem?.list?.forEach((val) => {
       const attr = `${val.selected ? "selected" : ""} ${val.disabled ? "disabled" : ""}`;
       if (utils.isUndefined(val[valueKey]) && val.label) {
         template += `<option value="${val.value || ""}" ${attr}>${val.label}</option>`;
       } else {
-        template += `<option value="${val[valueKey]}" ${attr}>${this.valuesLabelValue(labelKey, val)}</option>`;
+        template += `<option value="${val[valueKey]}" ${attr}>${Render.valuesLabelValue(labelKey, val)}</option>`;
       }
     });
 

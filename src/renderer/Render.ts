@@ -12,6 +12,7 @@ export default abstract class Render {
     this.daraForm = form;
     this.field = field;
     this.rowElement = rowElement;
+    this.createField();
 
     if (field.tooltip) rowElement.querySelector(".df-tooltip")?.setAttribute("tooltip", field.tooltip);
   }
@@ -35,7 +36,15 @@ export default abstract class Render {
     this.setDisabled(this.field.disabled ?? false);
   }
 
+  public addChildField(element: Element) {
+    this.rowElement.querySelector(".df-field-container")?.append(element);
+  }
+
   static isDataRender(): boolean {
+    return true;
+  }
+
+  static isChildrenCreate(): boolean {
     return true;
   }
 
@@ -49,6 +58,7 @@ export default abstract class Render {
   public abstract reset(): void;
   public abstract getElement(): any;
   public abstract valid(): ValidResult | boolean;
+  public abstract createField(): void;
 
   public setValueItems(value: any): void {}
 

@@ -37,7 +37,7 @@ export default class GridRender extends Render {
       fields: [],
     } as FormOptions;
 
-    this.gridForm = new DaraForm(field.$xssName, gridFromOpt);
+    this.gridForm = new DaraForm(document.createElement("div"), gridFromOpt);
 
     this.mounted();
     this.setDefaultOption();
@@ -60,7 +60,15 @@ export default class GridRender extends Render {
     return false;
   }
 
-  static template(field: FormField, formTemplate: FormTemplate, options: FormOptions, olnyAddRow?: boolean): string {
+  static isChildrenCreate(): boolean {
+    return false;
+  }
+
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
     let theadTemplate = [];
     let colgroupTemplate = [];
     let addBtnTemplate = [];
@@ -85,7 +93,7 @@ export default class GridRender extends Render {
       theadTemplate.push("</tr>");
     }
 
-    return `
+    fieldContainerElement.innerHTML = `
     <div class="df-grid-field">
       ${addBtnTemplate.join("")}
      <div class="df-grid-container ${field.style?.position ?? ""}" style="height:${field.gridOptions?.height ?? "auto"};">
@@ -123,7 +131,7 @@ export default class GridRender extends Render {
       columnField.name = columnField.name + "_" + $$idx;
       columnField.$xssName = parentName + "_" + utils.getXssFieldName(columnField);
 
-      const columnElement = formTemplate.getFieldTemplate(columnField);
+      const columnElement = ""; //formTemplate.getFieldTemplate(columnField);
 
       // static 로 사용할지 객체 자체에서 추가 할지 여부 확인할것.
 
@@ -133,7 +141,7 @@ export default class GridRender extends Render {
 
     this.allAddRowInfo[$$idx] = addColumns;
 
-    const addRowElement = this.createTrRow(rowTemplate.join(""));
+    const addRowElement = utils.templateToElement(rowTemplate.join(""));
 
     if (addRowElement) {
       this.rowElement.querySelector("tbody")?.append(addRowElement);
@@ -145,10 +153,10 @@ export default class GridRender extends Render {
 
     valueItem = valueItem ?? {};
     for (let columnField of this.allAddRowInfo[$$idx]) {
-      columnField.$renderer = new (columnField.$renderer as any)(columnField, addRowElement?.querySelector(`#${columnField.$xssName}`), this.gridForm);
+      columnField.$instance = new (columnField.$renderType as any)(columnField, addRowElement?.querySelector(`#${columnField.$xssName}`), this.gridForm);
 
       if (valueItem[columnField.$orgin.name]) {
-        columnField.$renderer.setValue(valueItem[columnField.$orgin.name]);
+        columnField.$instance.setValue(valueItem[columnField.$orgin.name]);
       }
     }
   }
@@ -178,12 +186,6 @@ export default class GridRender extends Render {
     this.allAddRowInfo = {} as NumberKeyMap;
   }
 
-  createTrRow(trTemplate: string): Element | null {
-    const template = document.createElement("template");
-    template.innerHTML = trTemplate;
-    return template.content.firstElementChild;
-  }
-
   getValue() {
     if (this.customFunction.getValue) {
       return (this.customFunction.getValue as any).call(this, this.field, this.rowElement);
@@ -197,7 +199,7 @@ export default class GridRender extends Render {
       let rowInfo = {} as any;
       for (let childIdx = 0; childIdx < childrenLength; childIdx++) {
         let childField = children[childIdx];
-        rowInfo[childField.name] = this.gridForm.getFieldValue(rowColumns[childIdx].name); // rowColumns[childIdx].$renderer.getValue();
+        rowInfo[childField.name] = this.gridForm.getFieldValue(rowColumns[childIdx].name); // rowColumns[childIdx].$instance.getValue();
       }
 
       result.push(rowInfo);

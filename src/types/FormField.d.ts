@@ -116,7 +116,8 @@ export interface FormField {
     align?: TEXT_ALIGN_TYPE; // renderer 그리드 타입 추가 버튼 유무
     height: string; // grid 높이값
   };
-  $renderer: Render; // 실제 render
+  $renderType: Render; // render Type
+  $instance: Render; // 실제 render
   $orgin: FormField;
   $xssName: string; // xss 변경명
   $key: string; // 내부 key

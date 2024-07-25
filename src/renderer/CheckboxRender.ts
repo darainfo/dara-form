@@ -44,6 +44,10 @@ export default class CheckboxRender extends Render {
   }
 
   public mounted() {
+    this.initEvent();
+  }
+
+  public initEvent() {
     const checkboxes = this.rowElement.querySelectorAll(this.getSelector());
 
     checkboxes.forEach((ele) => {
@@ -58,12 +62,16 @@ export default class CheckboxRender extends Render {
     return `input[type="checkbox"][name="${this.field.$xssName}"]`;
   }
 
-  static template(field: FormField): string {
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
     const templates: string[] = [];
     const fieldName = field.$xssName;
 
-    const labelKey = this.valuesLabelKey(field);
-    const valueKey = this.valuesValueKey(field);
+    const labelKey = Render.valuesLabelKey(field);
+    const valueKey = Render.valuesValueKey(field);
 
     templates.push(` <div class="df-field"><div class="field-group">`);
     field.listItem?.list?.forEach((val) => {
@@ -72,14 +80,14 @@ export default class CheckboxRender extends Render {
           <span class="field ${field.listItem.orientation == "vertical" ? "vertical" : "horizontal"}">
               <label>
                   <input type="checkbox" name="${fieldName}" value="${checkVal ? utils.replaceXss(checkVal) : ""}" class="form-field checkbox" ${val.selected ? "checked" : ""} ${val.disabled ? "disabled" : ""}  />
-                  ${this.valuesLabelValue(labelKey, val)}
+                  ${Render.valuesLabelValue(labelKey, val)}
               </label>
           </span>
       `);
     });
     templates.push(`<i class="dara-icon help-icon"></i></div></div> ${Render.getDescriptionTemplate(field)}<div class="help-message"></div>`);
 
-    return templates.join("");
+    fieldContainerElement.innerHTML = templates.join("");
   }
 
   public setValueItems(items: any): void {
@@ -92,9 +100,8 @@ export default class CheckboxRender extends Render {
           list: items,
         } as ValuesInfo;
       }
-      containerEle.innerHTML = CheckboxRender.template(this.field);
 
-      this.mounted();
+      this.createField();
     }
   }
 

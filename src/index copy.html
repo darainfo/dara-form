@@ -97,7 +97,148 @@
   load();
 
 
+  const loginForm = new DaraForm("#loginForm", {
+    message: "This value is not valid",
+    //mode: 'vertical',
+    //autoFocus: false,
+    style: {
+      //width: '600px',
+      position: 'left',
+      labelWidth: '3'
 
+    },
+    mode: 'new',
+    // form load 이후 호출. 
+    onMounted: function () {
+      console.log(this)
+    },
+    message: {
+      empty: "{name} 필수 입력사항입니다.",
+      string: {
+        minLength: "{size} 글자 이상 입력해야합니다.",
+        maxLength: "{size} 글자 이상 입력할 수 없습니다.",
+      },
+      number: {
+        minimum: "{size} 보다 커야 합니다",
+        miximum: "{size} 보다 커야 합니다",
+      },
+      regexp: {
+        email: "이메일이 유효하지 않습니다.",
+        url: "URL이 유효하지 않습니다.",
+      },
+    },
+    fields: [
+      {
+        name: "uid",
+        required: true,
+        label: "아이디",
+        tooltip: "아이디를 넣어주세요.",
+        placeholder: "아이디를 넣어주세요.",
+        renderType: "text",
+      }
+    ]
+  });
+
+  const loginForm1 = new DaraForm("#loginForm1", {
+    message: "This value is not valid",
+    //mode: 'vertical',
+    //autoFocus: false,
+    style: {
+      //width: '600px',
+      position: 'left',
+      labelWidth: '3'
+
+    },
+    mode: 'view',
+    // form load 이후 호출. 
+    onMounted: function () {
+      console.log(this)
+    },
+    message: {
+      empty: "{name} 필수 입력사항입니다.",
+      string: {
+        minLength: "{size} 글자 이상 입력해야합니다.",
+        maxLength: "{size} 글자 이상 입력할 수 없습니다.",
+      },
+      number: {
+        minimum: "{size} 보다 커야 합니다",
+        miximum: "{size} 보다 커야 합니다",
+      },
+      regexp: {
+        email: "이메일이 유효하지 않습니다.",
+        url: "URL이 유효하지 않습니다.",
+      },
+    },
+    fields: [
+      {
+        name: "\"uid<div>",
+        required: true,
+        label: "아이디",
+        tooltip: "아이디를 넣어주세요.",
+        placeholder: "아이디를 넣어주세요.",
+        renderType: "text",
+      }
+      , {
+        name: "password",
+        label: "패스워드",
+        description: "비밀번호는 대문자 소문자 포함입니다.",
+        placeholder: "패스워드를 입력하세요",
+        renderType: "password",
+      }
+      , {
+        name: "sex",
+        label: "남성/여성",
+        renderType: "checkbox",
+        listItem: {
+          list: [
+            { label: "", value: "Y", selected: true },
+          ],
+        }
+      }
+      , {
+        name: "grid",
+        label: "grid",
+        renderType: "grid",
+        gridOptions: {
+          disableAddButton: false,
+          disableRemoveButton: false,
+          height: '200px',
+        }
+        , children: [
+          {
+            name: "key",
+            label: "key",
+            renderType: "text",
+            required: true,
+            style: {
+              width: '200px'
+            },
+            rule: {
+              minLength: 2,
+              maxLength: 100,
+            },
+          }
+          , {
+            name: "value",
+            label: "value",
+            renderType: "text",
+          }
+          , {
+            name: "cre",
+            label: "성별",
+            required: true,
+            renderType: "dropdown",
+            listItem: {
+              labelField: "credName",
+              valueField: "credId",
+              list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
+            }
+          },
+        ],
+
+      }
+    ]
+  });
 
   var formInfo = {
     message: "This value is not valid",
@@ -243,8 +384,6 @@
           }
         ]
       },
-
-      /*
       {
         name: "uname",
         label: "이름222222",
@@ -495,17 +634,15 @@
           },
         ],
       },
-      */
     ],
   };
-
 
   var rowIdx = 0;
   var formBuilder;
   var formObj = {
     load: () => {
-      // formBuilder = loginForm;
-      formBuilder = new DaraForm(document.getElementById("formArea"), formInfo);
+      formBuilder = loginForm;
+      //formBuilder = new DaraForm("#formArea", formInfo);
     },
     addItem: () => {
       rowIdx += 1;

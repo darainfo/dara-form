@@ -76,8 +76,6 @@ export default class FileRender extends Render {
   private setFileList(fileList: FileInfo[], initFlag?: boolean | undefined) {
     const fileListElement = this.rowElement.querySelector(".dara-file-list");
 
-    console.log("fileList", fileList);
-
     if (fileListElement) {
       if (initFlag === true) {
         fileListElement.innerHTML = "";
@@ -171,8 +169,12 @@ export default class FileRender extends Render {
     }
   }
 
-  static template(field: FormField): string {
-    return `
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
+    fieldContainerElement.innerHTML = `
     <div class="df-field">
       <span class="file-wrapper">
         <label class="file-label">
@@ -186,6 +188,8 @@ export default class FileRender extends Render {
     <div class="dara-file-list"></div>
     <div class="help-message"></div>
     `;
+
+    this.element = fieldContainerElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
   }
 
   getValue() {
