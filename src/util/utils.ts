@@ -105,6 +105,16 @@ export const replaceXssField = (field: FormField): FormField => {
 };
 
 /**
+ * 값을 무시하는 필드
+ *
+ * @param field formField
+ * @returns
+ */
+export const ignoreValueField = (field: FormField): boolean => {
+  return isGridType(field.$parent) || isTabType(field.$parent);
+};
+
+/**
  * grid field name xss repalce
  *
  * @param {FormField} field

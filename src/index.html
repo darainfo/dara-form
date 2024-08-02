@@ -135,11 +135,10 @@
         defaultValue: "asdf",
       },
       {
-        name: "uid",
-        label: "아이디",
-        tooltip: "아이디를 넣어주세요.",
-        description: "설명설명설명",
-        placeholder: "아이디를 넣어주세요.",
+        name: "tab",
+        label: "첫번째 탭",
+        tooltip: "탭을 선택후 정보를 입력해주세요.",
+        description: "탭 설명설명설명",
         renderType: "tab",
         style: {
           labelHide: false,
@@ -163,9 +162,7 @@
                   minLength: 2,
                   maxLength: 100,
                 },
-                onChange: (arg) => {
-                  console.log(arg);
-                },
+
               }
               , {
                 name: "uname222333",
@@ -175,17 +172,16 @@
                   minLength: 2,
                   maxLength: 100,
                 },
-                onChange: (arg) => {
-                  console.log(arg);
-                },
+
               }
 
               , {
                 label: "child tab",
                 renderType: "tab",
                 style: {
-                  //labelHide: true
-                  position: 'top-center'
+                  labelHide: true,
+                  //position: 'top-center',
+                  position: 'top-bottom',
                 }
                 , children: [
                   {
@@ -517,7 +513,7 @@
       });
     },
     getValue: () => {
-      alert(JSON.stringify(loginForm.getValue()));
+      alert(JSON.stringify(formBuilder.getValue()));
     },
     getValuePromise: () => {
       formBuilder
@@ -557,5 +553,4 @@
 
   window.formBuilder = formBuilder;
   window.formObj = formObj;
-  window.loginForm = loginForm; 
 </script>

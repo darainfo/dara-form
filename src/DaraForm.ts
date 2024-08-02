@@ -95,7 +95,7 @@ export default class DaraForm {
 
   private createForm(fields: FormField[]) {
     this.fieldInfoMap = new FieldInfoMap(this.selector);
-    this.formElement.innerHTML = "";
+    //this.formElement.innerHTML = "";
     this.formTemplate = new FormTemplate(this, this.formElement, this.fieldInfoMap);
 
     if (this.options.autoCreate === false) {
@@ -201,7 +201,7 @@ export default class DaraForm {
    * 폼 필드 value 셋팅
    * @param values
    */
-  public setValue = (values: any, clear: boolean | undefined) => {
+  public setValue = (values: any, clear?: boolean | undefined) => {
     if (clear !== false) {
       this.resetForm();
     }
@@ -255,9 +255,9 @@ export default class DaraForm {
 
     if (element != null) {
       element.closest(".df-row")?.remove();
-
-      this.fieldInfoMap.removeFieldInfo(fieldName);
     }
+
+    this.fieldInfoMap.removeFieldInfo(fieldName);
   };
 
   /**
@@ -283,20 +283,21 @@ export default class DaraForm {
     const fieldMap = this.fieldInfoMap.getAllFieldInfo();
     for (const fieldKey in fieldMap) {
       const fieldInfo = fieldMap[fieldKey];
-      const renderInfo = fieldInfo.$instance;
 
-      let fieldValid = renderInfo.valid();
+      let fieldValid = this.fieldInfoMap.getFieldValidation(fieldInfo, autoFocusFlag);
 
       if (fieldValid !== true) {
-        if (autoFocusFlag) {
-          renderInfo.focus();
-          autoFocusFlag = false;
+        autoFocusFlag = false;
+
+        if (utils.isGridType(fieldInfo)) {
+          validResult = validResult.concat(fieldValid);
+        } else {
+          if (firstFlag) {
+            this.validTabCheck(fieldInfo);
+            firstFlag = false;
+          }
+          validResult.push(fieldValid);
         }
-        if (firstFlag) {
-          this.validTabCheck(fieldInfo);
-          firstFlag = false;
-        }
-        validResult.push(fieldValid);
       }
     }
 
@@ -380,7 +381,14 @@ export default class DaraForm {
     },
   };
 
-  public static instance(element: Element) {
+  public static instance(ele: Element | String) {
+    let element;
+    if (utils.isString(ele)) {
+      element = document.querySelector(ele);
+    } else {
+      element = ele;
+    }
+    element = element as Element;
     let selector = element.getAttribute(SEQ_ATTR_KEY);
 
     if (utils.isUndefined(selector) || utils.isBlank(selector)) {
@@ -408,4 +416,8 @@ export default class DaraForm {
     this.options.fields = fields;
     this.createForm(fields);
   };
+
+  public getFieldInfoMap() {
+    return this.fieldInfoMap;
+  }
 }

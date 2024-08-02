@@ -25,7 +25,7 @@ export default class GridRender extends Render {
       this.customFunction = {} as any;
     }
 
-    const gridFromOpt = {
+    const gridFormOptions = {
       style: {
         width: "100%",
         labelWidth: 3,
@@ -37,7 +37,7 @@ export default class GridRender extends Render {
       fields: [],
     } as FormOptions;
 
-    this.gridForm = new DaraForm(document.createElement("div"), gridFromOpt);
+    this.gridForm = new DaraForm(document.createElement("div"), gridFormOptions);
 
     this.mounted();
     this.setDefaultOption();
@@ -131,11 +131,9 @@ export default class GridRender extends Render {
       columnField.name = columnField.name + "_" + $$idx;
       columnField.$xssName = parentName + "_" + utils.getXssFieldName(columnField);
 
-      const columnElement = ""; //formTemplate.getFieldTemplate(columnField);
+      formTemplate.addRowFieldInfo(columnField);
 
-      // static 로 사용할지 객체 자체에서 추가 할지 여부 확인할것.
-
-      rowTemplate.push(`<td id="${columnField.$xssName}"><div class="df-field-container ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}">${columnElement}</div></td>`);
+      rowTemplate.push(`<td id="${columnField.$xssName}"><div class="df-field-container ${columnField.required ? "required" : ""} " style="${fieldStyle.valueStyle}"></div></td>`);
     }
     rowTemplate.push("</tr>");
 
@@ -152,7 +150,7 @@ export default class GridRender extends Render {
     }
 
     valueItem = valueItem ?? {};
-    for (let columnField of this.allAddRowInfo[$$idx]) {
+    for (let columnField of addColumns) {
       columnField.$instance = new (columnField.$renderType as any)(columnField, addRowElement?.querySelector(`#${columnField.$xssName}`), this.gridForm);
 
       if (valueItem[columnField.$orgin.name]) {
@@ -175,6 +173,10 @@ export default class GridRender extends Render {
       if (rowElement.parentElement?.childElementCount == 1) return;
 
       let rowIdx = (evt.currentTarget as Element)?.getAttribute("data-row-idx") || "-1";
+
+      for (let columnField of this.allAddRowInfo[parseInt(rowIdx, 10)]) {
+        this.gridForm.getFieldInfoMap().removeFieldInfo(columnField.name);
+      }
 
       delete this.allAddRowInfo[parseInt(rowIdx, 10)];
       rowElement.remove();
@@ -248,10 +250,23 @@ export default class GridRender extends Render {
 
       return;
     }
-    const validResult = stringValidator(this.getValue(), this.field);
 
-    invalidMessage(this.field, this.rowElement, validResult);
+    const validResult = this.gridForm.validForm();
 
-    return validResult;
+    console.log("validResult", validResult);
+
+    if (validResult.length > 0) {
+      const firstItem = validResult[0];
+
+      if (firstItem.message) {
+        firstItem.message = "[" + this.field.label + "] " + firstItem.message;
+
+        return firstItem;
+      }
+    }
+
+    return true;
   }
+
+  focus(): void {}
 }

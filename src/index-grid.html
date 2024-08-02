@@ -96,8 +96,7 @@
   }
   load();
 
-
-  const loginForm = new DaraForm("#loginForm", {
+  const loginForm = new DaraForm(document.getElementById("loginForm"), {
     message: "This value is not valid",
     //mode: 'vertical',
     //autoFocus: false,
@@ -107,49 +106,7 @@
       labelWidth: '3'
 
     },
-    mode: 'new',
-    // form load 이후 호출. 
-    onMounted: function () {
-      console.log(this)
-    },
-    message: {
-      empty: "{name} 필수 입력사항입니다.",
-      string: {
-        minLength: "{size} 글자 이상 입력해야합니다.",
-        maxLength: "{size} 글자 이상 입력할 수 없습니다.",
-      },
-      number: {
-        minimum: "{size} 보다 커야 합니다",
-        miximum: "{size} 보다 커야 합니다",
-      },
-      regexp: {
-        email: "이메일이 유효하지 않습니다.",
-        url: "URL이 유효하지 않습니다.",
-      },
-    },
-    fields: [
-      {
-        name: "uid",
-        required: true,
-        label: "아이디",
-        tooltip: "아이디를 넣어주세요.",
-        placeholder: "아이디를 넣어주세요.",
-        renderType: "text",
-      }
-    ]
-  });
-
-  const loginForm1 = new DaraForm("#loginForm1", {
-    message: "This value is not valid",
-    //mode: 'vertical',
-    //autoFocus: false,
-    style: {
-      //width: '600px',
-      position: 'left',
-      labelWidth: '3'
-
-    },
-    mode: 'view',
+    mode: 'write',
     // form load 이후 호출. 
     onMounted: function () {
       console.log(this)

@@ -32,4 +32,8 @@ export default class GroupRender extends Render {
   valid(): any {
     return true;
   }
+
+  public addChildField(element: Element) {
+    this.rowElement.append(element);
+  }
 }

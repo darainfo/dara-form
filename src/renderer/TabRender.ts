@@ -6,16 +6,28 @@ import DaraForm from "src/DaraForm";
 import FormTemplate from "src/FormTemplate";
 import styleUtils from "src/util/styleUtils";
 import { FormOptions } from "@t/FormOptions";
+import * as utils from "src/util/utils";
 
 export default class TabRender extends Render {
+  private customFunction;
   private tabContainerElement: HTMLElement;
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
+
+    if (field.renderer) {
+      this.customFunction = field.renderer;
+    } else {
+      this.customFunction = {} as any;
+    }
 
     this.mounted();
   }
 
   mounted() {
+    if (this.customFunction.mounted) {
+      (this.customFunction.mounted as any).call(this, this.field, this.rowElement);
+    }
+
     this.tabContainerElement.querySelectorAll(".tab-item").forEach((tabItem) => {
       tabItem.addEventListener("click", (e: any) => {
         this.clickEventHandler(tabItem, e);
@@ -80,55 +92,89 @@ export default class TabRender extends Render {
     const options = this.daraForm.getOptions();
 
     const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
-    let tabTemplate = [];
-    let tabChildTemplate = [];
 
     //tab 이벤트 처리 할것.
     let fieldStyle = styleUtils.fieldStyle(options, field);
 
-    console.log("tab", field);
+    fieldContainerElement.innerHTML = `
+        <div class="df-field ">
+          <div class="tab-header ${fieldStyle.tabAlignClass}"></div>
+        </div>
+        <div class="df-tab-body"></div>
+    `;
 
     if (field.children) {
       let firstFlag = true;
+
+      const formOptions = this.getForm().getOptions();
+
+      let fieldStyle: FieldStyle = styleUtils.fieldStyle(formOptions, field, null, formTemplate.isLabelHide(field));
+
       for (const childField of field.children) {
         childField.$parent = field;
         formTemplate.addRowFieldInfo(childField);
         let id = childField.$key;
 
-        tabTemplate.push(`<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`);
+        let tabTemplate = `<span class="tab-item ${firstFlag ? "active" : ""}" data-tab-id="${id}"><a href="javascript:;">${childField.label}</a></span>`;
 
-        tabChildTemplate.push(`<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render.getDescriptionTemplate(childField)}`);
+        let tabBodyTemplate = `<div class="tab-panel ${firstFlag ? "active" : ""}" tab-panel-id="${id}">${Render.getDescriptionTemplate(childField)}
+          <div class="tab-group"></div>
+        </div>`;
 
-        tabChildTemplate.push(`</div>`);
+        const tabElement = utils.templateToElement(tabTemplate);
+        const tabBodyElement = utils.templateToElement(tabBodyTemplate);
 
-        if (childField.children) {
-          // 새로운 폼으로 해서 처리 할것.
-
-          tabChildTemplate.push(formTemplate.childTemplate(childField, fieldStyle));
-        }
         firstFlag = false;
+        if (tabElement) {
+          fieldContainerElement.querySelector(".tab-header")?.appendChild(tabElement);
+        }
+
+        if (tabBodyElement) {
+          fieldContainerElement.querySelector(".df-tab-body")?.appendChild(tabBodyElement);
+
+          if (childField.children) {
+            let tabFormOptions = {
+              style: {
+                width: formOptions.style.width ?? "100%",
+                labelWidth: formOptions.style.labelWidth ?? 3,
+                valueWidth: formOptions.style.valueWidth ?? 9,
+                position: formOptions.style.position ?? "left-right",
+              },
+              autoCreate: false,
+              notValidMessage: "This form is not valid.",
+              fields: [],
+            } as FormOptions;
+
+            childField.$tabForm = new DaraForm(document.createElement("div"), tabFormOptions);
+
+            childField.$instance = new (childField.$renderType as any)(childField, tabBodyElement?.querySelector(".tab-group"), childField.$tabForm);
+
+            childField.$tabForm.formTemplate.childTemplate(childField, fieldStyle);
+          }
+        }
       }
+
+      this.tabContainerElement = fieldContainerElement;
+    }
+  }
+
+  getValue(): any {
+    if (this.customFunction.getValue) {
+      return (this.customFunction.getValue as any).call(this, this.field, this.rowElement);
     }
 
-    fieldContainerElement.innerHTML = `
-     <div class="df-field ">
-      <div class="tab-header ${fieldStyle.tabAlignClass}">
-      ${tabTemplate.join("")}
-      </div>
-     </div>
-     <div class="df-tab-body">
-      ${tabChildTemplate.join("")}
-     </div>
-     `;
-
-    this.tabContainerElement = fieldContainerElement;
+    let allTabValue = {} as any;
+    for (const childField of this.field.children) {
+      allTabValue[childField.$valueName] = childField.$tabForm?.getValue(false);
+    }
+    return allTabValue;
   }
 
-  getValue() {
-    return "";
+  setValue(value: any): void {
+    for (const childField of this.field.children) {
+      childField.$tabForm?.setValue(value);
+    }
   }
-
-  setValue(value: any): void {}
 
   reset() {}
 
@@ -137,10 +183,30 @@ export default class TabRender extends Render {
   }
 
   valid(): any {
-    const validResult = stringValidator(this.getValue(), this.field);
+    if (this.customFunction.valid) {
+      const validResult = (this.customFunction.valid as any).call(this, this.field, this.rowElement);
 
-    invalidMessage(this.field, this.rowElement, validResult);
+      invalidMessage(this.field, this.rowElement, validResult);
 
-    return validResult;
+      return;
+    }
+
+    const field = this.field;
+
+    for (const childField of field.children) {
+      const validResult = childField.$tabForm?.validForm();
+
+      if (validResult && validResult.length > 0) {
+        const firstItem = validResult[0];
+
+        if (firstItem.message) {
+          firstItem.message = "[" + this.field.label + "] " + firstItem.message;
+
+          return firstItem;
+        }
+      }
+    }
+
+    return true;
   }
 }

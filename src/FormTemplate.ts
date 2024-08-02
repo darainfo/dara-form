@@ -45,18 +45,6 @@ export default class FormTemplate {
     this.addRowFields = [];
 
     this.addRowTemplate(field);
-
-    /*
-    this.addRowFields.forEach((fieldSeq) => {
-      const fileldInfo = this.fieldInfoMap.get(fieldSeq);
-      let fieldKey = fileldInfo.$key;
-
-      const fieldWrapperElement = this.formElement.querySelector(`#${fieldKey}`);
-
-      fileldInfo.$instance = new (fileldInfo.$instance as any)(fileldInfo, fieldWrapperElement, this.daraform);
-      //fieldWrapperElement?.removeAttribute("id");
-    });
-    */
   }
 
   /**
@@ -184,7 +172,7 @@ export default class FormTemplate {
    * @param field formfield
    * @returns
    */
-  private isLabelHide(field: FormField): boolean {
+  public isLabelHide(field: FormField): boolean {
     return field.style?.labelHide || utils.isUndefined(field.label);
   }
 
@@ -210,6 +198,8 @@ export default class FormTemplate {
     if (!utils.isBlank(field.name) && this.fieldInfoMap.hasFieldName(field.name)) {
       throw new Error(`Duplicate field name "${field.name}"`);
     }
+
+    field.$valueName = field.name ?? field.label;
     utils.replaceXssField(field);
     this.fieldInfoMap.addField(field);
     this.addRowFields.push(field.$key);

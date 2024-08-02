@@ -1,3 +1,4 @@
+import DaraForm from "src/DaraForm";
 import { RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
 import Render from "src/renderer/Render";
 
@@ -123,4 +124,6 @@ export interface FormField {
   $key: string; // 내부 key
   $value: string; // 내부 사용 value
   $parent: FormField;
+  $tabForm?: DaraForm; //tab 일경우 폼 정보
+  $valueName: string; //
 }

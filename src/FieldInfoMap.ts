@@ -113,8 +113,8 @@ export default class FieldInfoMap {
   public getAllFieldValue(formValue: any, validationCheck: boolean) {
     if (validationCheck !== true) {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        if (!utils.isGridType(fieldInfo.$parent)) {
-          formValue[fieldInfo.name] = fieldInfo.$instance.getValue();
+        if (!utils.ignoreValueField(fieldInfo)) {
+          formValue[fieldInfo.$valueName] = fieldInfo.$instance.getValue();
         }
       }
       return formValue;
@@ -126,21 +126,16 @@ export default class FieldInfoMap {
           continue;
         }
 
-        const renderInfo = fieldInfo.$instance;
-        let fieldValid = renderInfo.valid();
+        let fieldValid = this.getFieldValidation(fieldInfo, true);
 
         if (fieldValid !== true) {
-          renderInfo.focus();
-          fieldValid = fieldValid as ValidResult;
-          if (utils.isUndefined(fieldValid.message)) {
-            fieldValid.message = Lanauage.validMessage(fieldInfo, fieldValid)[0];
-          }
-
           reject(new Error(fieldValid.message, { cause: fieldValid }));
           return;
         }
 
-        formValue[fieldInfo.name] = renderInfo.getValue();
+        if (!utils.ignoreValueField(fieldInfo)) {
+          formValue[fieldInfo.$valueName] = fieldInfo.$instance.getValue();
+        }
       }
 
       resolve(formValue);
@@ -174,20 +169,14 @@ export default class FieldInfoMap {
           continue;
         }
 
-        const renderInfo = fieldInfo.$instance;
-        let fieldValid = renderInfo.valid();
+        let fieldValid = this.getFieldValidation(fieldInfo, true);
 
         if (fieldValid !== true) {
-          renderInfo.focus();
-          fieldValid = fieldValid as ValidResult;
-          if (utils.isUndefined(fieldValid.message)) {
-            fieldValid.message = Lanauage.validMessage(fieldInfo, fieldValid)[0];
-          }
           reject(new Error(fieldValid.message, { cause: fieldValid }));
           return;
         }
 
-        addFieldFormData(reval, fieldInfo, renderInfo.getValue());
+        addFieldFormData(reval, fieldInfo, fieldInfo.$instance.getValue());
       }
 
       resolve(reval);
@@ -262,18 +251,44 @@ export default class FieldInfoMap {
       }
     });
   }
+
+  /**
+   * field validation check
+   *
+   * @param fieldInfo FormField
+   * @returns boolean true or ValidResult
+   */
+  public getFieldValidation(fieldInfo: FormField, focusFlag: boolean | undefined) {
+    const renderInfo = fieldInfo.$instance;
+    let fieldValid = renderInfo.valid();
+
+    if (fieldValid === true) return true;
+
+    if (focusFlag) {
+      renderInfo.focus();
+    }
+    fieldValid = fieldValid as ValidResult;
+    if (utils.isUndefined(fieldValid.message)) {
+      fieldValid.message = Lanauage.validMessage(fieldInfo, fieldValid)[0];
+    }
+
+    return fieldValid;
+  }
 }
 
 function addFieldFormData(formData: FormData, fieldInfo: FormField, fieldValue: any) {
   if (fieldInfo.renderType === "file") {
     const uploadFiles = fieldValue["uploadFile"];
-    formData.delete(fieldInfo.name);
+    formData.delete(fieldInfo.$valueName);
     for (let uploadFile of uploadFiles) {
-      formData.append(fieldInfo.name, uploadFile);
+      formData.append(fieldInfo.$valueName, uploadFile);
     }
-
-    formData.set(fieldInfo.name + "RemoveIds", fieldValue["removeIds"]);
+    if (!utils.ignoreValueField(fieldInfo)) {
+      formData.set(fieldInfo.$valueName + "RemoveIds", fieldValue["removeIds"]);
+    }
   } else {
-    formData.set(fieldInfo.name, fieldValue);
+    if (!utils.ignoreValueField(fieldInfo)) {
+      formData.set(fieldInfo.$valueName, fieldValue);
+    }
   }
 }
