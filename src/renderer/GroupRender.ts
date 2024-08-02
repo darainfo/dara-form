@@ -34,6 +34,12 @@ export default class GroupRender extends Render {
   }
 
   public addChildField(element: Element) {
-    this.rowElement.append(element);
+    let addContainer = this.rowElement.querySelector(".df-field-container");
+
+    if (addContainer) {
+      addContainer.append(element);
+    } else {
+      this.rowElement.append(element);
+    }
   }
 }

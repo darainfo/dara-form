@@ -37,7 +37,6 @@ export default abstract class Render {
   }
 
   public addChildField(element: Element) {
-    console.log("addChildField11   ", this.field, this.rowElement);
     this.rowElement.querySelector(".df-field-container")?.append(element);
   }
 
