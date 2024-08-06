@@ -271,8 +271,6 @@ export default class GridRender extends Render {
 
     const validResult = this.gridForm.validForm();
 
-    console.log("validResult ", validResult);
-
     if (validResult.length > 0) {
       const firstItem = validResult[0];
 

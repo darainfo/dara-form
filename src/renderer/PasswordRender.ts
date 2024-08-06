@@ -23,8 +23,6 @@ export default class PasswordRender extends Render {
   createField() {
     const field = this.field;
 
-    console.log("password", field);
-
     const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
 
     fieldContainerElement.innerHTML = `

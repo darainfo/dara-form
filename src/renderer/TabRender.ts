@@ -182,11 +182,9 @@ export default class TabRender extends Render {
   }
 
   setValue(value: any): void {
-    console.log("setValue : ", value);
     for (const childField of this.field.children) {
       let tabChildValue = value[childField.$validName];
 
-      console.log(childField, tabChildValue);
       if (tabChildValue) {
         childField.$tabForm?.setValue(tabChildValue);
       }
