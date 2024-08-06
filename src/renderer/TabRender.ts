@@ -140,6 +140,7 @@ export default class TabRender extends Render {
                 valueWidth: formOptions.style.valueWidth ?? 9,
                 position: formOptions.style.position ?? "left-right",
               },
+              useTypeValue: formOptions.useTypeValue,
               autoCreate: false,
               notValidMessage: "This form is not valid.",
               fields: [],
@@ -164,15 +165,31 @@ export default class TabRender extends Render {
     }
 
     let allTabValue = {} as any;
+
+    let useTypeValue = this.getForm().getOptions().useTypeValue;
+
     for (const childField of this.field.children) {
-      allTabValue[childField.$valueName] = childField.$tabForm?.getValue(false);
+      const childFieldValue = childField.$tabForm?.getValue(false);
+      if (useTypeValue) {
+        allTabValue[childField.$validName] = childFieldValue;
+      } else {
+        for (let [key, value] of Object.entries(childFieldValue)) {
+          allTabValue[key] = value;
+        }
+      }
     }
     return allTabValue;
   }
 
   setValue(value: any): void {
+    console.log("setValue : ", value);
     for (const childField of this.field.children) {
-      childField.$tabForm?.setValue(value);
+      let tabChildValue = value[childField.$validName];
+
+      console.log(childField, tabChildValue);
+      if (tabChildValue) {
+        childField.$tabForm?.setValue(tabChildValue);
+      }
     }
   }
 

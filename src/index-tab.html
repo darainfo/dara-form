@@ -96,11 +96,14 @@
   }
   load();
 
+
+
+
   var formInfo = {
     message: "This value is not valid",
     //mode: 'vertical',
     //autoFocus: false,
-    //useTypeValue: false,
+    //useTypeValue: true,
     style: {
       //width: '600px',
       position: 'left-left',
@@ -592,7 +595,7 @@
     },
     getValue: () => {
       let formValue = formBuilder.getValue();
-      console.log('getValue : ', formValue, JSON.stringify(formValue))
+      console.log('getValue : ', formValue)
       alert('파일은 콘솔 확인\n' + JSON.stringify(formValue));
     },
     getValuePromise: () => {
@@ -620,34 +623,12 @@
     },
 
     setValue: () => {
-      formBuilder.setValue(
-        {
-          "hiddenMode": "asdf",
-          "이름222222": "이름222222",
-          "tab": {
-            "tab1": {
-              "tabPicture": [{ fileId: "test1", fileName: "aaa.zip" }],
-              "tabPictureRemoveIds": [],
-              "grid": [
-                { key: 'aaa', value: 'bbb', cre: 'credId' },
-                { key: 'key임', value: 'value임', cre: 'credId' }
-              ],
-              "uname222": "uname222vvvv",
-              "uname222333": "uname222333vvvv",
-              "child tab": {
-                "child-tab1": {
-                  "child-uname222": "child-uname222 uname222"
-                },
-                "child-uname2-tab2": {
-                  "child-uname333": "child-uname2-tab2 uname333"
-                }
-              }
-            },
-            "tab2": {
-              "uname333": "tab2 uname333 value"
-            }
-          }
-        }, false);
+      formBuilder.setValue({
+        grid: [
+          { key: 'aaa', value: 'bbb', cre: 'credId' },
+          { key: 'key임', value: 'value임', cre: 'credId' }
+        ]
+      }, false);
     },
   };
 

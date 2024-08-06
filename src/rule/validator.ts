@@ -1,6 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { regexpValidator } from "./regexpValidator";
+import * as utils from "src/util/utils";
 
 /**
  *  validator  ,  regexp 체크 .
@@ -28,7 +29,7 @@ export const validator = (value: string, field: FormField, result: ValidResult):
     const diffFieldName = field.different.field;
     const diffField = field.$instance.getForm().getField(diffFieldName);
 
-    if (field.$instance.getValue() == diffField.$instance.getValue()) {
+    if (!utils.isEmpty(diffField) && field.$instance.getValue() == diffField.$instance.getValue()) {
       result.message = field.different.message;
       return result;
     }
@@ -38,7 +39,7 @@ export const validator = (value: string, field: FormField, result: ValidResult):
     const diffFieldName = field.identical.field;
     const diffField = field.$instance.getForm().getField(diffFieldName);
 
-    if (field.$instance.getValue() != diffField.$instance.getValue()) {
+    if (!utils.isEmpty(diffField) && field.$instance.getValue() != diffField.$instance.getValue()) {
       result.message = field.identical.message;
       return result;
     }

@@ -125,5 +125,5 @@ export interface FormField {
   $value: string; // 내부 사용 value
   $parent: FormField;
   $tabForm?: DaraForm; //tab 일경우 폼 정보
-  $valueName: string; //
+  $validName: string; //
 }

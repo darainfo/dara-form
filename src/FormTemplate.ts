@@ -79,7 +79,6 @@ export default class FormTemplate {
   }
 
   public createField(field: FormField, element: Element): void {
-    console.log("createField : ", field.name, field);
     field.$instance = new (field.$renderType as any)(field, element, this.daraform);
   }
 
@@ -95,8 +94,6 @@ export default class FormTemplate {
     let firstFlag = true;
     let isEmptyLabel = false;
 
-    console.log("childTemplate , ", field.label, (field.$renderType as any).isChildrenCreate);
-
     if (!(field.$renderType as any).isChildrenCreate()) {
       return;
     }
@@ -104,8 +101,15 @@ export default class FormTemplate {
     const rowElement = document.createElement("div");
     rowElement.classList.add("df-row", parentFieldStyle.rowStyleClass ?? "");
 
+    let idx = 0;
+
     for (const childField of field.children) {
+      if (utils.isEmpty(childField)) {
+        throw new Error(`parent field :[${field.$validName}], children index ${idx},  empty [${childField}]`);
+      }
+
       childField.$parent = field;
+      ++idx;
 
       if (this.checkHiddenField(childField)) {
         continue;
@@ -177,9 +181,7 @@ export default class FormTemplate {
   }
 
   public checkHiddenField(field: FormField) {
-    const isHidden = utils.isHiddenField(field);
-
-    if (isHidden) {
+    if (utils.isHiddenField(field)) {
       this.fieldInfoMap.addField(field);
       field.$instance = new (field.$renderType as any)(field, null, this.daraform);
 
@@ -199,8 +201,6 @@ export default class FormTemplate {
       throw new Error(`Duplicate field name "${field.name}"`);
     }
 
-    field.$valueName = field.name ?? field.label;
-    utils.replaceXssField(field);
     this.fieldInfoMap.addField(field);
     this.addRowFields.push(field.$key);
   }

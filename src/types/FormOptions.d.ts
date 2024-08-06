@@ -48,6 +48,15 @@ export interface FormOptions {
   };
 
   /**
+   * form에 값을 renderer type별로 값을 구 할지 여부.
+   * @default false
+   * @example
+   * true or false
+   *
+   */
+  useTypeValue?: boolean;
+
+  /**
    * form 자동 생성 여부
    * @default true
    * @example

@@ -4,6 +4,7 @@ import { ValidResult } from "./types/ValidResult";
 import { getRenderer } from "./util/renderFactory";
 import Lanauage from "./util/Lanauage";
 import * as utils from "./util/utils";
+import DaraForm from "./DaraForm";
 
 interface NumberFieldMap {
   [key: string]: FormField;
@@ -24,8 +25,11 @@ export default class FieldInfoMap {
 
   private fieldPrefix;
 
-  constructor(selector: string) {
+  private form;
+
+  constructor(selector: string, form: DaraForm) {
     this.fieldPrefix = `${FIELD_PREFIX}_${utils.getHashCode(selector)}`;
+    this.form = form;
   }
 
   /**
@@ -35,9 +39,11 @@ export default class FieldInfoMap {
    * @param {FormField} field 폼필드 정보
    */
   public addField(field: FormField) {
+    utils.replaceXssField(field);
     this.fieldIdx += 1;
     field.$key = `${this.fieldPrefix}_${this.fieldIdx}`;
-    this.keyNameMap[field.name] = field.$key;
+    field.$validName = field.name ?? field.label;
+    this.keyNameMap[field.$validName] = field.$key;
     this.allFieldInfo[field.$key] = field;
     field.$renderType = getRenderer(field);
 
@@ -111,11 +117,11 @@ export default class FieldInfoMap {
    * @returns {*}
    */
   public getAllFieldValue(formValue: any, validationCheck: boolean) {
+    const useTypeValue = this.form.getOptions().useTypeValue;
+
     if (validationCheck !== true) {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        if (!utils.ignoreValueField(fieldInfo)) {
-          formValue[fieldInfo.$valueName] = fieldInfo.$instance.getValue();
-        }
+        formValue = addFormValue(formValue, fieldInfo, useTypeValue);
       }
       return formValue;
     }
@@ -133,9 +139,7 @@ export default class FieldInfoMap {
           return;
         }
 
-        if (!utils.ignoreValueField(fieldInfo)) {
-          formValue[fieldInfo.$valueName] = fieldInfo.$instance.getValue();
-        }
+        formValue = addFormValue(formValue, fieldInfo, useTypeValue);
       }
 
       resolve(formValue);
@@ -276,19 +280,73 @@ export default class FieldInfoMap {
   }
 }
 
-function addFieldFormData(formData: FormData, fieldInfo: FormField, fieldValue: any) {
+/**
+ * add form value
+ * @param formData {Object} return Object value
+ * @param fieldInfo {FormField} field info
+ * @param fieldValue {any} form value
+ */
+function addFormValue(formData: any, fieldInfo: FormField, useTypeValue?: boolean) {
+  if (utils.ignoreValueField(fieldInfo)) {
+    return formData;
+  }
+
+  const fieldValue = fieldInfo.$instance.getValue();
+
   if (fieldInfo.renderType === "file") {
     const uploadFiles = fieldValue["uploadFile"];
-    formData.delete(fieldInfo.$valueName);
-    for (let uploadFile of uploadFiles) {
-      formData.append(fieldInfo.$valueName, uploadFile);
-    }
-    if (!utils.ignoreValueField(fieldInfo)) {
-      formData.set(fieldInfo.$valueName + "RemoveIds", fieldValue["removeIds"]);
-    }
+
+    formData[fieldInfo.$validName] = uploadFiles;
+    formData[fieldInfo.$validName + "RemoveIds"] = fieldValue["removeIds"];
   } else {
-    if (!utils.ignoreValueField(fieldInfo)) {
-      formData.set(fieldInfo.$valueName, fieldValue);
+    if (useTypeValue !== true) {
+      if (utils.isTabType(fieldInfo)) {
+        for (let [key, value] of Object.entries(fieldValue)) {
+          formData[key] = value;
+        }
+      } else {
+        if (!utils.isEmpty(fieldInfo.name)) {
+          formData[fieldInfo.name] = fieldValue;
+        }
+      }
+    } else {
+      formData[fieldInfo.$validName] = fieldValue;
     }
   }
+
+  return formData;
+}
+
+function addFieldFormData(formData: FormData, fieldInfo: FormField, useTypeValue?: boolean) {
+  if (utils.ignoreValueField(fieldInfo)) {
+    return formData;
+  }
+
+  const fieldValue = fieldInfo.$instance.getValue();
+
+  if (fieldInfo.renderType === "file") {
+    const uploadFiles = fieldValue["uploadFile"];
+    formData.delete(fieldInfo.$validName);
+    for (let uploadFile of uploadFiles) {
+      formData.append(fieldInfo.$validName, uploadFile);
+    }
+
+    formData.set(fieldInfo.$validName + "RemoveIds", fieldValue["removeIds"]);
+  } else {
+    if (useTypeValue !== true) {
+      if (utils.isTabType(fieldInfo)) {
+        for (let [key, value] of Object.entries(fieldValue)) {
+          formData.set(key, value as any);
+        }
+      } else {
+        if (!utils.isEmpty(fieldInfo.name)) {
+          formData.set(fieldInfo.$validName, fieldValue);
+        }
+      }
+    } else {
+      formData.set(fieldInfo.$validName, fieldValue);
+    }
+  }
+
+  return formData;
 }

@@ -45,6 +45,29 @@ export default class FileRender extends Render {
     this.setFileList(this.fileList);
   }
 
+  createField() {
+    const field = this.field;
+
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+
+    fieldContainerElement.innerHTML = `
+    <div class="df-field">
+      <span class="file-wrapper">
+        <label class="file-label">
+          <input type="file" name="${field.$xssName}" class="form-field file" multiple />
+          ${Lanauage.getMessage("fileButton")}
+        </label>
+        <i class="dara-icon help-icon"></i>
+      </span>
+    </div>
+    ${Render.getDescriptionTemplate(field)}
+    <div class="dara-file-list"></div>
+    <div class="help-message"></div>
+    `;
+
+    this.element = fieldContainerElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
+  }
+
   addFiles(files: any[]) {
     let addFlag = false;
 
@@ -169,29 +192,6 @@ export default class FileRender extends Render {
     }
   }
 
-  createField() {
-    const field = this.field;
-
-    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
-
-    fieldContainerElement.innerHTML = `
-    <div class="df-field">
-      <span class="file-wrapper">
-        <label class="file-label">
-          <input type="file" name="${field.$xssName}" class="form-field file" multiple />
-          ${Lanauage.getMessage("fileButton")}
-        </label>
-        <i class="dara-icon help-icon"></i>
-      </span>
-    </div>
-    ${Render.getDescriptionTemplate(field)}
-    <div class="dara-file-list"></div>
-    <div class="help-message"></div>
-    `;
-
-    this.element = fieldContainerElement.querySelector(`[name="${field.$xssName}"]`) as HTMLInputElement;
-  }
-
   getValue() {
     return {
       uploadFile: Object.values(this.uploadFiles),
@@ -213,8 +213,10 @@ export default class FileRender extends Render {
   }
 
   setValue(value: any): void {
+    if (utils.isArray(value)) {
+      this.setValueItems(value);
+    }
     this.element.value = "";
-    this.field.$value = value;
   }
 
   reset() {

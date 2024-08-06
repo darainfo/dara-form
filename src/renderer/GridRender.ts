@@ -174,18 +174,36 @@ export default class GridRender extends Render {
 
       let rowIdx = (evt.currentTarget as Element)?.getAttribute("data-row-idx") || "-1";
 
-      for (let columnField of this.allAddRowInfo[parseInt(rowIdx, 10)]) {
-        this.gridForm.getFieldInfoMap().removeFieldInfo(columnField.name);
-      }
-
-      delete this.allAddRowInfo[parseInt(rowIdx, 10)];
+      this.removeFieldInfo(rowIdx);
       rowElement.remove();
+    }
+  }
+
+  /**
+   *
+   * @param rowIdx row index
+   */
+  removeFieldInfo(rowIdx?: string) {
+    let removeFieldArrs = [] as any;
+    if (utils.isEmpty(rowIdx)) {
+      for (let key in this.allAddRowInfo) {
+        removeFieldArrs = removeFieldArrs.concat(this.allAddRowInfo[key]);
+      }
+      this.allAddRowInfo = {} as NumberKeyMap;
+    } else if (rowIdx) {
+      const rowIdxNum = parseInt(rowIdx, 10);
+      removeFieldArrs = removeFieldArrs.concat(this.allAddRowInfo[rowIdxNum]);
+      delete this.allAddRowInfo[rowIdxNum];
+    }
+
+    for (let columnField of removeFieldArrs) {
+      this.gridForm.getFieldInfoMap().removeFieldInfo(columnField.name);
     }
   }
 
   allRemoveRow(): void {
     this.rowElement.querySelector("tbody")?.replaceChildren();
-    this.allAddRowInfo = {} as NumberKeyMap;
+    this.removeFieldInfo();
   }
 
   getValue() {
@@ -253,7 +271,7 @@ export default class GridRender extends Render {
 
     const validResult = this.gridForm.validForm();
 
-    console.log("validResult", validResult);
+    console.log("validResult ", validResult);
 
     if (validResult.length > 0) {
       const firstItem = validResult[0];

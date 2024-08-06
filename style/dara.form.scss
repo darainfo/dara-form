@@ -575,6 +575,7 @@ body.dark .dara-form,
       width: 100%;
       height: auto;
       overflow-y: auto;
+      border: 1px solid var(--border-color);
 
       .df-btn {
         padding: 3px 5px;
@@ -582,7 +583,6 @@ body.dark .dara-form,
 
       .df-grid {
         width: 100%;
-        border: 1px solid var(--border-color);
         border-top-width: 0px;
         border-collapse: collapse;
 

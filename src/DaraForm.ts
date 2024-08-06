@@ -21,6 +21,7 @@ const defaultOptions = {
     position: "left-right",
   },
   mode: "new",
+  useTypeValue: true,
   autoCreate: true,
   notValidMessage: "This form is not valid.",
   fields: [],
@@ -94,7 +95,7 @@ export default class DaraForm {
   }
 
   private createForm(fields: FormField[]) {
-    this.fieldInfoMap = new FieldInfoMap(this.selector);
+    this.fieldInfoMap = new FieldInfoMap(this.selector, this);
     //this.formElement.innerHTML = "";
     this.formTemplate = new FormTemplate(this, this.formElement, this.fieldInfoMap);
 
