@@ -267,6 +267,9 @@ body.dark .dara-form,
     $className: ".col-xs-#{$i}";
     #{$className} {
       flex-basis: $size;
+      -webkit-box-flex: 0;
+      -ms-flex: 0 0 $size;
+      flex: 0 0 $size;
       max-width: $size;
     }
   }
@@ -316,6 +319,7 @@ body.dark .dara-form,
     }
     .df-field {
       position: relative;
+      margin-right: 10px;
 
       .range-num {
         clear: both;
@@ -482,9 +486,6 @@ body.dark .dara-form,
     display: -ms-flexbox;
     display: -webkit-box;
     display: flex;
-    -ms-flex: 0 1 auto;
-    -webkit-box-flex: 0;
-    flex: 0 1 auto;
     -ms-flex-direction: row;
     -webkit-box-orient: horizontal;
     -webkit-box-direction: normal;
@@ -493,6 +494,8 @@ body.dark .dara-form,
     flex-wrap: wrap;
     margin-top: var(--field-margin-top);
     margin-bottom: 0px;
+    margin-right: 0px !important;
+    margin-left: 0px !important;
 
     &:last-child {
       margin-bottom: 0px;
@@ -566,6 +569,7 @@ body.dark .dara-form,
     }
   }
   .df-grid-field {
+    margin-right: 10px;
     .df-grid-btn-area {
       border: 1px solid var(--border-color);
       padding: 3px;
@@ -593,6 +597,7 @@ body.dark .dara-form,
             z-index: 10;
             border-bottom: 1px solid var(--border-color);
             background-color: var(--bg-grid-header);
+            text-align: center;
           }
         }
 

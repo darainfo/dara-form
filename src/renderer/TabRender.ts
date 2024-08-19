@@ -224,4 +224,6 @@ export default class TabRender extends Render {
 
     return true;
   }
+
+  focus(): void {}
 }

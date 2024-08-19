@@ -132,6 +132,63 @@
         renderType: "hidden",
         defaultValue: "asdf",
       }
+      , {
+        name: "cmpCredId111",
+        label: "credentials",
+        renderType: "dropdown",
+        tooltip: "credentials 넣어주세요.",
+        required: true,
+        listItem: {
+          labelField: "credName",
+          valueField: "credId",
+          list: [{ credId: "credId22", credName: "credNam22" }, { credId: "credId", credName: "credName" }],
+        },
+        description: "drop down 설명",
+      }
+      , {
+        renderType: 'group'
+        , orientation: "horizontal"
+        , children: [
+          {
+            renderType: 'group'
+            , orientation: "vertical"
+            , label: 'source'
+            , style: {
+              width: '5',
+              position: 'top-center'
+            }
+            , children: [
+              {
+                name: 'aaa',
+                label: 'asdf',
+                renderType: 'text',
+                style: {
+                  position: 'left-left'
+                }
+              }
+              , {
+                name: 'bbb',
+                label: 'asdf',
+                renderType: 'text',
+                style: {
+                  position: 'top-left'
+                }
+              }
+            ]
+
+          }
+          , {
+            name: 'test11122',
+            label: 'right-label',
+            renderType: 'text',
+            style: {
+              width: '7',
+              position: 'top-left'
+            }
+          }
+        ]
+      }
+
       ,
       {
         name: "이름222222",
@@ -156,6 +213,25 @@
           , valid1(field, rowElement) {
             const val = this.getValue();
             return { name: field.name, message: 'custom type not valid' };
+          }
+        }
+      },
+      {
+        name: "sql",
+        label: "SQL",
+        renderType: 'custom',
+        template: '<div id="sqlCont" style="width:100%; height:200px;" class="border"></div>',
+        required: true,
+        onChange: (arg) => {
+          console.log(arg);
+        },
+        renderer: {
+          mounted: (field, element) => {
+            console.log(field, element.querySelector('#sqlCont'))
+
+          }
+          , getValue() {
+            return "custom field value";
           }
         }
       },

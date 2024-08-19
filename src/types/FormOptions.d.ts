@@ -48,7 +48,7 @@ export interface FormOptions {
   };
 
   /**
-   * form에 값을 renderer type별로 값을 구 할지 여부.
+   * form에 값을 renderer type별로 값을 구 할지 여부. tab 값을 구할때 영향이 있음
    * @default false
    * @example
    * true or false

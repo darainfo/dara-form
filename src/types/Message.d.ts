@@ -1,6 +1,7 @@
 export interface Message {
   required: string;
   fileButton: string;
+  selection: string;
 
   // string
   string: {
@@ -24,16 +25,16 @@ export interface Message {
 
   // 정규식 메시지
   regexp: {
-    'mobile': string;
-    'email': string;
-    'url': string;
-    'number': string
-    'alpha': string;
-    'alpha-num': string;
-    'variable': string;
-    'number-char': string;
-    'upper-char': string;
-    'upper-char-special': string;
-    'upper-char-special-number': string;
+    mobile: string;
+    email: string;
+    url: string;
+    number: string;
+    alpha: string;
+    "alpha-num": string;
+    variable: string;
+    "number-char": string;
+    "upper-char": string;
+    "upper-char-special": string;
+    "upper-char-special-number": string;
   };
 }

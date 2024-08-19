@@ -8,6 +8,14 @@
     "email": "darainfosys@gmail.com",
     "url": "https://www.moaview.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/darainfo/dara-form.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
   "license": "MIT",
   "keywords": [
     "daraValidation",
@@ -29,10 +37,6 @@
   "bugs": {
     "url": "https://github.com/darainfo/validation/issues",
     "email": "darainfosys@gmail.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/darainfo/dara-form.git"
   },
   "files": [
     "dist"

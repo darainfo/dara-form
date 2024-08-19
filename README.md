@@ -88,7 +88,8 @@ const form = new DaraForm("#loginForm", {
 | onMounted |  폼 로드후 이벤트 |  |  |
 | fields |  폼필드 [설명](#field-option) | | |
 | message |  폼 유효성 체크 메시지 [설명](#form-message) |  | 
-  
+| useTypeValue | form에 값을 renderer type별로 값을 구 할지 여부. renderType tab 값을 구할때 영향이 있음 |  | 
+
 
 # Form message
 ```javascript

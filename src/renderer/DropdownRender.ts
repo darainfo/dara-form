@@ -6,10 +6,11 @@ import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
 import { dropdownChangeEvent } from "src/event/renderEvents";
 import DaraForm from "src/DaraForm";
 import * as utils from "src/util/utils";
+import Lanauage from "src/util/Lanauage";
 
 export default class DropdownRender extends Render {
   private element: HTMLSelectElement;
-  private defaultCheckValue;
+  private defaultSelected;
 
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {
     super(daraForm, field, rowElement);
@@ -25,7 +26,7 @@ export default class DropdownRender extends Render {
     this.field.listItem?.list?.forEach((item) => {
       let itemValue = item[valueKey];
       if (item.selected) {
-        this.defaultCheckValue = itemValue;
+        this.defaultSelected = itemValue;
       }
       if (itemValue == initDefaultValue) {
         initDefaultValueFlag = true;
@@ -33,18 +34,20 @@ export default class DropdownRender extends Render {
     });
 
     if (initDefaultValueFlag) {
-      this.defaultCheckValue = initDefaultValue;
-    } else if (!this.defaultCheckValue) {
-      this.defaultCheckValue = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
+      this.defaultSelected = initDefaultValue;
+    } else if (!this.defaultSelected) {
+      if (field.customOptions?.disableDefaultOption === true) {
+        this.defaultSelected = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
+      }
     }
 
-    if (utils.isUndefined(this.defaultCheckValue)) {
-      this.defaultCheckValue = "";
+    if (utils.isUndefined(this.defaultSelected)) {
+      this.defaultSelected = "";
     }
 
     this.mounted();
     this.setDefaultOption();
-    this.setValue(this.defaultCheckValue);
+    this.setValue(this.defaultSelected);
   }
 
   mounted() {
@@ -83,12 +86,13 @@ export default class DropdownRender extends Render {
   }
 
   setValue(value: any): void {
+    console.log("selected, ", this.field.name, value);
     this.field.$value = value;
     this.element.value = value;
   }
 
   reset() {
-    this.setValue(this.defaultCheckValue);
+    this.setValue(this.defaultSelected);
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }
@@ -118,6 +122,10 @@ export default class DropdownRender extends Render {
     const labelKey = Render.valuesLabelKey(field);
     const valueKey = Render.valuesValueKey(field);
     let template = "";
+
+    if (field.customOptions?.disableDefaultOption !== true) {
+      template += `<option value="">${Lanauage.getMessage("selection")}</option>`;
+    }
     field.listItem?.list?.forEach((val) => {
       const attr = `${val.selected ? "selected" : ""} ${val.disabled ? "disabled" : ""}`;
       if (utils.isUndefined(val[valueKey]) && val.label) {

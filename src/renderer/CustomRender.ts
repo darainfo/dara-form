@@ -33,18 +33,15 @@ export default class CustomRender extends Render {
   createField() {
     const field = this.field;
 
-    if (field.template) {
-      const fieldTemplate = utils.isString(field.template) ? field.template : field.template();
+    const fieldTemplate = utils.isEmpty(field.template) ? "" : utils.isString(field.template) ? field.template : field.template();
 
-      const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
+    const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
 
-      fieldContainerElement.innerHTML = ` <div class="df-field">
+    fieldContainerElement.innerHTML = ` <div class="df-field">
         ${fieldTemplate}
         </div>
           ${Render.getDescriptionTemplate(field)}
         <div class="help-message"></div>`;
-    }
-    return "";
   }
 
   getValue() {
@@ -86,5 +83,14 @@ export default class CustomRender extends Render {
     invalidMessage(this.field, this.rowElement, validResult);
 
     return validResult;
+  }
+
+  /**
+   * focus
+   */
+  focus(): void {
+    if (this.customFunction.focus) {
+      (this.customFunction.focus as any).call(this, this.field, this.rowElement);
+    }
   }
 }

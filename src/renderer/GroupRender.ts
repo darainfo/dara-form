@@ -42,4 +42,6 @@ export default class GroupRender extends Render {
       this.rowElement.append(element);
     }
   }
+
+  focus(): void {}
 }

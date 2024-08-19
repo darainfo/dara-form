@@ -72,18 +72,19 @@ export default class GridRender extends Render {
     let theadTemplate = [];
     let colgroupTemplate = [];
     let addBtnTemplate = [];
+    addBtnTemplate.push("");
 
     if (field.children) {
-      if (field.gridOptions?.disableAddButton !== true) {
-        addBtnTemplate.push(`<div class="df-grid-btn-area txt-${field.gridOptions?.align ?? "center"}"><button type="button" class="df-btn df-grid-add-row-btn"><i class="df-icon df-add-icon"></i> Add</button></div>`);
-      }
       colgroupTemplate.push("<colgroup>");
 
       theadTemplate.push("<tr>");
-      if (field.gridOptions?.disableRemoveButton !== true) {
-        colgroupTemplate.push(`<col style="width:38px">`);
-        theadTemplate.push("<th></th>");
+
+      colgroupTemplate.push(`<col style="width:38px">`);
+      theadTemplate.push("<th>");
+      if (field.gridOptions?.disableAddButton !== true) {
+        theadTemplate.push(`<button type="button" class="df-btn df-grid-add-row-btn" title="Add"><i class="df-icon df-add-icon"></i></button>`);
       }
+      theadTemplate.push("</th>");
 
       for (const childField of field.children) {
         colgroupTemplate.push(`<col style="width:${childField.style?.width ?? "*"}">`);
@@ -117,9 +118,11 @@ export default class GridRender extends Render {
     let addColumns = [];
     rowTemplate.push(`<tr class="grid-row">`);
 
+    rowTemplate.push("<td>");
     if (this.field.gridOptions?.disableRemoveButton !== true) {
-      rowTemplate.push(`<td><button type="button" data-row-idx="${$$idx}" class="df-btn df-grid-row-remove"><i class="df-icon df-remove-icon"></i></button></td>`);
+      rowTemplate.push(`<button type="button" data-row-idx="${$$idx}" class="df-btn df-grid-row-remove"><i class="df-icon df-remove-icon"></i></button>`);
     }
+    rowTemplate.push("</td>");
 
     for (const childField of this.field.children) {
       let fieldStyle: FieldStyle = styleUtils.fieldStyle(options, childField, null, true);
@@ -239,12 +242,10 @@ export default class GridRender extends Render {
       }
     }
 
-    if (valueArr.length > 0) {
-      this.allRemoveRow();
+    this.allRemoveRow();
 
-      for (let valueItem of valueArr) {
-        this.addRow(valueItem);
-      }
+    for (let valueItem of valueArr) {
+      this.addRow(valueItem);
     }
   }
 

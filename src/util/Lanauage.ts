@@ -6,6 +6,7 @@ import { RULES } from "src/constants";
 let localeMessage: Message = {
   required: "{label} 필수 입력사항입니다.",
   fileButton: "파일찾기",
+  selection: "선택",
   string: {
     minLength: "{minLength} 글자 이상으로 입력하세요.",
     maxLength: "{maxLength} 글자 이하로 입력하세요.",
