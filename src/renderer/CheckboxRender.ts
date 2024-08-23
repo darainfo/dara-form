@@ -177,6 +177,14 @@ export default class CheckboxRender extends Render {
     return this.rowElement.querySelectorAll(`[name="${this.field.$xssName}"]`);
   }
 
+  public focus() {
+    const elements = this.getElement();
+
+    if (elements && elements.length > 0) {
+      this.getElement()[0].focus();
+    }
+  }
+
   valid(): any {
     const value = this.getValue();
 

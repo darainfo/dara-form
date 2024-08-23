@@ -128,7 +128,7 @@ export default class FieldInfoMap {
 
     return new Promise((resolve, reject) => {
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        if (!this.isValueFieldCheck(fieldInfo)) {
+        if (!fieldInfo.$instance.isEnableView()) {
           continue;
         }
 
@@ -169,7 +169,7 @@ export default class FieldInfoMap {
       }
 
       for (let [key, fieldInfo] of Object.entries(this.allFieldInfo)) {
-        if (!this.isValueFieldCheck(fieldInfo)) {
+        if (!fieldInfo.$instance.isEnableView()) {
           continue;
         }
 
@@ -193,7 +193,7 @@ export default class FieldInfoMap {
    * @param field
    * @returns
    */
-  public isValueFieldCheck(field: FormField) {
+  public isConditionFieldCheck(field: FormField) {
     let parent = field;
 
     while (typeof parent !== "undefined") {
@@ -263,6 +263,10 @@ export default class FieldInfoMap {
    * @returns boolean true or ValidResult
    */
   public getFieldValidation(fieldInfo: FormField, focusFlag: boolean | undefined) {
+    if (!this.isConditionFieldCheck(fieldInfo)) {
+      return true;
+    }
+
     const renderInfo = fieldInfo.$instance;
     let fieldValid = renderInfo.valid();
 

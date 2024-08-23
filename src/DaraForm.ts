@@ -268,6 +268,7 @@ export default class DaraForm {
    */
   public isValidForm = (): boolean => {
     const result = this.validForm();
+
     return result.length < 1;
   };
 

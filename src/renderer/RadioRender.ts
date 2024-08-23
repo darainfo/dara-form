@@ -158,6 +158,14 @@ export default class RadioRender extends Render {
     return this.rowElement.querySelectorAll(this.getSelector());
   }
 
+  public focus() {
+    const elements = this.getElement();
+
+    if (elements && elements.length > 0) {
+      this.getElement()[0].focus();
+    }
+  }
+
   valid(): any {
     const value = this.getValue();
 

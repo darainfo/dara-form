@@ -13,9 +13,9 @@
       <button type="button" onclick="formObj.getValue()">getValue</button>
       <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
       <button type="button" onclick="formObj.setValue()">setValue()</button>
-      <button type="button" onclick="formObj.isValidForm()">valid check</button>
-      <button type="button" onclick="formObj.resetForm()">Reset</button>
-      <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
+      <button type="button" onclick="formBuilder.isValidForm()">valid check</button>
+      <button type="button" onclick="formBuilder.resetForm()">Reset</button>
+      <button type="button" onclick="formBuilder.setFieldItems()">setFieldItems</button>
     </div>
 
     <div>
@@ -135,8 +135,9 @@
       , {
         name: "cmpCredId111",
         label: "credentials",
-        renderType: "dropdown",
+        renderType: "checkbox",
         tooltip: "credentials 넣어주세요.",
+        defaultValue: '222',
         required: true,
         listItem: {
           labelField: "credName",
@@ -207,11 +208,15 @@
         rule: {
           minLength: 2,
           maxLength: 100,
-        },
-        onChange: (arg) => {
-          return true;
-        },
-        renderer: {
+        }
+        , conditional: {
+          show: true,
+          custom: function () {
+
+            return false;
+          }
+        }
+        , renderer: {
           mounted: () => {
             console.log(document.getElementById('customElementID'))
           }
@@ -243,163 +248,7 @@
           }
         }
       },
-      {
-        name: "tab",
-        label: "첫번째 탭",
-        tooltip: "탭을 선택후 정보를 입력해주세요.",
-        description: "탭 설명설명설명",
-        renderType: "tab",
-        style: {
-          labelHide: false,
-          position: 'top-left'
-        },
-        children: [
-          {
-            label: 'tab1'
-            , description: 'tabl 설명'
-            , children: [
-              {
-                name: "tabPicture",
-                label: "tab사진",
-                required: true,
-                renderType: "file",
-                listItem: {
-                  list: [
-                  ],
-                },
-              }
-              , {
-                name: "grid",
-                label: "grid",
-                renderType: "grid",
-                gridOptions: {
-                  disableAddButton: false,
-                  disableRemoveButton: false,
-                  height: '200px',
-                }
-                , children: [
-                  {
-                    name: "key",
-                    label: "key",
-                    renderType: "text",
-                    required: true,
-                    style: {
-                      width: '200px'
-                    },
-                    rule: {
-                      minLength: 2,
-                      maxLength: 100,
-                    },
-                  }
-                  , {
-                    name: "value",
-                    label: "value",
-                    renderType: "text",
-                  }
-                  , {
-                    name: "cre",
-                    label: "성별",
-                    required: true,
-                    renderType: "dropdown",
-                    listItem: {
-                      labelField: "credName",
-                      valueField: "credId",
-                      list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
-                    }
-                  },
-                ],
 
-              },
-              {
-                name: "uname222",
-                label: "tab-이름",
-                style: {
-                  customClass: 'custom-class',
-                  position: 'left',
-                  labelWidth: '120px',
-                  labelHide: false,
-                }
-                , rule: {
-                  minLength: 2,
-                  maxLength: 100,
-                },
-
-              }
-              , {
-                name: "uname222333",
-                label: "tab11-이름",
-                tooltip: "아이디를 넣어주세요.",
-                rule: {
-                  minLength: 2,
-                  maxLength: 100,
-                },
-
-              }
-
-              , {
-                label: "child tab",
-                renderType: "tab",
-                style: {
-                  labelHide: true,
-                  //position: 'top-center',
-                  position: 'top-bottom',
-                }
-                , children: [
-                  {
-                    label: 'child-tab1'
-                    , description: 'tabl 설명'
-                    , children: [
-                      {
-                        name: "child-uname222",
-                        label: "tab-이름",
-                        style: {
-                          customClass: 'custom-class',
-                          position: 'left',
-                          labelWidth: '120px',
-                          labelHide: false,
-                        }
-                      }
-                    ]
-                  }
-                  , {
-                    label: 'child-uname2-tab2'
-                    , children: [
-                      {
-                        name: "child-uname333",
-                        label: "tab",
-
-                        rule: {
-                          minLength: 2,
-                          maxLength: 100,
-                        },
-                        onChange: (arg) => {
-                          console.log(arg);
-                        },
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-          , {
-            label: 'tab2'
-            , children: [
-              {
-                name: "uname333",
-                label: "tab-22222222222222222222222222222222",
-                rule: {
-                  minLength: 2,
-                  maxLength: 100,
-                },
-                onChange: (arg) => {
-                  console.log(arg);
-                },
-              }
-            ]
-          }
-        ]
-      },
 
       /*
           {
@@ -681,7 +530,7 @@
     },
     getValuePromise: () => {
       formBuilder
-        .getFormDataValue(true)
+        .getValue(true)
         .then((aa) => {
           console.log(aa);
 
