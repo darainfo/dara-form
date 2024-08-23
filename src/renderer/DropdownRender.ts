@@ -47,7 +47,7 @@ export default class DropdownRender extends Render {
 
     this.mounted();
     this.setDefaultOption();
-    this.setValue(this.defaultSelected);
+    this.setValue(this.defaultSelected, false);
   }
 
   mounted() {
@@ -85,14 +85,17 @@ export default class DropdownRender extends Render {
     return this.element.value;
   }
 
-  setValue(value: any): void {
-    console.log("selected, ", this.field.name, value);
+  setValue(value: any, changeCheckFlag?: boolean): void {
+    if (changeCheckFlag !== false && this.changeEventCall(this.field, null, this, value) === false) {
+      this.element.value = this.field.$value;
+      return;
+    }
     this.field.$value = value;
     this.element.value = value;
   }
 
   reset() {
-    this.setValue(this.defaultSelected);
+    this.setValue(this.defaultSelected, false);
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }

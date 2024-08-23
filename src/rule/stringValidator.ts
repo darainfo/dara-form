@@ -12,6 +12,10 @@ import { validator } from "./validator";
  * @returns {(ValidResult | boolean)}
  */
 export const stringValidator = (value: string, field: FormField): ValidResult | boolean => {
+  if (!field.$instance.isEnableView()) {
+    return true;
+  }
+
   let result: ValidResult = { name: field.name, constraint: [] };
 
   if (field.required && utils.isBlank(value)) {

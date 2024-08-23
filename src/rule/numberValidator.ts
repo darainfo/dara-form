@@ -12,6 +12,10 @@ import * as utils from "src/util/utils";
  * @returns {(ValidResult | boolean)}
  */
 export const numberValidator = (value: string, field: FormField): ValidResult | boolean => {
+  if (!field.$instance.isEnableView()) {
+    return true;
+  }
+
   const result: ValidResult = { name: field.name, constraint: [] };
   const numValue = Number(value);
 

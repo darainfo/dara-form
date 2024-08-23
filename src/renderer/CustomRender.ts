@@ -51,11 +51,15 @@ export default class CustomRender extends Render {
     return "";
   }
 
-  setValue(value: any): void {
-    this.field.$value = value;
+  setValue(value: any, changeCheckFlag?: boolean): void {
     if (this.customFunction.setValue) {
+      if (changeCheckFlag !== false && this.changeEventCall(this.field, null, this, value) === false) {
+        value = this.field.$value;
+      }
       (this.customFunction.setValue as any).call(this, value, this.field, this.rowElement);
     }
+
+    this.field.$value = value;
   }
 
   reset() {

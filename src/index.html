@@ -141,9 +141,16 @@
         listItem: {
           labelField: "credName",
           valueField: "credId",
-          list: [{ credId: "credId22", credName: "credNam22" }, { credId: "credId", credName: "credName" }],
+          list: [{ credId: "11", credName: "credNam11" }, { credId: "22", credName: "credName" }, { credId: "33", credName: "credName33" }],
         },
         description: "drop down 설명",
+        onChange: (aaa) => {
+          console.log(aaa)
+
+          if (aaa.newValue == '22') return false;
+
+          return true;
+        }
       }
       , {
         renderType: 'group'
@@ -165,6 +172,7 @@
                 style: {
                   position: 'left-left'
                 }
+
               }
               , {
                 name: 'bbb',
@@ -201,7 +209,7 @@
           maxLength: 100,
         },
         onChange: (arg) => {
-          console.log(arg);
+          return true;
         },
         renderer: {
           mounted: () => {

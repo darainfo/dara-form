@@ -202,8 +202,8 @@ export default class DaraForm {
    * 폼 필드 value 셋팅
    * @param values
    */
-  public setValue = (values: any, clear?: boolean | undefined) => {
-    if (clear !== false) {
+  public setValue = (values: any, dataClear?: boolean | undefined) => {
+    if (dataClear !== false) {
       this.resetForm();
     }
 

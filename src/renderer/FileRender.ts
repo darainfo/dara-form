@@ -34,7 +34,7 @@ export default class FileRender extends Render {
         }
         this.addFiles(fileList);
       }
-      customChangeEventCall(this.field, e, this);
+      customChangeEventCall(this.field, e, this, this.fileList);
       this.valid();
     });
 

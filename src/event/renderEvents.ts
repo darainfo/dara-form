@@ -4,7 +4,7 @@ import * as utils from "src/util/utils";
 
 export const inputEvent = (field: FormField, element: Element, renderInfo: Render) => {
   element.addEventListener("input", (e: Event) => {
-    customChangeEventCall(field, e, renderInfo);
+    customChangeEventCall(field, e, renderInfo, renderInfo.getValue());
     renderInfo.valid();
   });
 };
@@ -17,7 +17,7 @@ export const numberInputEvent = (field: FormField, element: HTMLInputElement, re
       element.value = val.replace(/[^0-9\.\-\+]/g, "");
       e.preventDefault();
     }
-    customChangeEventCall(field, e, renderInfo);
+    customChangeEventCall(field, e, renderInfo, renderInfo.getValue());
     renderInfo.valid();
   });
 
@@ -30,12 +30,12 @@ export const numberInputEvent = (field: FormField, element: HTMLInputElement, re
 };
 
 export const dropdownChangeEvent = (field: FormField, element: Element, renderInfo: Render) => {
-  element.addEventListener("change", (e: Event) => {
-    customChangeEventCall(field, e, renderInfo);
+  element.addEventListener("change", (e: any) => {
+    customChangeEventCall(field, e, renderInfo, renderInfo.getValue());
     renderInfo.valid();
   });
 };
 
-export const customChangeEventCall = (field: FormField, e: Event, renderInfo: Render) => {
-  renderInfo.changeEventCall(field, e, renderInfo);
+export const customChangeEventCall = (field: FormField, e: Event, renderInfo: Render, value: any) => {
+  renderInfo.changeEventCall(field, e, renderInfo, value);
 };

@@ -40,7 +40,11 @@ export default class PasswordRender extends Render {
     return this.element.value;
   }
 
-  setValue(value: any): void {
+  setValue(value: any, changeCheckFlag?: boolean): void {
+    if (changeCheckFlag !== false && this.changeEventCall(this.field, null, this, value) === false) {
+      this.element.value = this.field.$value;
+      return;
+    }
     this.field.$value = value;
     this.element.value = value;
   }

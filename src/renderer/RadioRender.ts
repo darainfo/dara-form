@@ -42,7 +42,7 @@ export default class RadioRender extends Render {
 
     this.mounted();
     this.setDefaultOption();
-    this.setValue(this.defaultCheckValue);
+    this.setValue(this.defaultCheckValue, false);
   }
 
   public mounted() {
@@ -54,7 +54,7 @@ export default class RadioRender extends Render {
 
     checkboxes.forEach((ele) => {
       ele.addEventListener("change", (e: Event) => {
-        customChangeEventCall(this.field, e, this);
+        customChangeEventCall(this.field, e, this, this.getValue());
 
         this.valid();
       });
@@ -120,7 +120,11 @@ export default class RadioRender extends Render {
     return (this.rowElement.querySelector(`[name="${this.field.$xssName}"]:checked`) as HTMLInputElement)?.value;
   }
 
-  setValue(value: any): void {
+  setValue(value: any, changeCheckFlag?: boolean): void {
+    if (changeCheckFlag !== false && this.changeEventCall(this.field, null, this, value) === false) {
+      value = this.field.$value;
+    }
+
     this.field.$value = value;
     if (value === true) {
       (this.rowElement.querySelector(`[name="${this.field.$xssName}"]`) as HTMLInputElement).checked = true;
@@ -145,7 +149,7 @@ export default class RadioRender extends Render {
   }
 
   reset() {
-    this.setValue(this.defaultCheckValue);
+    this.setValue(this.defaultCheckValue, false);
     this.setDisabled(false);
     resetRowElementStyleClass(this.rowElement);
   }

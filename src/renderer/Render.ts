@@ -8,6 +8,8 @@ export default abstract class Render {
   protected rowElement;
   protected field;
 
+  private enableView: boolean = true;
+
   constructor(form: DaraForm, field: FormField, rowElement: HTMLElement) {
     this.daraForm = form;
     this.field = field;
@@ -19,9 +21,9 @@ export default abstract class Render {
 
   public setDefaultInfo() {
     if (utils.isUndefined(this.field.defaultValue)) {
-      this.setValue("");
+      this.setValue("", false);
     } else {
-      this.setValue(this.field.defaultValue);
+      this.setValue(this.field.defaultValue, false);
     }
 
     if (!utils.isUndefined(this.field.placeholder)) {
@@ -54,7 +56,7 @@ export default abstract class Render {
 
   public abstract mounted(): void;
   public abstract getValue(): any;
-  public abstract setValue(value: any): void;
+  public abstract setValue(value: any, changeCheckFlag?: boolean): void;
   public abstract reset(): void;
   public abstract getElement(): any;
   public abstract valid(): ValidResult | boolean;
@@ -66,16 +68,14 @@ export default abstract class Render {
     return field.description ? `<div class="df-description">${field.description}</div>` : "";
   }
 
-  public changeEventCall(field: FormField, e: Event | null, rederInfo: Render) {
+  public changeEventCall(field: FormField, e: Event | null, rederInfo: Render, fieldValue: any): boolean | undefined {
     if (field.onChange) {
-      let fieldValue = rederInfo.getValue();
-
-      let changeValue: any = {
+      let changeInfo: any = {
         field: field,
         evt: e,
+        oldValue: field.$value,
+        value: fieldValue,
       };
-
-      changeValue.value = fieldValue;
 
       if (field.listItem?.list) {
         let valuesItem = [];
@@ -94,10 +94,16 @@ export default abstract class Render {
             }
           }
         }
-        changeValue.valueItem = valuesItem;
+
+        changeInfo.valueItems = valuesItem;
       }
 
-      field.onChange.call(null, changeValue);
+      if (changeInfo.oldValue != changeInfo.value && field.onChange.call(null, changeInfo) === false) {
+        rederInfo.setValue(field.$value, false);
+        return false;
+      }
+
+      field.$value = changeInfo.value;
     }
 
     this.daraForm.conditionCheck();
@@ -107,11 +113,17 @@ export default abstract class Render {
     this.getElement().focus();
   }
 
+  public isEnableView() {
+    return this.enableView;
+  }
+
   public show() {
+    this.enableView = true;
     this.rowElement.classList.remove("df-hidden");
   }
 
   public hide() {
+    this.enableView = false;
     if (!this.rowElement.classList.contains("df-hidden")) {
       this.rowElement.classList.add("df-hidden");
     }
