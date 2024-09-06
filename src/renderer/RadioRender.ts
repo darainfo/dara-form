@@ -113,6 +113,12 @@ export default class RadioRender extends Render {
       }
 
       this.createField();
+
+      if (!utils.isBlank(this.field.$value)) {
+        const currentValue = this.field.$value;
+        this.field.$value = "";
+        this.setValue(currentValue);
+      }
     }
   }
 

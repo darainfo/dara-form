@@ -25,6 +25,10 @@ export default class CheckboxRender extends Render {
 
     const valueKey = CheckboxRender.valuesValueKey(field);
 
+    if (utils.isUndefined(this.field.listItem)) {
+      this.setValueItems([{ label: "", value: "Y" }]);
+    }
+
     let initDefaultValueFlag = false;
     this.field.listItem?.list?.forEach((item) => {
       let itemValue = item[valueKey];
@@ -102,6 +106,12 @@ export default class CheckboxRender extends Render {
       }
 
       this.createField();
+
+      if (!utils.isBlank(this.field.$value)) {
+        const currentValue = this.field.$value;
+        this.field.$value = "";
+        this.setValue(currentValue);
+      }
     }
   }
 

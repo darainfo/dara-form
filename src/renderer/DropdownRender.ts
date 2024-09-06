@@ -79,6 +79,12 @@ export default class DropdownRender extends Render {
       } as ValuesInfo;
     }
     this.element.innerHTML = this.dropdownValuesTemplate(this.field);
+
+    if (!utils.isBlank(this.field.$value)) {
+      const currentValue = this.field.$value;
+      this.field.$value = "";
+      this.setValue(currentValue);
+    }
   }
 
   getValue() {
