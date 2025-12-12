@@ -1,9 +1,9 @@
 import { FormField } from "@t/FormField";
-import Render from "./Render";
-import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { inputEvent } from "src/event/renderEvents";
-import DaraForm from "src/DaraForm";
+import { Render } from "./Render";
+import { stringValidator } from "@/rule/stringValidator";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { inputEvent } from "@/event/renderEvents";
+import { DaraForm } from "@/DaraForm";
 
 export default class TextRender extends Render {
   private element: HTMLInputElement;

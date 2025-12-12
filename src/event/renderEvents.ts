@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
-import Render from "src/renderer/Render";
-import * as utils from "src/util/utils";
+import { Render } from "@/renderer/Render";
+import * as utils from "@/util/utils";
 
 export const inputEvent = (field: FormField, element: Element, renderInfo: Render) => {
   element.addEventListener("input", (e: Event) => {

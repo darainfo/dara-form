@@ -2,8 +2,8 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist", "build", ".vscode"],
   "compilerOptions": {
-    "target": "es6" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
-    "module": "commonJS",
+    "target": "es2017" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+    "module": "esnext",
     "jsx": "react-jsx",
     //"jsxFactory": "h",
     "jsxImportSource": "preact",
@@ -14,6 +14,7 @@
     "baseUrl": "." /* Specify the base directory to resolve non-relative module names. */,
     "outDir": "./dist/",
     "paths": {
+      "@/*": ["src/*"],
       "@t/*": ["src/types/*"]
     } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     "types": ["node"],

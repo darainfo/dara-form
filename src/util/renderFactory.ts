@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
 
-import Render from "../renderer/Render";
+import { Render } from "../renderer/Render";
 import { RENDER_TEMPLATE } from "../constants";
 import * as utils from "./utils";
 

@@ -1,7 +1,7 @@
 import { Message } from "@t/Message";
 import { FormField } from "../types/FormField";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
+import { RULES } from "@/constants";
 
 let localeMessage: Message = {
   required: "{label} 필수 입력사항입니다.",

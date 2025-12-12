@@ -1,6 +1,6 @@
 import { FormField } from "@t/FormField";
-import Render from "./Render";
-import DaraForm from "src/DaraForm";
+import { Render } from "./Render";
+import { DaraForm } from "@/DaraForm";
 
 export default class GroupRender extends Render {
   constructor(field: FormField, rowElement: HTMLElement, daraForm: DaraForm) {

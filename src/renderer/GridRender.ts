@@ -1,11 +1,11 @@
 import { FieldStyle, FormField } from "@t/FormField";
-import Render from "./Render";
-import { invalidMessage, resetRowElementStyleClass } from "src/util/validUtils";
-import DaraForm from "src/DaraForm";
-import * as utils from "src/util/utils";
-import { stringValidator } from "src/rule/stringValidator";
-import styleUtils from "src/util/styleUtils";
-import FormTemplate from "src/FormTemplate";
+import { Render } from "./Render";
+import { invalidMessage, resetRowElementStyleClass } from "@/util/validUtils";
+import { DaraForm } from "@/DaraForm";
+import * as utils from "@/util/utils";
+import { stringValidator } from "@/rule/stringValidator";
+import styleUtils from "@/util/styleUtils";
+import FormTemplate from "@/FormTemplate";
 import { FormOptions } from "@t/FormOptions";
 import { NumberKeyMap } from "@t/DataMap";
 
@@ -234,7 +234,7 @@ export default class GridRender extends Render {
     this.field.$value = value;
 
     let valueArr: any[] = [];
-    if (Array.isArray(value)) {
+    if (utils.isArray(value)) {
       valueArr = value;
     } else {
       if (utils.isPlainObject(value)) {

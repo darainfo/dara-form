@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
-import * as utils from "src/util/utils";
+import { RULES } from "@/constants";
+import * as utils from "@/util/utils";
 import { validator } from "./validator";
 
 /**

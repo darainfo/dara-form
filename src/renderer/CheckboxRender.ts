@@ -1,11 +1,11 @@
 import { FormField, ValuesInfo } from "@t/FormField";
-import Render from "./Render";
-import * as utils from "src/util/utils";
+import { Render } from "./Render";
+import * as utils from "@/util/utils";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { customChangeEventCall } from "src/event/renderEvents";
-import DaraForm from "src/DaraForm";
+import { RULES } from "@/constants";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { customChangeEventCall } from "@/event/renderEvents";
+import { DaraForm } from "@/DaraForm";
 
 export default class CheckboxRender extends Render {
   private defaultCheckValue: any[] = [];
@@ -155,7 +155,7 @@ export default class CheckboxRender extends Render {
     }
 
     let valueArr: any[] = [];
-    if (Array.isArray(value)) {
+    if (utils.isArray(value)) {
       valueArr = value;
     } else {
       valueArr.push(value);

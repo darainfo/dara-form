@@ -1,11 +1,11 @@
 import { FormField } from "@t/FormField";
-import Render from "./Render";
-import { stringValidator } from "src/rule/stringValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import DaraForm from "src/DaraForm";
+import { Render } from "./Render";
+import { stringValidator } from "@/rule/stringValidator";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { DaraForm } from "@/DaraForm";
 import DateTimePicker from "@daracl/datetimepicker";
 
-import * as utils from "src/util/utils";
+import * as utils from "@/util/utils";
 
 export default class DateRender extends Render {
   private element: HTMLInputElement;

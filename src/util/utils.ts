@@ -1,4 +1,5 @@
 import { FormField } from "@t/FormField";
+import { isArray as coreIsArray} from "@daracl/core";
 
 const xssFilter = {
   "&": "&amp;",
@@ -68,7 +69,7 @@ export const isNumber = (value: any): value is number => {
 };
 
 export const isArray = (value: any): value is Array<any> => {
-  return Array.isArray(value);
+  return coreIsArray(value);
 };
 
 /**
@@ -176,7 +177,7 @@ export function isPlainObject(obj: any) {
 }
 
 function isObject(value: any) {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !isArray(value);
 }
 
 function isDate(value: any) {

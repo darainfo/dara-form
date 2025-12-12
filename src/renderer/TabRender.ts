@@ -1,12 +1,12 @@
 import { FieldStyle, FormField } from "@t/FormField";
-import Render from "./Render";
-import { invalidMessage } from "src/util/validUtils";
-import { stringValidator } from "src/rule/stringValidator";
-import DaraForm from "src/DaraForm";
-import FormTemplate from "src/FormTemplate";
-import styleUtils from "src/util/styleUtils";
+import { Render } from "./Render";
+import { invalidMessage } from "@/util/validUtils";
+import { stringValidator } from "@/rule/stringValidator";
+import { DaraForm } from "@/DaraForm";
+import FormTemplate from "@/FormTemplate";
+import styleUtils from "@/util/styleUtils";
 import { FormOptions } from "@t/FormOptions";
-import * as utils from "src/util/utils";
+import * as utils from "@/util/utils";
 
 export default class TabRender extends Render {
   private customFunction;

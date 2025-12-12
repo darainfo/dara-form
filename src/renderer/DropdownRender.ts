@@ -1,12 +1,12 @@
 import { FormField, ValuesInfo } from "@t/FormField";
-import Render from "./Render";
+import { Render } from "./Render";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { dropdownChangeEvent } from "src/event/renderEvents";
-import DaraForm from "src/DaraForm";
-import * as utils from "src/util/utils";
-import Language from "src/util/Language";
+import { RULES } from "@/constants";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { dropdownChangeEvent } from "@/event/renderEvents";
+import { DaraForm } from "@/DaraForm";
+import * as utils from "@/util/utils";
+import Language from "@/util/Language";
 
 export default class DropdownRender extends Render {
   private element: HTMLSelectElement;

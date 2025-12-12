@@ -1,7 +1,7 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
 import { regexpValidator } from "./regexpValidator";
-import * as utils from "src/util/utils";
+import * as utils from "@/util/utils";
 
 /**
  *  validator  ,  regexp 체크 .

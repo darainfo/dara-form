@@ -1,10 +1,10 @@
-import { FIELD_PREFIX } from "src/constants";
+import { FIELD_PREFIX } from "@/constants";
 import { FormField } from "./types/FormField";
 import { ValidResult } from "./types/ValidResult";
 import { getRenderer } from "./util/renderFactory";
 import Language from "./util/Language";
 import * as utils from "./util/utils";
-import DaraForm from "./DaraForm";
+import { DaraForm } from "./DaraForm";
 
 interface NumberFieldMap {
   [key: string]: FormField;

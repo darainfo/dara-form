@@ -1,6 +1,6 @@
 import { FileInfo, FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
+import { RULES } from "@/constants";
 
 /**
  * file validator

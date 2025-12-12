@@ -1,9 +1,9 @@
 import { FormField } from "@t/FormField";
-import Render from "./Render";
-import { invalidMessage, resetRowElementStyleClass } from "src/util/validUtils";
-import DaraForm from "src/DaraForm";
-import * as utils from "src/util/utils";
-import { stringValidator } from "src/rule/stringValidator";
+import { Render } from "./Render";
+import { invalidMessage, resetRowElementStyleClass } from "@/util/validUtils";
+import { DaraForm } from "@/DaraForm";
+import * as utils from "@/util/utils";
+import { stringValidator } from "@/rule/stringValidator";
 
 export default class CustomRender extends Render {
   private customFunction;

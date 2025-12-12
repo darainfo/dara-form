@@ -1,8 +1,8 @@
 import { FormField } from "@t/FormField";
 import { ValidResult } from "@t/ValidResult";
-import { RULES } from "src/constants";
+import { RULES } from "@/constants";
 import { validator } from "./validator";
-import * as utils from "src/util/utils";
+import * as utils from "@/util/utils";
 
 /**
  * 숫자 유효성 체크

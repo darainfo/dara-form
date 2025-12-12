@@ -1,6 +1,6 @@
-import DaraForm from "src/DaraForm";
-import { RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "src/constants";
-import Render from "src/renderer/Render";
+import { DaraForm } from "@/DaraForm";
+import { RENDER_TYPE, REGEXP_TYPE, TEXT_ALIGN_TYPE, FIELD_POSITION, ORIENTATION_TYPE } from "@/constants";
+import { Render } from "@/renderer/Render";
 
 export interface OptionCallback {
   (...params: any[]): any;

@@ -1,6 +1,6 @@
 import { FieldStyle, FormField } from "@t/FormField";
 import * as utils from "./utils";
-import { FIELD_POSITION_STYLE, ALIGN } from "src/constants";
+import { FIELD_POSITION_STYLE, ALIGN } from "@/constants";
 import { FormOptions } from "@t/FormOptions";
 
 export default {

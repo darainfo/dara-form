@@ -1,11 +1,12 @@
 import { FileInfo, FormField } from "@t/FormField";
-import Render from "./Render";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { fileValidator } from "src/rule/fileValidator";
-import Language from "src/util/Language";
-import { customChangeEventCall } from "src/event/renderEvents";
-import DaraForm from "src/DaraForm";
-import * as utils from "src/util/utils";
+import { Render } from "./Render";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { fileValidator } from "@/rule/fileValidator";
+import Language from "@/util/Language";
+import { customChangeEventCall } from "@/event/renderEvents";
+import { DaraForm } from "@/DaraForm";
+import { isArray } from "@daracl/core";
+import * as utils from "@/util/utils";
 
 export default class FileRender extends Render {
   private element: HTMLInputElement;
@@ -213,7 +214,7 @@ export default class FileRender extends Render {
   }
 
   setValue(value: any): void {
-    if (utils.isArray(value)) {
+    if (isArray(value)) {
       this.setValueItems(value);
     }
     this.element.value = "";

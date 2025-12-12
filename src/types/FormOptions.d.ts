@@ -1,4 +1,4 @@
-import { FORM_MODE, TEXT_ALIGN_TYPE } from "src/constants";
+import { FORM_MODE, TEXT_ALIGN_TYPE } from "@/constants";
 import { OptionCallback } from "./FormField";
 
 /**

@@ -7,9 +7,11 @@ import Language from "./util/Language";
 import { stringValidator } from "./rule/stringValidator";
 import { numberValidator } from "./rule/numberValidator";
 import { regexpValidator } from "./rule/regexpValidator";
-import FieldInfoMap from "src/FieldInfoMap";
+import FieldInfoMap from "@/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
 import { FORM_MODE } from "./constants";
+import { Toast } from "@daracl/toast"
+//import { Tree } from "@daracl/tree";
 
 declare const APP_VERSION: string;
 
@@ -47,7 +49,7 @@ let DARA_FORM_SEQ = 0;
  * @class DaraForm
  * @typedef {DaraForm}
  */
-export default class DaraForm {
+export class DaraForm {
   public static VERSION = `${APP_VERSION}`;
 
   private readonly options;
@@ -65,6 +67,9 @@ export default class DaraForm {
 
   constructor(formElement: Element, options: FormOptions, message?: Message) {
     this.options = utils.merge({}, defaultOptions, options) as FormOptions;
+
+    new Toast("111");
+    //new Tree("#treeTest",{});
 
     Language.set(message);
 

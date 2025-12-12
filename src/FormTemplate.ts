@@ -1,10 +1,10 @@
 import { FormOptions } from "@t/FormOptions";
 import { FieldStyle, FormField } from "@t/FormField";
 import * as utils from "./util/utils";
-import FieldInfoMap from "src/FieldInfoMap";
+import FieldInfoMap from "@/FieldInfoMap";
 
 import styleUtils from "./util/styleUtils";
-import DaraForm from "./DaraForm";
+import { DaraForm } from "./DaraForm";
 import TabRender from "./renderer/TabRender";
 import GridRender from "./renderer/GridRender";
 

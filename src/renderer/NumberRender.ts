@@ -1,9 +1,9 @@
 import { FormField } from "@t/FormField";
-import Render from "./Render";
-import { numberValidator } from "src/rule/numberValidator";
-import { resetRowElementStyleClass, invalidMessage } from "src/util/validUtils";
-import { numberInputEvent } from "src/event/renderEvents";
-import DaraForm from "src/DaraForm";
+import { Render } from "./Render";
+import { numberValidator } from "@/rule/numberValidator";
+import { resetRowElementStyleClass, invalidMessage } from "@/util/validUtils";
+import { numberInputEvent } from "@/event/renderEvents";
+import { DaraForm } from "@/DaraForm";
 
 export default class NumberRender extends Render {
   private element: HTMLInputElement;

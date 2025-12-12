@@ -1,5 +1,5 @@
 import DateTimePicker from "@daracl/datetimepicker";
-import Toast from "@daracl/toast";
+import { Toast } from "@daracl/toast";
 
 import "@daracl/datetimepicker/style/daracl.datetimepicker.scss";
 import "@daracl/toast/style/daracl.toast.scss";
