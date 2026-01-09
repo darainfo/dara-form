@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
         external: [
           "@daracl/core",
           "@daracl/toast",
-          "@daracl/tree",
+          "@daracl/datatimepicker",
         ],
        // plugins: isProd ? [terser()] : [], 
         output: {

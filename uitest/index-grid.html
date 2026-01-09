@@ -1,38 +1,38 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Dara Form</title>
+  </head>
 
-<head>
-  <meta charset="utf-8" />
-  <title>Dara Form</title>
-</head>
+  <body>
+    <div class="header">
+      <div class="form-button">
+        <button type="button" onclick="formObj.addItem()">Add</button>
+        <button type="button" onclick="formObj.getValue()">getValue</button>
+        <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
+        <button type="button" onclick="formObj.setValue()">setValue()</button>
+        <button type="button" onclick="formObj.isValidForm()">valid check</button>
+        <button type="button" onclick="formObj.resetForm()">Reset</button>
+        <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
+      </div>
 
-<body>
-  <div class="header">
-    <div class="form-button">
-      <button type="button" onclick="formObj.addItem()">Add</button>
-      <button type="button" onclick="formObj.getValue()">getValue</button>
-      <button type="button" onclick="formObj.getValuePromise()">getValue(true)</button>
-      <button type="button" onclick="formObj.setValue()">setValue()</button>
-      <button type="button" onclick="formObj.isValidForm()">valid check</button>
-      <button type="button" onclick="formObj.resetForm()">Reset</button>
-      <button type="button" onclick="formObj.setFieldItems()">setFieldItems</button>
+      <div>
+        Theme : <label>Light<input type="radio" name="theme-toggle" value="light" checked="true" /></label>
+        <label>Dark<input type="radio" name="theme-toggle" value="dark" /></label>
+      </div>
     </div>
 
-    <div>
-      Theme : <label>Light<input type="radio" name="theme-toggle" value="light" checked="true"></label>
-      <label>Dark<input type="radio" name="theme-toggle" value="dark"></label>
+    <div style="padding: 0px 20px">
+      <form id="loginForm" class="login-form"></form>
+
+      <form id="formArea" class="test-form aaa-test"></form>
     </div>
-  </div>
-
-  <div style="padding: 0px 20px">
-    <form id="loginForm" class="login-form"></form>
-
-    <form id="formArea" class="test-form aaa-test"></form>
-
-  </div>
-</body>
-
+  </body>
 </html>
+
+<script type="module" src="/src/index.ts"></script>
+
 <style>
   .form-button {
     text-align: center;
@@ -41,13 +41,11 @@
   :root {
     --bg: #ffffff;
     --bg-color: #070d19;
-
   }
 
   body.dark {
     --bg: #070d19;
     --bg-color: #ffffff;
-
   }
 
   body {
@@ -59,7 +57,6 @@
   }
 </style>
 <script type="module">
-
   const THEME_KEY = "form-theme";
   const theme = localStorage.getItem(THEME_KEY);
 
@@ -91,7 +88,7 @@
         el.addEventListener("click", (e) => {
           setMainTheme(el.value, true);
         });
-      })
+      });
     }
   }
   load();
@@ -102,14 +99,13 @@
     //autoFocus: false,
     style: {
       //width: '600px',
-      position: 'left',
-      labelWidth: '3'
-
+      position: "left",
+      labelWidth: "3",
     },
-    mode: 'write',
-    // form load 이후 호출. 
+    mode: "write",
+    // form load 이후 호출.
     onMounted: function () {
-      console.log(this)
+      console.log(this);
     },
     message: {
       empty: "{name} 필수 입력사항입니다.",
@@ -128,59 +124,57 @@
     },
     fields: [
       {
-        name: "\"uid<div>",
+        name: '"uid<div>',
         required: true,
         label: "아이디",
         tooltip: "아이디를 넣어주세요.",
         placeholder: "아이디를 넣어주세요.",
         renderType: "text",
-      }
-      , {
+      },
+      {
         name: "password",
         label: "패스워드",
         description: "비밀번호는 대문자 소문자 포함입니다.",
         placeholder: "패스워드를 입력하세요",
         renderType: "password",
-      }
-      , {
+      },
+      {
         name: "sex",
         label: "남성/여성",
         renderType: "checkbox",
         listItem: {
-          list: [
-            { label: "", value: "Y", selected: true },
-          ],
-        }
-      }
-      , {
+          list: [{ label: "", value: "Y", selected: true }],
+        },
+      },
+      {
         name: "grid",
         label: "grid",
         renderType: "grid",
         gridOptions: {
           disableAddButton: false,
           disableRemoveButton: false,
-          height: '200px',
-        }
-        , children: [
+          height: "200px",
+        },
+        children: [
           {
             name: "key",
             label: "key",
             renderType: "text",
             required: true,
             style: {
-              width: '200px'
+              width: "200px",
             },
             rule: {
               minLength: 2,
               maxLength: 100,
             },
-          }
-          , {
+          },
+          {
             name: "value",
             label: "value",
             renderType: "text",
-          }
-          , {
+          },
+          {
             name: "cre",
             label: "성별",
             required: true,
@@ -189,12 +183,11 @@
               labelField: "credName",
               valueField: "credId",
               list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
-            }
+            },
           },
         ],
-
-      }
-    ]
+      },
+    ],
   });
 
   var formInfo = {
@@ -203,13 +196,12 @@
     //autoFocus: false,
     style: {
       //width: '600px',
-      position: 'left-left',
-      labelWidth: '3'
-
+      position: "left-left",
+      labelWidth: "3",
     },
-    // form load 이후 호출. 
+    // form load 이후 호출.
     onMounted: function () {
-      console.log(this)
+      console.log(this);
     },
     message: {
       empty: "{name} 필수 입력사항입니다.",
@@ -241,31 +233,31 @@
         renderType: "tab",
         style: {
           labelHide: false,
-          position: 'top-left'
+          position: "top-left",
         },
         children: [
           {
-            label: 'tab1'
-            , description: 'tabl 설명'
-            , children: [
+            label: "tab1",
+            description: "tabl 설명",
+            children: [
               {
                 name: "uname222",
                 label: "tab-이름",
                 style: {
-                  customClass: 'custom-class',
-                  position: 'left',
-                  labelWidth: '120px',
+                  customClass: "custom-class",
+                  position: "left",
+                  labelWidth: "120px",
                   labelHide: false,
-                }
-                , rule: {
+                },
+                rule: {
                   minLength: 2,
                   maxLength: 100,
                 },
                 onChange: (arg) => {
                   console.log(arg);
                 },
-              }
-              , {
+              },
+              {
                 name: "uname222333",
                 label: "tab11-이름",
                 tooltip: "아이디를 넣어주세요.",
@@ -276,35 +268,35 @@
                 onChange: (arg) => {
                   console.log(arg);
                 },
-              }
+              },
 
-              , {
+              {
                 label: "child tab",
                 renderType: "tab",
                 style: {
                   //labelHide: true
-                  position: 'top-center'
-                }
-                , children: [
+                  position: "top-center",
+                },
+                children: [
                   {
-                    label: 'child-tab1'
-                    , description: 'tabl 설명'
-                    , children: [
+                    label: "child-tab1",
+                    description: "tabl 설명",
+                    children: [
                       {
                         name: "child-uname222",
                         label: "tab-이름",
                         style: {
-                          customClass: 'custom-class',
-                          position: 'left',
-                          labelWidth: '120px',
+                          customClass: "custom-class",
+                          position: "left",
+                          labelWidth: "120px",
                           labelHide: false,
-                        }
-                      }
-                    ]
-                  }
-                  , {
-                    label: 'child-uname2-tab2'
-                    , children: [
+                        },
+                      },
+                    ],
+                  },
+                  {
+                    label: "child-uname2-tab2",
+                    children: [
                       {
                         name: "child-uname333",
                         label: "tab",
@@ -316,16 +308,16 @@
                         onChange: (arg) => {
                           console.log(arg);
                         },
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-          , {
-            label: 'tab2'
-            , children: [
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            label: "tab2",
+            children: [
               {
                 name: "uname333",
                 label: "tab-22222222222222222222222222222222",
@@ -336,15 +328,15 @@
                 onChange: (arg) => {
                   console.log(arg);
                 },
-              }
-            ]
-          }
-        ]
+              },
+            ],
+          },
+        ],
       },
       {
         name: "uname",
         label: "이름222222",
-        renderType: 'custom',
+        renderType: "custom",
         template: '<div id="customElementID">111</div>',
         required: true,
         rule: {
@@ -356,64 +348,65 @@
         },
         renderer: {
           mounted: () => {
-            console.log(document.getElementById('customElementID'))
-          }
-          , getValue() {
-            return '21';
-          }
-          , valid(field, rowElement) {
+            console.log(document.getElementById("customElementID"));
+          },
+          getValue() {
+            return "21";
+          },
+          valid(field, rowElement) {
             const val = this.getValue();
-            return { name: field.name, message: 'custom type not valid' };
-          }
-        }
+            return { name: field.name, message: "custom type not valid" };
+          },
+        },
       },
       {
-        label: '비밀번호'
-        , orientation: 'vertical'
-        , conditional: {
+        label: "비밀번호",
+        orientation: "vertical",
+        conditional: {
           show: true,
           custom: function () {
-
             return true;
-          }
-        }
-        , children: [{
-          name: 'upw'
-          , label: '비밀번호'
-          , style: {
-            labelHide: true
-          }
-          , renderType: 'password'
-          , regexpType: 'number-char'
-          , rule: {
-            minLength: 3
-          }
-          , different: {
-            field: 'uid',
-            message: '아이디와 달라야 합니다.'
-          }
-        }
-          , {
-          name: 'confirmUpw'
-          , label: '확인 비밀번호'
-          , style: {
-            labelHide: true
-          }
-          , renderType: 'password'
-          , identical: {
-            field: 'upw',
-            message: '비밀번호가 같아야합니다.'
-          }
-        }]
-      }
-      , {
+          },
+        },
+        children: [
+          {
+            name: "upw",
+            label: "비밀번호",
+            style: {
+              labelHide: true,
+            },
+            renderType: "password",
+            regexpType: "number-char",
+            rule: {
+              minLength: 3,
+            },
+            different: {
+              field: "uid",
+              message: "아이디와 달라야 합니다.",
+            },
+          },
+          {
+            name: "confirmUpw",
+            label: "확인 비밀번호",
+            style: {
+              labelHide: true,
+            },
+            renderType: "password",
+            identical: {
+              field: "upw",
+              message: "비밀번호가 같아야합니다.",
+            },
+          },
+        ],
+      },
+      {
         name: "age",
         label: "생년월일",
         required: true,
         renderType: "date",
         customOptions: {
-          mode: 'datetime'
-        }
+          mode: "datetime",
+        },
       },
       {
         name: "sex",
@@ -433,8 +426,7 @@
         required: true,
         renderType: "file",
         listItem: {
-          list: [
-          ],
+          list: [],
         },
       },
 
@@ -457,50 +449,49 @@
         name: "checkbox11",
         required: true,
         renderType: "checkbox",
-        defaultValue: '',
+        defaultValue: "",
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
-            { label: "checkbox value", value: "Y", selected: true }
-            , { label: "checkbox value111", value: "Y1" }
-            , { label: "checkbox value222", value: "Y2", disabled: true }
-            , { label: "checkbox value333", value: "Y3" }
+            { label: "checkbox value", value: "Y", selected: true },
+            { label: "checkbox value111", value: "Y1" },
+            { label: "checkbox value222", value: "Y2", disabled: true },
+            { label: "checkbox value333", value: "Y3" },
           ],
         },
         onChange: (arg) => {
           console.log(arg);
         },
-      }
-      , {
+      },
+      {
         label: "라벨주소",
-        name: 'newAddress',
-        renderType: 'radio',
+        name: "newAddress",
+        renderType: "radio",
         //defaultValue: 'N',
         listItem: {
           orientation: "horizontal", // 'vertical , horizontal'
           list: [
             { label: "추가1", value: "Y", selected: true },
-            { label: "추가", value: "N" }
+            { label: "추가", value: "N" },
           ],
-        }
-        , description: `<div><a href="asdf">111111111111111</a></div>`
-        , orientation: "horizontal" // 'vertical , horizontal'
-        , conditional: {
+        },
+        description: `<div><a href="asdf">111111111111111</a></div>`,
+        orientation: "horizontal", // 'vertical , horizontal'
+        conditional: {
           show: true,
           custom: function () {
             return true;
           },
         },
         children: [
-
           {
             name: "address32",
             label: "주소",
-            orientation: 'vertical',
+            orientation: "vertical",
             style: {
               labelHide: false,
-              position: 'left',
-              labelWidth: '120px',
+              position: "left",
+              labelWidth: "120px",
             },
             required: true,
             rule: {
@@ -512,7 +503,7 @@
               field: "newAddress",
               eq: "N",
               //custom?: OptionCallback
-            }
+            },
           },
           {
             name: "address",
@@ -539,7 +530,7 @@
             style: {
               //width: '200px',
               labelHide: false,
-              position: 'left'
+              position: "left",
             },
             required: true,
             rule: {
@@ -560,7 +551,7 @@
             orientation: "horizontal", // 'vertical , horizontal, horizontal-row'
             style: {
               labelWidth: "200px",
-              labelHide: false
+              labelHide: false,
             },
             conditional: {
               show: true,
@@ -638,12 +629,15 @@
     },
 
     setValue: () => {
-      formBuilder.setValue({
-        grid: [
-          { key: 'aaa', value: 'bbb', cre: 'credId' },
-          { key: 'key임', value: 'value임', cre: 'credId' }
-        ]
-      }, false);
+      formBuilder.setValue(
+        {
+          grid: [
+            { key: "aaa", value: "bbb", cre: "credId" },
+            { key: "key임", value: "value임", cre: "credId" },
+          ],
+        },
+        false
+      );
     },
   };
 
@@ -651,5 +645,5 @@
 
   window.formBuilder = formBuilder;
   window.formObj = formObj;
-  window.loginForm = loginForm; 
+  window.loginForm = loginForm;
 </script>

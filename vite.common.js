@@ -8,8 +8,7 @@ const topBanner = `/*!
 * Licensed ${packageJson.license}
 */`;
 
-
- const moduleName = 'daracl.form';
+const moduleName = 'daracl.form';
 
 export const MODULE_NAME = moduleName;
 

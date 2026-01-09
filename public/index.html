@@ -4,7 +4,10 @@
     <meta charset="utf-8" />
     <title>Dara Form</title>
 
-    <script defer src="../dist/daracl.form.umd.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./daracl.form.min.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script type="text/javascript" src="./daracl.form.umd.js"></script>
   </head>
 
   <body onload="formObj.load()">
@@ -309,7 +312,7 @@
   var formBuilder;
   var formObj = {
     load: () => {
-      formBuilder = new DaraForm("#formArea", formInfo);
+      formBuilder = Daracl.form.create(document.getElementById("formArea"), formInfo);
     },
     addItem: () => {
       rowIdx += 1;

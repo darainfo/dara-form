@@ -8,14 +8,6 @@
     "email": "darainfosys@gmail.com",
     "url": "https://www.moaview.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/darainfo/daracl.form.git"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org"
-  },
   "license": "MIT",
   "keywords": [
     "@daracl/form",
@@ -30,15 +22,26 @@
   ],
   "main": "src/index.ts",
   "types": "./dist/index.d.ts",
-  "homepage": "https://github.com/darainfo/daracl.form",
+  "homepage": "https://github.com/daracl/ui-form",
   "bugs": {
-    "url": "https://github.com/darainfo/daracl.form/issues",
+    "url": "https://github.com/daracl/ui-form/issues",
     "email": "darainfosys@gmail.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daracl/ui-form.git"
+  },
   "exports": {
-    ".": "./dist/index.js",
-    "./dist/": "./dist/",
-    "./style/": "./style/"
+      ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+      },
+      "./umd": {
+      "import": "./dist/daracl.form.umd.js"
+      },
+      "./dist/": "./dist/",
+      "./style/": "./style/"
   },
   "files": [
     "dist",
@@ -59,7 +62,7 @@
   "peerDependencies": {
     "@daracl/core": "^0.0.3",
     "@daracl/toast": "^0.0.10",
-    "@daracl/tree": "^0.0.11"
+    "@daracl/datetimepicker": "^0.0.13"
   },
   "dependencies": {
     "@babel/plugin-syntax-dynamic-import": "^7.8.3",
@@ -70,21 +73,16 @@
     "tslint-config-prettier": "^1.18.0"
   },
   "devDependencies": {
-    "@daracl/core": "^0.0.3",
+    "@daracl/core": "^0.0.5",
     "@daracl/toast": "^0.0.10",
-    "@daracl/tree": "^0.0.11",
-    "@daracl/datetimepicker": "^0.0.9",
+    "@daracl/datetimepicker": "^0.0.13",
     "@mxssfd/typedoc-theme": "^1.1.1",
-    "@types/file-saver": "^2.0.5",
     "@types/jest": "^29.5.1",
+    "@playwright/test": "^1.55.1",
     "@types/node": "^20.1.0",
     "@typescript-eslint/eslint-plugin": "^5.59.5",
     "@typescript-eslint/parser": "^5.59.5",
     "cpx": "^1.5.0",
-    "css-loader": "^6.8.1",
-    "css-minimizer-webpack-plugin": "^5.0.1",
-    "esbuild": "^0.19.2",
-    "esbuild-sass-plugin": "^2.12.0",
     "eslint": "^8.40.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.8.0",
@@ -111,21 +109,19 @@
     "vite-plugin-banner": "^0.7.1"
   },
   "scripts": {
-    "prepack": "yarn build",
-    
-    "build": "vite build --mode production && vite build --mode development && yarn copy-dts && yarn build:tsc && yarn copy-unmin && yarn clean:unmin && yarn copy-html",
+    "build": "yarn build:escjs && yarn build:umd && yarn mergenclean",
+    "build:umd": "vite build --config vite.config.umd.js --mode production && vite build --config vite.config.umd.js --mode development",
+    "build:escjs": "vite build --config vite.config.js --mode production && vite build --config vite.config.js --mode development",
+    "mergenclean": "yarn copy-dts && yarn build:tsc && yarn copy-unmin && yarn clean:unmin && yarn copy-html",
     "build:tsc": "tsc --emitDeclarationOnly",
-
-    
-    "build:vender": "webpack --config webpack.vender.js",
-    "build:dev": "webpack --config webpack.dev.js",
-    "build:prod": "webpack --config webpack.prod.js && webpack --env=mode=deploy --config webpack.dev.js",
-    "preview": "vite preview",
     "dev": "vite",
-    "dts:gen": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
+    "preview": "vite preview",
+
     "docs:gen": "typedoc --tsconfig tsconfig.doc.json",
+    "dts:gen": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
+    
     "test": "jest",
-    "start": "webpack-dev-server --config ./webpack.dev.server.js",
+    "pwtest": "playwright test",
     "clean:unmin": "rimraf dist/unmin",
     "copy-html": "cpx \"public/index.html\" dist",
     "copy-unmin": "cpx \"dist/unmin/**.*\" dist",

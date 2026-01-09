@@ -10,8 +10,6 @@ import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "@/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
 import { FORM_MODE } from "./constants";
-import { Toast } from "@daracl/toast"
-//import { Tree } from "@daracl/tree";
 
 declare const APP_VERSION: string;
 
@@ -67,9 +65,6 @@ export class DaraForm {
 
   constructor(formElement: Element, options: FormOptions, message?: Message) {
     this.options = utils.merge({}, defaultOptions, options) as FormOptions;
-
-    new Toast("111");
-    //new Tree("#treeTest",{});
 
     Language.set(message);
 
