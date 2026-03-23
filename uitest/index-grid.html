@@ -150,9 +150,10 @@
         name: "grid",
         label: "grid",
         renderType: "grid",
-        gridOptions: {
-          disableAddButton: false,
-          disableRemoveButton: false,
+        displayMode: "view",
+        rendererOptions: {
+          disableAddButton: true,
+          disableRemoveButton: true,
           height: "200px",
         },
         children: [
@@ -176,14 +177,8 @@
           },
           {
             name: "cre",
-            label: "성별",
-            required: true,
-            renderType: "dropdown",
-            listItem: {
-              labelField: "credName",
-              valueField: "credId",
-              list: [{ label: "선택하세요." }, { credId: "credId", credName: "credName" }],
-            },
+            label: "추가",
+            renderType: "button",
           },
         ],
       },
@@ -404,7 +399,7 @@
         label: "생년월일",
         required: true,
         renderType: "date",
-        customOptions: {
+        rendererOptions: {
           mode: "datetime",
         },
       },

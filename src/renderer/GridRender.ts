@@ -81,7 +81,7 @@ export default class GridRender extends Render {
 
       colgroupTemplate.push(`<col style="width:38px">`);
       theadTemplate.push("<th>");
-      if (field.gridOptions?.disableAddButton !== true) {
+      if (field.rendererOptions?.disableAddButton !== true) {
         theadTemplate.push(`<button type="button" class="df-btn df-grid-add-row-btn" title="Add"><i class="df-icon df-add-icon"></i></button>`);
       }
       theadTemplate.push("</th>");
@@ -97,7 +97,7 @@ export default class GridRender extends Render {
     fieldContainerElement.innerHTML = `
     <div class="df-grid-field">
       ${addBtnTemplate.join("")}
-     <div class="df-grid-container ${field.style?.position ?? ""}" style="height:${field.gridOptions?.height ?? "auto"};">
+     <div class="df-grid-container ${field.style?.position ?? ""}" style="height:${field.rendererOptions?.height ?? "auto"};">
         <table class="df-grid">${colgroupTemplate.join("")}<thead>${theadTemplate.join("")}</thead><tbody></tbody></table>
      </div>
      </div>
@@ -119,7 +119,7 @@ export default class GridRender extends Render {
     rowTemplate.push(`<tr class="grid-row">`);
 
     rowTemplate.push("<td>");
-    if (this.field.gridOptions?.disableRemoveButton !== true) {
+    if (this.field.rendererOptions?.disableRemoveButton !== true) {
       rowTemplate.push(`<button type="button" data-row-idx="${$$idx}" class="df-btn df-grid-row-remove"><i class="df-icon df-remove-icon"></i></button>`);
     }
     rowTemplate.push("</td>");

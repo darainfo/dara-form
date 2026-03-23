@@ -25,7 +25,7 @@ export default class TextAreaRender extends Render {
 
     const fieldContainerElement = this.rowElement.querySelector(".df-field-container") as HTMLElement;
 
-    let rows = field.customOptions?.rows;
+    let rows = field.rendererOptions?.rows;
     rows = +rows > 0 ? rows : 3;
 
     fieldContainerElement.innerHTML = `

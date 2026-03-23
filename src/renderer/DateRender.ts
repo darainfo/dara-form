@@ -22,20 +22,20 @@ export default class DateRender extends Render {
 
   mounted() {
     let dateOnSelectEvent: any;
-    this.field.customOptions = Object.assign({}, this.field.customOptions);
-    if (typeof this.field.customOptions.onSelect !== "undefined") {
-      dateOnSelectEvent = typeof this.field.customOptions.onSelect;
+    this.field.rendererOptions = Object.assign({}, this.field.rendererOptions);
+    if (typeof this.field.rendererOptions.onSelect !== "undefined") {
+      dateOnSelectEvent = typeof this.field.rendererOptions.onSelect;
     }
 
-    if (utils.isUndefined(this.field.customOptions.mode)) {
+    if (utils.isUndefined(this.field.rendererOptions.mode)) {
       if (this.field.renderType == "datemonth" || this.field.renderType == "datehour") {
-        this.field.customOptions.mode = this.field.renderType.replace("date", "");
+        this.field.rendererOptions.mode = this.field.renderType.replace("date", "");
       } else {
-        this.field.customOptions.mode = this.field.renderType;
+        this.field.rendererOptions.mode = this.field.renderType;
       }
     }
 
-    this.field.customOptions.onSelect = (dt: any, e: Event) => {
+    this.field.rendererOptions.onSelect = (dt: any, e: Event) => {
       if (dateOnSelectEvent) {
         dateOnSelectEvent(dt, e);
       }
@@ -45,7 +45,7 @@ export default class DateRender extends Render {
       this.valid();
     };
 
-    this.dateObj = new DateTimePicker(this.element, this.field.customOptions, {} as any);
+    this.dateObj = new DateTimePicker(this.element, this.field.rendererOptions, {} as any);
   }
 
   createField() {

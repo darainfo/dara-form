@@ -135,7 +135,7 @@ type: {
 | renderer | custom renderer |   |  |
 | conditional | 보이기 여부 조건 | show: 보이기 여부 <br/>  field: field name <br> eq: 비교 값 <br> custom: custom 체크 메소드   |  |
 | renderType |  render type  | text  | number, text, file, textarea, dropdown, radio, checkbox, date(dara-datetimepicker모듈 사용), group, custom |
-| customOptions |  date 타입등의 추가 module에서 사용하는 추가 옵션 |   |  |
+| rendererOptions |  date 타입등의 추가 module에서 사용하는 추가 옵션 |   |  |
 | style |  width: field 넓이<br> labelHide : label 숨김여부 <br> labelWidth : label 넓이<br>  customClass : custom class <br> valueWidth : value width <br> tabAlign : render type이 tab일 경우 정렬 <br> position : '"[label위치]"-[글자 정렬위치]' <br> -- ex) 'top-left','left-right' |  width: "100%" <br>  labelWidth: 3<br> valueWidth: 9<br> position: "left-right" | position : top,left,right - left,center,right <br> tabAlign:left, center, right|
 | rule |  유효성 규칙 | minLength: 최소 길이 <br>  maxLength: 최대길이<br> minimum: 최소값 <br>    exclusiveMinimum: 최소값 포함 여부 <br> maximum: 최대값 <br>exclusiveMaximum: 최대값 포함여부 |  |
 | different | field 값이 다른지 비교 | field: field name <br> message: 메시지   |  |

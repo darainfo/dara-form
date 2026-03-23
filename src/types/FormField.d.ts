@@ -63,9 +63,10 @@ export interface FieldStyle {
  */
 export interface FormField {
   name: string; // 'name'
+  displayMode?: 'edit' | 'view'; // 'edit'
   renderType?: RENDER_TYPE | string;
-  customOptions: any;
-  label: string; // '아이디'
+  label: string; // '이름'
+  position?: FIELD_POSITION; // 'top'
   style: {
     width: string | number;
     labelHide: boolean;
@@ -111,12 +112,7 @@ export interface FormField {
   fileDownload: OptionCallback; // file download function
   renderer: Render; // custom renderer
   conditional: ConditionInfo; // 보이기 여부
-  gridOptions?: {
-    disableAddButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
-    disableRemoveButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
-    align?: TEXT_ALIGN_TYPE; // renderer 그리드 타입 추가 버튼 유무
-    height: string; // grid 높이값
-  };
+  rendererOptions: any| GridOptions;  // custom options 옵션
   $renderType: Render; // render Type
   $instance: Render; // 실제 render
   $orgin: FormField;
@@ -126,4 +122,12 @@ export interface FormField {
   $parent: FormField;
   $tabForm?: DaraForm; //tab 일경우 폼 정보
   $validName: string; //
+}
+
+
+export interface GridOptions {
+  disableAddButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
+  disableRemoveButton?: boolean; // renderer 그리드 타입 추가 버튼 유무
+  align?: TEXT_ALIGN_TYPE; // renderer 그리드 타입 추가 버튼 유무
+  height: string; // grid 높이값
 }

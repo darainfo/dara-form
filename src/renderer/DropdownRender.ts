@@ -36,7 +36,7 @@ export default class DropdownRender extends Render {
     if (initDefaultValueFlag) {
       this.defaultSelected = initDefaultValue;
     } else if (!this.defaultSelected) {
-      if (field.customOptions?.disableDefaultOption === true) {
+      if (field.rendererOptions?.disableDefaultOption === true) {
         this.defaultSelected = this.field.listItem?.list?.length > 0 ? this.field.listItem.list[0][valueKey] || "" : "";
       }
     }
@@ -132,7 +132,7 @@ export default class DropdownRender extends Render {
     const valueKey = Render.valuesValueKey(field);
     let template = "";
 
-    if (field.customOptions?.disableDefaultOption !== true) {
+    if (field.rendererOptions?.disableDefaultOption !== true) {
       template += `<option value="">${Language.getMessage("selection")}</option>`;
     }
     field.listItem?.list?.forEach((val) => {
