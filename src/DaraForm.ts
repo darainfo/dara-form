@@ -35,6 +35,18 @@ interface DaraFormMap {
   [key: string]: DaraForm;
 }
 
+export interface FormChangeEvent {
+  form: DaraForm;
+}
+
+export interface FormChangeListener {
+  (event: FormChangeEvent): void;
+}
+
+export interface Unsubscribe {
+  (): void;
+}
+
 // all instance
 const allInstance: DaraFormMap = {};
 
@@ -62,6 +74,8 @@ export class DaraForm {
   private formValue: any = {};
 
   public formTemplate: FormTemplate;
+
+  private changeListeners: FormChangeListener[] = [];
 
   constructor(formElement: Element, options: FormOptions, message?: Message) {
     this.options = utils.merge({}, defaultOptions, options) as FormOptions;
@@ -258,14 +272,128 @@ export class DaraForm {
    * @param {string} fieldName
    */
   public removeField = (fieldName: string) => {
-    const element = this.getFieldElement(fieldName);
+    const fieldInfo = this.fieldInfoMap.getFieldName(fieldName);
 
-    if (element != null) {
-      element.closest(".df-row")?.remove();
+    if (!fieldInfo) return;
+
+    const removeFields = this.getRemoveFields(fieldInfo);
+
+    removeFields.forEach((removeField) => {
+      this.removeFormValue(removeField);
+    });
+
+    this.removeFieldElement(fieldInfo);
+    this.removeParentChildField(fieldInfo);
+
+    removeFields.forEach((removeField) => {
+      this.fieldInfoMap.removeFieldInfoByKey(removeField.$key);
+    });
+
+    this.conditionCheck();
+  };
+
+  /**
+   * 제거할 필드와 같은 fieldInfoMap에 등록된 하위 필드(group 하위 필드, tab 패널) 목록
+   * grid 컬럼, tab 패널 내부 필드는 별도 form에 등록되므로 제외됨.
+   *
+   * @param {FormField} fieldInfo
+   * @param {FormField[]} result
+   * @returns {FormField[]}
+   */
+  private getRemoveFields(fieldInfo: FormField, result: FormField[] = []): FormField[] {
+    result.push(fieldInfo);
+
+    fieldInfo.children?.forEach((childField) => {
+      if (childField && this.fieldInfoMap.get(childField.$key) === childField) {
+        this.getRemoveFields(childField, result);
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * field element 제거
+   *
+   * @param {FormField} fieldInfo
+   */
+  private removeFieldElement(fieldInfo: FormField) {
+    const parentField = fieldInfo.$parent;
+
+    // tab 패널은 tab header item, tab panel 로 구성됨.
+    if (parentField && utils.isTabType(parentField)) {
+      const tabElement = parentField.$instance.getElement() as Element;
+      const tabItem = tabElement.querySelector(`[data-tab-id="${fieldInfo.$key}"]`);
+      const activeFlag = tabItem?.classList.contains("active");
+
+      tabItem?.remove();
+      tabElement.querySelector(`[tab-panel-id="${fieldInfo.$key}"]`)?.remove();
+
+      const firstTabItem = tabElement.querySelector(".tab-header .tab-item");
+      if (activeFlag && firstTabItem) {
+        parentField.$instance.setActive(firstTabItem.getAttribute("data-tab-id") ?? "");
+      }
+      return;
     }
 
-    this.fieldInfoMap.removeFieldInfo(fieldName);
-  };
+    // 최상위 필드는 .df-row, group 하위 필드는 .form-group 에 id=$key 가 지정됨.
+    const rowSelector = `[id="${fieldInfo.$key}"]`;
+    let element = fieldInfo.$instance?.getElement();
+
+    // checkbox, radio 는 getElement()가 NodeList를 반환함.
+    if (element instanceof NodeList || element instanceof HTMLCollection) {
+      element = element[0] ?? null;
+    }
+
+    const rowElement = (element instanceof Element ? element.closest(rowSelector) : null) ?? this.formElement.querySelector(rowSelector);
+    const containerElement = rowElement?.parentElement;
+
+    rowElement?.remove();
+
+    // group 하위 필드를 모두 제거한 경우 빈 row 제거
+    if (parentField && containerElement?.classList.contains("df-row") && containerElement.childElementCount < 1) {
+      containerElement.remove();
+    }
+  }
+
+  /**
+   * 부모 children(최상위는 options.fields)에서 필드 제거
+   * tab 은 children 기준으로 값/유효성 체크를 하므로 제거해야 함.
+   *
+   * @param {FormField} fieldInfo
+   */
+  private removeParentChildField(fieldInfo: FormField) {
+    const fields: FormField[] | undefined = fieldInfo.$parent ? fieldInfo.$parent.children : this.options.fields;
+    const idx = fields ? fields.indexOf(fieldInfo) : -1;
+
+    if (idx > -1) {
+      fields?.splice(idx, 1);
+    }
+  }
+
+  /**
+   * getValue() 시 formValue에 누적된 field 값 제거
+   *
+   * @param {FormField} fieldInfo
+   */
+  private removeFormValue(fieldInfo: FormField) {
+    const keys = [fieldInfo.name, fieldInfo.$validName];
+
+    if (fieldInfo.renderType === "file") {
+      keys.push(fieldInfo.$validName + "RemoveIds");
+    } else if (utils.isTabType(fieldInfo)) {
+      keys.push(...Object.keys(fieldInfo.$instance.getValue() ?? {}));
+    }
+
+    // tab 패널 (useTypeValue false 일 경우 패널 내부 필드 값이 펼쳐져 저장됨)
+    if (fieldInfo.$tabForm) {
+      keys.push(...Object.keys(fieldInfo.$tabForm.getValue(false) ?? {}));
+    }
+
+    keys.forEach((key) => {
+      if (!utils.isBlank(key)) delete this.formValue[key];
+    });
+  }
 
   /**
    * 폼 유효성 검증 여부
@@ -345,6 +473,30 @@ export class DaraForm {
 
   public conditionCheck() {
     this.fieldInfoMap.conditionCheck();
+    this.notifyChange();
+  }
+
+  /**
+   * 폼 상태(값/보이기 여부 등) 변경을 감지하는 리스너 등록.
+   *
+   * value/setValue/resetForm/conditional 변경 체크
+   *
+   * @param listener 상태 변경시 호출되는 콜백
+   * @returns 등록 해제 함수
+   */
+  public subscribe = (listener: FormChangeListener): Unsubscribe => {
+    this.changeListeners.push(listener);
+
+    return () => {
+      this.changeListeners = this.changeListeners.filter((l) => l !== listener);
+    };
+  };
+
+  private notifyChange() {
+    if (this.changeListeners.length < 1) return;
+
+    const event: FormChangeEvent = { form: this };
+    this.changeListeners.forEach((listener) => listener(event));
   }
 
   public setFieldDisabled(fieldName: string, flag: boolean) {

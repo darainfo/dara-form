@@ -311,6 +311,7 @@ body.dark .daracl-form,
   .df-field-container {
     overflow: initial;
     position: relative;
+    flex: 1;
     > .df-row {
       margin-top: -10px;
     }

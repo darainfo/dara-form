@@ -106,7 +106,30 @@ export default class FieldInfoMap {
    * @param {string} fieldName
    */
   public removeFieldInfo(fieldName: string) {
-    delete this.allFieldInfo[this.keyNameMap[fieldName]];
+    const fieldKey = this.keyNameMap[fieldName];
+
+    if (utils.isUndefined(fieldKey)) return;
+
+    this.removeFieldInfoByKey(fieldKey);
+    delete this.keyNameMap[fieldName];
+  }
+
+  /**
+   * 필드 키로 필드 정보 맵에서 지우기
+   *
+   * @public
+   * @param {string} fieldKey
+   */
+  public removeFieldInfoByKey(fieldKey: string) {
+    const fieldInfo = this.allFieldInfo[fieldKey];
+
+    if (fieldInfo && this.keyNameMap[fieldInfo.$validName] === fieldKey) {
+      delete this.keyNameMap[fieldInfo.$validName];
+    }
+
+    delete this.allFieldInfo[fieldKey];
+
+    this.conditionFields = this.conditionFields.filter((key) => key !== fieldKey);
   }
 
   /**

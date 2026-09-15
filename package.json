@@ -1,6 +1,6 @@
 {
   "name": "@daracl/form",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "sideEffects": false,
   "description": "Daracl form validation ",
   "author": {
@@ -32,16 +32,16 @@
     "url": "https://github.com/daracl/ui-form.git"
   },
   "exports": {
-      ".": {
+    ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-      },
-      "./umd": {
+    },
+    "./umd": {
       "import": "./dist/daracl.form.umd.js"
-      },
-      "./dist/": "./dist/",
-      "./style/": "./style/"
+    },
+    "./dist/": "./dist/",
+    "./style/": "./style/"
   },
   "files": [
     "dist",
@@ -116,10 +116,8 @@
     "build:tsc": "tsc --emitDeclarationOnly",
     "dev": "vite",
     "preview": "vite preview",
-
     "docs:gen": "typedoc --tsconfig tsconfig.doc.json",
     "dts:gen": "npx -p typescript tsc src/index.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
-    
     "test": "jest",
     "pwtest": "playwright test",
     "clean:unmin": "rimraf dist/unmin",

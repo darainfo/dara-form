@@ -18,4 +18,6 @@ template.zip
 test-results/*
 /test-results
 
+style/*.css
+
 bundle-report.html
