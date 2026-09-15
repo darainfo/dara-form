@@ -10,22 +10,9 @@ import { regexpValidator } from "./rule/regexpValidator";
 import FieldInfoMap from "@/FieldInfoMap";
 import FormTemplate from "./FormTemplate";
 import { FORM_MODE } from "./constants";
+import { initFormOptions, setDefaultOptions } from "./defaultOption";
 
 declare const APP_VERSION: string;
-
-const defaultOptions = {
-  style: {
-    width: "100%",
-    labelWidth: 3,
-    valueWidth: 9,
-    position: "left-right",
-  },
-  mode: "new",
-  useTypeValue: true,
-  autoCreate: true,
-  notValidMessage: "This form is not valid.",
-  fields: [],
-} as FormOptions;
 
 interface FieldMap {
   [key: string]: FormField;
@@ -78,7 +65,7 @@ export class DaraForm {
   private changeListeners: FormChangeListener[] = [];
 
   constructor(formElement: Element, options: FormOptions, message?: Message) {
-    this.options = utils.merge({}, defaultOptions, options) as FormOptions;
+    this.options = initFormOptions(options);
 
     Language.set(message);
 
@@ -112,6 +99,14 @@ export class DaraForm {
 
   public static setMessage(message: Message): void {
     Language.set(message);
+  }
+
+  public static setDefaultOptions(options: FormOptions, message?: Message): void {
+    setDefaultOptions(options);
+
+    if (message) {
+      Language.set(message);
+    }
   }
 
   private createForm(fields: FormField[]) {
